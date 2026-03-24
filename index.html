@@ -118,25 +118,14 @@
       text-transform: none;
     }
 
-    /* ─── VIDEO / DEIN ZIEL ──────────────────────────────────── */
+    /* ─── VIDEO ──────────────────────────────────────────────── */
     .video-section {
-      background: var(--teal-dark);
+      background: #000;
       padding: 0;
-      position: relative;
-      overflow: hidden;
-      min-height: 420px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex; justify-content: center;
     }
     .video-overlay-text {
-      font-family: var(--font-head);
-      font-size: 72px;
-      color: var(--yellow);
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      position: absolute;
-      z-index: 2;
-      text-align: center;
-      pointer-events: none;
+      display: none;
     }
     .video-player {
       width: 90%; max-width: 1240px;
@@ -940,9 +929,8 @@
   </p>
 </section>
 
-<!-- ═══ VIDEO / DEIN ZIEL ════════════════════════════════════════ -->
+<!-- ═══ VIDEO ════════════════════════════════════════════════════ -->
 <section class="video-section">
-  <div class="video-overlay-text">DEIN&nbsp;&nbsp;ZIEL</div>
   <div class="video-player">
     <video controls preload="metadata" poster="">
       <source src="startseite%20der-redewert.mp4" type="video/mp4">
