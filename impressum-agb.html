@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impressum & AGB | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:    #8bd0cd;
+      --yellow:  #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid: #57bbbf;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: #f5f3ee; color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: #1a1a1a;
+      text-decoration: none;
+      letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: #8b7a5a; }
+
+    /* ─── HAMBURGER ───────────────────────────────────────────── */
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px; background: #1a1a1a;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── PAGE TITLE ──────────────────────────────────────────── */
+    .page-hero {
+      background: var(--teal-dark);
+      padding: 60px 80px 50px;
+    }
+    .page-hero h1 {
+      font-family: var(--font-head);
+      font-size: 36px;
+      color: #fff;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0;
+    }
+
+    /* ─── CONTENT ─────────────────────────────────────────────── */
+    .page-content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 60px 40px 80px;
+    }
+
+    .content-section {
+      margin-bottom: 60px;
+    }
+
+    .content-section h2 {
+      font-family: var(--font-head);
+      font-size: 18px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--teal-dark);
+      margin-bottom: 24px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--teal-mid);
+    }
+
+    .content-section h3 {
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 20px 0 8px;
+      letter-spacing: 0.02em;
+    }
+
+    .content-section p {
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+      margin-bottom: 12px;
+    }
+
+    .content-section ul {
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+      padding-left: 24px;
+      margin-bottom: 12px;
+    }
+
+    .content-section a {
+      color: var(--teal-dark);
+      text-decoration: underline;
+    }
+
+    .section-divider {
+      width: 60px; height: 3px;
+      background: var(--teal-mid);
+      margin: 60px 0;
+    }
+
+    /* ─── FOOTER ──────────────────────────────────────────────── */
+    footer {
+      background: var(--mint);
+      padding: 40px 60px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+    }
+    .footer-left p {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-links a {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: #1a1a1a;
+      text-decoration: none;
+    }
+    .footer-links a:hover { text-decoration: underline; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      header { padding: 12px 20px; }
+      .hamburger { display: flex; }
+      nav {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--mint); flex-direction: column; justify-content: center;
+        align-items: center; gap: 32px; z-index: 150;
+      }
+      nav.open { display: flex; }
+      nav a { font-size: 18px; }
+      .page-hero { padding: 44px 24px 36px; }
+      .page-hero h1 { font-size: 22px; }
+      .page-content { padding: 40px 20px 60px; }
+      footer { padding: 32px 20px 16px; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif"
+         alt="der-redewert Logo">
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="mainNav">
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+</header>
+
+<!-- ═══ PAGE HERO ════════════════════════════════════════════════ -->
+<div class="page-hero">
+  <h1>Impressum &amp; AGB</h1>
+</div>
+
+<!-- ═══ CONTENT ══════════════════════════════════════════════════ -->
+<main class="page-content">
+
+  <!-- IMPRESSUM -->
+  <div class="content-section">
+    <h2>Impressum</h2>
+    <h3>Angaben gemäß § 5 TMG</h3>
+    <p>Wibke Scharpenberg<br>
+    DER REDEWERT<br>
+    Kopernikusstraße 3<br>
+    10243 Berlin</p>
+
+    <h3>Kontakt</h3>
+    <p>E-Mail: <a href="mailto:hallo@der-redewert.com">hallo@der-redewert.com</a></p>
+    <p>Stnr. 14/507/02217</p>
+
+    <h3>EU-Streitschlichtung</h3>
+    <p>Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS) bereit:
+    <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr</a>.
+    Unsere E-Mail-Adresse finden Sie oben im Impressum.</p>
+
+    <h3>Verbraucherstreitbeilegung / Universalschlichtungsstelle</h3>
+    <p>Wir nehmen an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teil. Zuständig ist die Universalschlichtungsstelle des Zentrums für Schlichtung e.V., Straßburger Straße 8, 77694 Kehl am Rhein (<a href="https://www.verbraucher-schlichter.de" target="_blank" rel="noopener">https://www.verbraucher-schlichter.de</a>).</p>
+
+    <h3>Haftung für Inhalte</h3>
+    <p>Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde Informationen zu überwachen oder nach Umständen zu forschen, die auf eine rechtswidrige Tätigkeit hinweisen. Verpflichtungen zur Entfernung oder Sperrung der Nutzung von Informationen nach den allgemeinen Gesetzen bleiben hiervon unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei Bekanntwerden von entsprechenden Rechtsverletzungen werden wir diese Inhalte umgehend entfernen.</p>
+
+    <h3>Haftung für Links</h3>
+    <p>Unser Angebot enthält Links zu externen Websites Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich. Die verlinkten Seiten wurden zum Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft. Rechtswidrige Inhalte waren zum Zeitpunkt der Verlinkung nicht erkennbar. Eine permanente inhaltliche Kontrolle der verlinkten Seiten ist jedoch ohne konkrete Anhaltspunkte einer Rechtsverletzung nicht zumutbar. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Links umgehend entfernen.</p>
+
+    <h3>Urheberrecht</h3>
+    <p>Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers. Downloads und Kopien dieser Seite sind nur für den privaten, nicht kommerziellen Gebrauch gestattet. Soweit die Inhalte auf dieser Seite nicht vom Betreiber erstellt wurden, werden die Urheberrechte Dritter beachtet. Insbesondere werden Inhalte Dritter als solche gekennzeichnet. Sollten Sie trotzdem auf eine Urheberrechtsverletzung aufmerksam werden, bitten wir um einen entsprechenden Hinweis. Bei Bekanntwerden von Rechtsverletzungen werden wir derartige Inhalte umgehend entfernen.</p>
+    <p><em>Quelle: e-recht24.de</em></p>
+  </div>
+
+  <div class="section-divider"></div>
+
+  <!-- AGB -->
+  <div class="content-section">
+    <h2>Allgemeine Geschäftsbedingungen</h2>
+    <p><strong>DER REDEWERT / Wibke Scharpenberg</strong><br>
+    Kopernikusstraße 34, 10243 Berlin<br>
+    <a href="mailto:hallo@der-redewert.com">hallo@der-redewert.com</a><br>
+    14/507/02217</p>
+
+    <h3>1. Geltungsbereich</h3>
+    <p>1.1 Die nachstehenden allgemeinen Geschäftsbedingungen gelten für alle Rechtsgeschäfte des Coaching/Seminar-Veranstalters nach diesem Vertrag mit seinem Vertragspartner, nachstehend "Teilnehmer" genannt.</p>
+    <p>1.2 Änderungen dieser Geschäftsbedingungen werden dem Teilnehmer schriftlich bekannt gegeben. Sie gelten als genehmigt, wenn der Teilnehmer nicht in Textform Widerspruch erhebt. Der Teilnehmer muss den Widerspruch innerhalb von 2 Wochen nach Bekanntgabe der Änderungen an den Veranstalter absenden.</p>
+
+    <h3>2. Vertragsgegenstand</h3>
+    <p>2.1 Der Veranstalter bietet Coachingveranstaltungen, Mediation und Seminare an. Eine genaue Bezeichnung und Auflistung des Leistungsangebots wird von dem Veranstalter unter anderem in seinen Geschäftsräumen, seiner Internetpräsenz und von diesem sonstig genutzten Medien bekannt gegeben.</p>
+    <p>2.2 Grundlegender Gegenstand des Vertrages / Aufgabenbezeichnung:</p>
+    <ul>
+      <li>1. Coaching</li>
+      <li>2. Mediation</li>
+      <li>3. Kommunikationstraining</li>
+      <li>4. Seminare und Workshops</li>
+    </ul>
+
+    <h3>3. Zustandekommen des Vertrages</h3>
+    <p>3.1 Ein Vertrag mit dem Veranstalter kommt zustande, durch die Übermittlung und Bestätigung der ausgefüllten und unterschriebenen Teilnahmeerklärung auf dem Postweg, per elektronische Post oder durch mündliche Absprache und anschließendem Nachreichen einer schriftlichen Teilnahmeerklärung.</p>
+    <p>3.2 Jeder Teilnehmer erhält nach Eingang seiner Teilnahmeerklärung ein Bestätigungs- oder Ablehnungsschreiben.</p>
+    <p>3.3 Die Teilnahmeerklärung ist verbindlich und kann bei Seminarveranstaltungen nur nach Absprache mit dem Veranstalter bis 21 Tage vor Beginn des Seminarstarts für gegenstandslos erklärt werden. Für die Terminvereinbarung zur Leistung Coaching oder Mediation muss 48 Std. vor dem vereinbarten Termin eine schriftliche Absage erfolgen, danach werden die vollen Kosten des Termins in Rechnung gestellt.</p>
+    <p>3.4 Bei einer Gruppenanmeldung, beispielsweise im Falle eines Betriebsausflugs, schließt der Veranstalter mit der für die Teilnehmer verantwortlichen bzw. mit der weisungsberechtigten Person einen Teilnahmevertrag über und für die Gruppe ab.</p>
+    <p>3.5 Der Veranstalter behält sich vor, bis 10 Tage vor Veranstaltungsbeginn, die Durchführung der Veranstaltung nach Ausschöpfung aller Möglichkeiten abzusagen bzw. zu kündigen, wenn diese nicht zumutbar ist. Die Durchführung eines Seminars ist an eine Mindestteilnehmerzahl gebunden. Im Falle der Unterschreitung der Mindestteilnehmerzahl behalten wir uns vor, das Seminar abzusagen.</p>
+    <p>3.6 Das Rücktrittsrecht besteht für den Veranstalter jedoch nur, wenn er die zu dem Rücktritt führenden Umstände nachweisen und dem Teilnehmer ein vergleichbares Ersatzangebot unterbreitet hat. Die gezahlte Teilnahmegebühr für das Seminar wird unverzüglich zurückerstattet.</p>
+    <p>3.7 Dem Teilnehmer werden die Seminargebühren bei Absage des Seminars von Seiten des Veranstalters DER REDEWERT zurück erstattet. Für die Stornierungskosten externer Anbieter (Unterkunft, Hotels etc.) übernimmt DER REDEWERT keine Haftung und/oder Ausgleich.</p>
+
+    <h3>4. Vertragsdauer und Vergütung</h3>
+    <p>4.1 Der Vertrag beginnt und endet am spezifisch und individuell vereinbarten Zeitpunkt.</p>
+    <p>4.2 Zahlungsmodalitäten: Die Teilnahmegebühr für die jeweilige Veranstaltung richtet sich nach der aktuellen Preistabelle des Veranstalters zum Zeitpunkt des Vertragsschlusses. Der Teilnehmer kann per PayPal, Überweisung oder Rechnung seiner Zahlungspflicht nachkommen.</p>
+    <p>4.3 Sämtliche Zahlungen sind 14 Tage nach Rechnungsstellung ohne jeden Abzug fällig. Bei Überschreitung der Zahlungstermine steht dem Veranstalter ohne weitere Mahnung ein Anspruch auf Verzugszinsen in Höhe von 2% über dem Referenzzinssatz der Europäischen Zentralbank zu.</p>
+    <p>4.4 Sämtliche Leistungen des Veranstalters verstehen sich exklusive der gesetzlich gültigen Mehrwertsteuer in Höhe von derzeit 19%.</p>
+
+    <h3>5. Leistungsumfang und nicht in Anspruch genommene Leistungen</h3>
+    <p>5.1 Der Leistungsumfang richtet sich nach dem jeweiligen Vertrag zwischen dem Veranstalter und dem Teilnehmer.</p>
+    <p>5.2 Werden einzelne Leistungen durch einen Teilnehmer nicht in Anspruch genommen, so behält sich der Veranstalter vor, dennoch die gesamte Teilnahmegebühr in Rechnung zu stellen.</p>
+
+    <h3>6. Allgemeine Teilnahmebedingungen</h3>
+    <p>6.1 Der Teilnehmer verhält sich vertragswidrig, wenn er ungeachtet einer Abmahnung die Veranstaltung nachhaltig stört, oder wenn er sich in erheblichem Maße entgegen der Guten Sitten verhält. In diesem Fall behält sich der Veranstalter vor, den Teilnehmer von der Veranstaltung auszuschließen.</p>
+    <p>6.2 Der Seminarleiter/Coach/Trainer ist gegenüber den Teilnehmern für die Dauer und im Rahmen der Veranstaltung weisungsbefugt.</p>
+    <p>6.3 Jeder Teilnehmer unterschreibt separat eine Haftungsfreizeichnung bezüglich Personen- und Sachschäden aufgrund der Teilnahme am Seminar/Coaching/Training.</p>
+    <p>6.5 Die Teilnehmer verpflichten sich, nicht unter Einfluss von Alkohol oder sonstigen Betäubungsmitteln zu stehen.</p>
+    <p>6.6 Vor der Veranstaltung muss der Trainer/Coach/Seminarleiter über gesundheitliche Probleme und etwaige Erkrankungen informiert werden.</p>
+    <p>6.9 Veranstaltungen und Seminare sind nie ohne ein Restrisiko. Gegen einen Unfall und Bergung ist jeder Teilnehmer nur im Rahmen seiner eigenen Unfallversicherung versichert.</p>
+
+    <h3>7. Verschwiegenheitspflicht</h3>
+    <p>Der Veranstalter verpflichtet sich, während der Dauer einer Veranstaltung und auch nach deren Beendigung, über alle Betriebs- und Geschäftsgeheimnisse des Teilnehmers/Auftraggebers Stillschweigen zu bewahren.</p>
+
+    <h3>8. Haftung</h3>
+    <p>8.1 Der Veranstalter haftet in Fällen des Vorsatzes oder der groben Fahrlässigkeit nach den gesetzlichen Bestimmungen. Für leichte Fahrlässigkeit haftet der Veranstalter ausschließlich nach den Vorschriften des Produkthaftungsgesetzes, wegen der Verletzung des Lebens, des Körpers oder der Gesundheit oder wegen der Verletzung wesentlicher Vertragspflichten. Der Schadensersatzanspruch für die leicht fahrlässige Verletzung wesentlicher Vertragspflichten ist jedoch auf den vertragstypischen, vorhersehbaren Schaden begrenzt.</p>
+    <p>8.2 Die Regelung des vorstehenden Absatzes (8.1) erstreckt sich auf Schadensersatz neben der Leistung, den Schadensersatz statt der Leistung und den Ersatzanspruch wegen vergeblicher Aufwendungen.</p>
+
+    <h3>9. Sonstige Bestimmungen</h3>
+    <p>Alle Nebenabreden erfordern die Schriftform.</p>
+    <p>Berlin, 1. September 2020<br>
+    <strong>Wibke Scharpenberg</strong></p>
+  </div>
+
+</main>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-left">
+    <p>© 2025 DER REDEWERT</p>
+    <div class="footer-links">
+      <a href="datenschutzerklaerung.html">Datenschutzerklärung</a>
+      <a href="impressum-agb.html">Impressum &amp; AGB</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var btn = document.getElementById('hamburger');
+  var nav = document.getElementById('mainNav');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('open');
+    nav.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+  });
+  nav.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      btn.classList.remove('open');
+      nav.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Philosophie | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:      #8bd0cd;
+      --yellow:    #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid:  #57bbbf;
+      --coral:     #f07070;
+      --navy:      #1e3d5c;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--mint); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: #1a1a1a;
+      text-decoration: none;
+      letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: var(--teal-mid); }
+
+    /* ─── HAMBURGER ───────────────────────────────────────────── */
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px; background: #1a1a1a;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── SLIDESHOW ───────────────────────────────────────────── */
+    .slideshow {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 82px);
+      min-height: 560px;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 60px 120px 80px 15%;
+      opacity: 0;
+      transition: opacity 0.7s ease;
+      pointer-events: none;
+    }
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ─── SLIDE 1 ─── */
+    .slide-1 {
+      background-color: var(--teal-mid);
+      background-image: url('https://static.wixstatic.com/media/1f8d5e3f5aab46f6bd96f6f55c373370.jpg/v1/fill/w_900,h_700,al_c,q_90,usm_0.66_1.00_0.01/1f8d5e3f5aab46f6bd96f6f55c373370.jpg');
+      background-repeat: no-repeat;
+      background-position: 68% center;
+      background-size: auto 75%;
+    }
+
+    .slide-1-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 700px;
+    }
+
+    .slide-1-title {
+      font-family: var(--font-head);
+      font-size: 48px;
+      color: #fff;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 48px;
+      line-height: 1;
+    }
+
+    .slide-1-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .slide-1-dark {
+      font-family: var(--font-head);
+      font-size: 38px;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      line-height: 1.15;
+    }
+
+    .slide-1-coral {
+      font-family: var(--font-head);
+      font-size: 38px;
+      color: var(--coral);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      line-height: 1.15;
+      margin-top: 0;
+      align-self: flex-end;
+    }
+
+    /* ─── SLIDE 2 ─── */
+    .slide-2 {
+      background-color: #8ecfd2;
+      background-image: url('https://static.wixstatic.com/media/454bc6b9a29f46f1810d5c4bd1131339.jpg/v1/fill/w_900,h_960,al_c,q_90,usm_0.66_1.00_0.01/454bc6b9a29f46f1810d5c4bd1131339.jpg');
+      background-repeat: no-repeat;
+      background-position: 70% bottom;
+      background-size: auto 85%;
+    }
+
+    .slide-2-inner {
+      position: relative;
+      z-index: 2;
+      max-width: 580px;
+    }
+
+    .slide-2-text {
+      font-family: var(--font-head);
+      font-size: 40px;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      line-height: 1.2;
+    }
+
+    /* ─── SLIDE CONTROLS ──────────────────────────────────────── */
+    .slide-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 12px;
+      color: rgba(255,255,255,0.7);
+      font-size: 32px;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .slide-arrow:hover { color: #fff; }
+    .slide-arrow.prev { left: 20px; }
+    .slide-arrow.next { right: 20px; }
+
+    .slide-dots {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+    .slide-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: background 0.2s;
+    }
+    .slide-dot.active { background: #fff; }
+
+    /* ─── CONTACT FOOTER ──────────────────────────────────────── */
+    .contact-section {
+      background: var(--yellow);
+      padding: 70px 80px;
+      display: flex;
+      gap: 80px;
+      align-items: flex-start;
+      justify-content: center;
+    }
+
+    .contact-info {
+      flex: 0 0 300px;
+    }
+
+    .contact-heading {
+      font-family: var(--font-head);
+      font-size: 22px;
+      letter-spacing: 0.1em;
+      color: #fff;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .contact-info p {
+      font-family: var(--font-body);
+      font-size: 16px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .contact-info a {
+      color: #1a1a1a;
+      text-decoration: underline;
+    }
+
+    .contact-form {
+      flex: 1;
+      max-width: 500px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 14px 16px;
+      margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.4);
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: #1a1a1a;
+      border-radius: 0;
+      outline: none;
+      display: block;
+    }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: #555; }
+    .contact-form input:focus,
+    .contact-form textarea:focus { background: rgba(255,255,255,0.6); }
+
+    .contact-form textarea {
+      height: 120px;
+      resize: vertical;
+    }
+
+    .contact-form button {
+      background: var(--teal-dark);
+      color: #fff;
+      font-family: var(--font-head);
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: none;
+      padding: 14px 40px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .contact-form button:hover { background: #0e4341; }
+
+    /* ─── FOOTER BAR ──────────────────────────────────────────── */
+    footer {
+      background: var(--mint);
+      padding: 28px 60px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    footer p {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: #1a1a1a;
+    }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: #1a1a1a;
+      text-decoration: none;
+    }
+    .footer-links a:hover { text-decoration: underline; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .slide-1-title  { font-size: 34px; }
+      .slide-1-dark,
+      .slide-1-coral  { font-size: 26px; }
+      .slide-2-text   { font-size: 28px; }
+      .slide { padding: 48px 80px 80px 10%; }
+      .contact-section { flex-direction: column; gap: 48px; padding: 52px 40px; }
+      .contact-info { flex: none; }
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 12px 20px; }
+      .hamburger { display: flex; }
+      nav {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--mint); flex-direction: column; justify-content: center;
+        align-items: center; gap: 32px; z-index: 150;
+      }
+      nav.open { display: flex; }
+      nav a { font-size: 18px; }
+
+      .slideshow { height: 70vh; min-height: 440px; }
+      .slide { padding: 36px 56px 72px 24px; }
+      .slide-1 { background-position: right bottom; background-size: 60% auto; }
+      .slide-2 { background-position: right bottom; background-size: 60% auto; }
+      .slide-1-title  { font-size: 24px; margin-bottom: 28px; }
+      .slide-1-dark,
+      .slide-1-coral  { font-size: 20px; }
+      .slide-2-text   { font-size: 20px; }
+
+      .contact-section { padding: 44px 24px; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif"
+         alt="der-redewert Logo">
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="mainNav">
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+</header>
+
+<!-- ═══ SLIDESHOW ════════════════════════════════════════════════ -->
+<main>
+<section class="slideshow" aria-label="Philosophie Diashow" id="slideshow">
+
+  <!-- SLIDE 1 -->
+  <div class="slide slide-1 active" role="group" aria-label="Folie 1 von 2">
+    <div class="slide-1-inner">
+      <h1 class="slide-1-title">der redewert</h1>
+      <div class="slide-1-body">
+        <span class="slide-1-dark">drückt aus, dass<br>
+        sich etwas lohnt<br>
+        oder dass die</span>
+        <span class="slide-1-coral">beschriebene Person oder Sache<br>
+        es verdient, dass etwas gemacht wird</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2 -->
+  <div class="slide slide-2" role="group" aria-label="Folie 2 von 2">
+    <div class="slide-2-inner">
+      <p class="slide-2-text">Wenn wir<br>
+      uns<br>
+      gedanklich<br>
+      für Neues<br>
+      öffnen,<br>
+      kann<br>
+      Kreativität<br>
+      ihre Kraft<br>
+      entfalten</p>
+    </div>
+  </div>
+
+  <!-- ARROWS -->
+  <button class="slide-arrow prev" aria-label="Vorherige Folie">&#8249;</button>
+  <button class="slide-arrow next" aria-label="Nächste Folie">&#8250;</button>
+
+  <!-- DOTS -->
+  <div class="slide-dots" role="tablist" aria-label="Folien-Navigation">
+    <button class="slide-dot active" role="tab" aria-label="Folie 1" data-index="0"></button>
+    <button class="slide-dot" role="tab" aria-label="Folie 2" data-index="1"></button>
+  </div>
+
+</section>
+</main>
+
+<!-- ═══ KONTAKT ══════════════════════════════════════════════════ -->
+<div id="contact-placeholder"></div>
+<script src="contact-section.js"></script>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════════ -->
+<footer>
+  <p>© 2025 DER REDEWERT</p>
+  <div class="footer-links">
+    <a href="datenschutzerklaerung.html">Datenschutzerklärung</a>
+    <a href="impressum-agb.html">Impressum &amp; AGB</a>
+  </div>
+</footer>
+
+<script>
+(function() {
+  /* ── Hamburger ── */
+  var btn = document.getElementById('hamburger');
+  var nav = document.getElementById('mainNav');
+  if (btn) {
+    btn.addEventListener('click', function() {
+      btn.classList.toggle('open');
+      nav.classList.toggle('open');
+      document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+    });
+    nav.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        btn.classList.remove('open');
+        nav.classList.remove('open');
+        document.body.style.overflow = '';
+      });
+    });
+  }
+
+  /* ── Slideshow ── */
+  var slides = document.querySelectorAll('.slide');
+  var dots   = document.querySelectorAll('.slide-dot');
+  var current = 0;
+  var autoTimer;
+
+  function goTo(index) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = (index + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+  }
+
+  function startAuto() {
+    clearInterval(autoTimer);
+    autoTimer = setInterval(function() { goTo(current + 1); }, 5000);
+  }
+
+  document.querySelector('.slide-arrow.prev').addEventListener('click', function() {
+    goTo(current - 1); startAuto();
+  });
+  document.querySelector('.slide-arrow.next').addEventListener('click', function() {
+    goTo(current + 1); startAuto();
+  });
+  dots.forEach(function(dot) {
+    dot.addEventListener('click', function() {
+      goTo(parseInt(dot.dataset.index)); startAuto();
+    });
+  });
+
+  startAuto();
+})();
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>

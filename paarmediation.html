@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paarmediation | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:      #8bd0cd;
+      --yellow:    #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid:  #57bbbf;
+      --coral:     #f07070;
+      --sage:      #c9ddb8;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body); font-size: 14px;
+      color: #1a1a1a; text-decoration: none; letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: var(--teal-dark); font-weight: 700; }
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span { display: block; width: 24px; height: 2px; background: #1a1a1a; transition: transform 0.3s, opacity 0.3s; }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mobile-nav {
+      display: none; position: fixed; top: 82px; left: 0; right: 0;
+      background: var(--mint); padding: 24px 40px; z-index: 99;
+      flex-direction: column; gap: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a { font-size: 16px; color: #1a1a1a; text-decoration: none; }
+
+    /* ─── HERO ───────────────────────────────────────────────── */
+    .hero {
+      background: var(--yellow);
+      text-align: center;
+      padding: 70px 40px 80px;
+    }
+    .hero-sub {
+      font-family: var(--font-body);
+      font-size: 18px; letter-spacing: 0.25em;
+      color: #fff; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .hero-divider { width: 40px; height: 2px; background: #fff; margin: 0 auto 18px; }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: 60px; color: #fff;
+      letter-spacing: 0.1em; line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .section-line { width: 40px; height: 3px; background: #1a1a1a; margin-bottom: 20px; }
+
+    /* ─── INTRO SECTION ──────────────────────────────────────── */
+    .intro-section {
+      background: var(--teal-mid);
+      padding: 70px 12% 60px;
+    }
+    .section-heading {
+      font-family: var(--font-head);
+      font-size: 28px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 24px;
+    }
+    .intro-section p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+      max-width: 820px; margin-bottom: 16px;
+    }
+
+    /* ─── WANN SECTION ───────────────────────────────────────── */
+    .wann-section {
+      background: var(--teal-mid);
+      padding: 10px 12% 60px;
+    }
+    .wann-heading {
+      font-family: var(--font-head);
+      font-size: 26px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 24px; line-height: 1.3;
+    }
+    .wann-section p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+      max-width: 820px; margin-bottom: 20px;
+    }
+    .cta-btn {
+      display: inline-block;
+      font-family: var(--font-body); font-size: 14px;
+      color: #fff; border: 1px solid #fff;
+      padding: 14px 28px; text-decoration: none; letter-spacing: 0.05em;
+      margin-bottom: 40px;
+      transition: background 0.2s;
+    }
+    .cta-btn:hover { background: rgba(255,255,255,0.2); }
+    .themen-list { list-style: none; max-width: 760px; }
+    .themen-list li {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.8; color: #1a1a1a;
+      padding-left: 24px; position: relative; margin-bottom: 4px;
+    }
+    .themen-list li::before {
+      content: '›'; position: absolute; left: 0;
+      font-size: 18px; color: #1a1a1a;
+    }
+
+    /* ─── TESTIMONIAL ────────────────────────────────────────── */
+    .testimonial-section {
+      background: var(--sage);
+      padding: 70px 12%;
+    }
+    .testimonial-label {
+      font-family: var(--font-head);
+      font-size: 14px; letter-spacing: 0.2em;
+      text-transform: uppercase; color: #555;
+      margin-bottom: 32px;
+    }
+    .testimonial-text {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.85; color: #1a1a1a;
+      max-width: 760px; font-style: italic;
+      margin-bottom: 20px;
+    }
+    .testimonial-author {
+      font-family: var(--font-body);
+      font-size: 14px; letter-spacing: 0.1em;
+      color: #555; font-style: normal;
+    }
+
+    /* ─── KOSTEN ─────────────────────────────────────────────── */
+    .kosten-section {
+      background: #c8a898;
+      padding: 70px 12%;
+    }
+    .kosten-heading {
+      font-family: var(--font-head);
+      font-size: 22px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 20px;
+    }
+    .kosten-main {
+      font-family: var(--font-body);
+      font-size: 17px; font-weight: 700;
+      line-height: 1.6; color: #1a1a1a; margin-bottom: 12px;
+    }
+    .kosten-body {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+      max-width: 720px;
+    }
+
+    /* ─── CONTACT ────────────────────────────────────────────── */
+    .contact-section {
+      background: var(--yellow);
+      padding: 70px 10%;
+      display: flex; gap: 80px; align-items: flex-start;
+    }
+    .contact-info { flex: 0 0 280px; }
+    .contact-heading {
+      font-family: var(--font-head);
+      font-size: 20px; letter-spacing: 0.1em;
+      color: #1a1a1a; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .contact-info p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.7; color: #1a1a1a; margin-bottom: 8px;
+    }
+    .contact-info a { color: #1a1a1a; text-decoration: underline; }
+    .contact-form { flex: 1; max-width: 500px; }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%; padding: 14px 16px; margin-bottom: 14px;
+      border: 1px solid rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.5);
+      font-family: var(--font-body); font-size: 15px;
+      color: #1a1a1a; border-radius: 0; outline: none; display: block;
+    }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: rgba(0,0,0,0.5); }
+    .contact-form input:focus,
+    .contact-form textarea:focus { background: rgba(255,255,255,0.75); }
+    .contact-form textarea { height: 120px; resize: vertical; }
+    .contact-form button {
+      background: var(--teal-dark); color: #fff;
+      font-family: var(--font-head); font-size: 13px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; padding: 16px 36px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .contact-form button:hover { background: #0d3f3d; }
+
+    /* ─── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      background: var(--mint);
+      padding: 16px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; }
+    footer a { color: #1a1a1a; text-decoration: none; margin-left: 20px; font-size: 13px; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      header { padding: 12px 24px; }
+      nav { display: none; }
+      .hamburger { display: flex; }
+      .hero-title { font-size: 38px; }
+      .contact-section { flex-direction: column; gap: 40px; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif" alt="DER REDEWERT Logo">
+  </a>
+  <nav>
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html" class="active">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+<nav class="mobile-nav" id="mobileNav">
+  <a href="index.html">Startseite</a>
+  <a href="coaching.html">Coaching</a>
+  <a href="mediation.html">Mediation</a>
+  <a href="seminare.html">Seminare</a>
+  <a href="ueber-mich.html">Über mich</a>
+  <a href="index.html#kontakt">Kontakt</a>
+</nav>
+
+<section class="hero">
+  <p class="hero-sub">Durch die Krise wieder</p>
+  <div class="hero-divider"></div>
+  <h1 class="hero-title">Zueinander finden</h1>
+</section>
+
+<section class="intro-section">
+  <div class="section-line"></div>
+  <h2 class="section-heading">Paarmediation</h2>
+  <p>Eine Paarmediation bietet die Möglichkeit, eine tragfähige Brücke zwischen den Partnern (wieder) aufzubauen und trotz Krise respektvoll miteinander zu kommunizieren. Ziel ist es, einen sicheren Raum zu schaffen, in dem alle Themen und Hintergründe, Gefühle und Bedürfnisse offen dargelegt werden können, so dass eine gute Lösung für beide Seiten entstehen kann. In dem strukturierten Prozess der Mediation werden den Parteien Kommunikationsstrategien an die Hand gegeben, um einen anderen Umgang mit Konflikten zu leben.</p>
+  <p>Mediation fördert den Kontakt auf Augenhöhe. Durch den tiefen Austausch über den Konflikt und die dahinter liegenden Beweggründe wächst das gegenseitige Verständnis und öffnet den Weg zu einer partnerschaftlichen, nachhaltigen Lösungsfindung. Die überstandene Krise festigt das respektvolle Verhältnis der Parteien.</p>
+  <p>Mediatoren sind – anders als Anwälte – unparteiisch und sorgen für ein ausgewogenes Verhältnis der Konfliktparteien. In der Paarmediation wird kein Recht gesprochen.</p>
+</section>
+
+<section class="wann-section">
+  <div class="section-line"></div>
+  <h2 class="wann-heading">Wann ist Paarmediation sinnvoll?</h2>
+  <p>Kommt es in der Beziehung zu wiederkehrendem Streit entstehen oft tiefe Verletzungen. Die Emotionen sind aufgewühlt, die Muster eingespielt und all das blockiert die Lösungsmöglichkeiten für den Konflikt. Der Blick ist auf die Unterschiedlichkeiten statt auf das Verbindende fixiert.</p>
+  <p>Scheitern die verschiedenen Kommunikationsversuche, ist es an der Zeit, aus dem Konflikt auszusteigen und neue Wege zu gehen. Am besten unter der Anleitung einer professionellen Begleitung, die es schafft, den Raum für Verständnis zu öffnen und den Blick auf die vielseitigen Lösungsmöglichkeiten zu richten. Denn sonst droht die Gefahr, dass die Emotionen einen Tiefpunkt erreichen und die Liebe zum Partner verloren geht.</p>
+  <a href="#kontakt" class="cta-btn">Jetzt kostenloses Kennenlerngespräch vereinbaren</a>
+  <p style="font-weight:700; margin-bottom:16px;">Themen, die häufig in meinen Paarmediationen besprochen werden:</p>
+  <ul class="themen-list">
+    <li>Konflikte eskalieren schnell, der Respekt geht verloren, der Umgangston ist schwierig</li>
+    <li>Die Kommunikation stimmt nicht mehr, es fehlt das Verständnis für den Anderen und das eigene Verstandenfühlen</li>
+    <li>Es gibt unterschiedliche Vorstellungen in den Bereichen: Kinder, Finanzen, Sex, Familienplanung, Zukunftsvisionen</li>
+    <li>Affären oder Gefühle außerhalb der ursprünglichen Paarbeziehung</li>
+    <li>Begleitung durch und Unterstützung für eine „gute" Trennung</li>
+  </ul>
+</section>
+
+<section class="testimonial-section">
+  <p class="testimonial-label">What People Say</p>
+  <p class="testimonial-text">„Weil sich die Konflikte in unserer festgefahrenen Paarbeziehung zusehends gehäuft haben und aus eigener Kraft keine nachhaltigen, friedvollen Lösungen mehr gefunden werden konnten, haben wir einen für uns neuen Versuch gewagt… Wir haben Wibke in unserer Mediation als einen sehr einfühlsamen und ausgleichenden Menschen erlebt. Sie hat eine unglaubliche Gabe, Menschen wahrzunehmen um diese dann mit großer Aufmerksamkeit und Empathie durch den Prozess zu begleiten. Ihre strukturierte und professionelle Arbeitsweise schaffte schnell Vertrauen. Trotz schwieriger Themen konnte Wibke immer wieder eine entspannte Atmosphäre für uns schaffen.</p>
+  <p class="testimonial-text">Nach und nach waren wir wieder in der Lage, Liebe und Verständnis für einander zuzulassen. Schon in der ersten Sitzung konnten wir die ersten Lichtschalter in unserem dunkel gewordenen Beziehungstunnel wieder finden. Wir haben gelernt, aufkommenden Konfliktsituationen gelassener zu begegnen und friedvoller zu lösen. Was vor einigen Wochen noch als undenkbar erschien, wurde wieder für uns möglich. Unsere wöchentlichen ‚Sitzungen' wurden nach einiger Zeit zu einem von uns sehr geschätzten, wohltuenden Ritual. Wir sind Wibke unglaublich dankbar für Ihre Unterstützung, Ihre unendliche Geduld und für diese heilsame Erfahrung."</p>
+  <p class="testimonial-author">— Marta R.</p>
+</section>
+
+<section class="kosten-section">
+  <div class="section-line"></div>
+  <h2 class="kosten-heading">Kosten</h2>
+  <p class="kosten-main">Jeder Termin dauert 90 Minuten. Die Kosten betragen 200,00 Euro inkl. 19 % MwSt.</p>
+  <p class="kosten-body">Jeder Termin wird neu festgelegt und besprochen. Es gibt weder eine Mindestanzahl von Terminen noch Paketbuchungen. Mir ist es sehr wichtig, dass ihr jedes Mal frei entscheidet, ob ihr die Zusammenarbeit für hilfreich einschätzt und weiter mit mir zusammen an euren Lösungen arbeiten möchtet.</p>
+</section>
+
+<div id="contact-placeholder"></div>
+<script src="contact-section.js"></script>
+
+<footer>
+  <p>© 2025 DER REDEWERT</p>
+  <div>
+    <a href="impressum-agb.html">Impressum</a>
+    <a href="datenschutzerklaerung.html">Datenschutz</a>
+  </div>
+</footer>
+
+<script>
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('open');
+    mobileNav.classList.toggle('open');
+  });
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

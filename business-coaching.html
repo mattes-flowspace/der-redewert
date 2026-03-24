@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Coaching | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:      #8bd0cd;
+      --yellow:    #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid:  #57bbbf;
+      --coral:     #f07070;
+      --sage:      #c9ddb8;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body); font-size: 14px;
+      color: #1a1a1a; text-decoration: none; letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: var(--teal-dark); font-weight: 700; }
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span { display: block; width: 24px; height: 2px; background: #1a1a1a; transition: transform 0.3s, opacity 0.3s; }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mobile-nav {
+      display: none; position: fixed; top: 82px; left: 0; right: 0;
+      background: var(--mint); padding: 24px 40px; z-index: 99;
+      flex-direction: column; gap: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a { font-size: 16px; color: #1a1a1a; text-decoration: none; }
+
+    /* ─── HERO ───────────────────────────────────────────────── */
+    .hero {
+      background: var(--teal-mid);
+      text-align: center;
+      padding: 70px 40px 80px;
+    }
+    .hero-sub {
+      font-family: var(--font-body);
+      font-size: 18px; letter-spacing: 0.25em;
+      color: #fff; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .hero-divider { width: 40px; height: 2px; background: #fff; margin: 0 auto 18px; }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: 64px; color: #fff;
+      letter-spacing: 0.12em; line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .section-line { width: 40px; height: 3px; background: #1a1a1a; margin-bottom: 20px; }
+
+    /* ─── CONTENT SECTION (2-col) ────────────────────────────── */
+    .content-section {
+      background: var(--teal-mid);
+      padding: 70px 12% 60px;
+      display: grid; grid-template-columns: 1fr 1.4fr; gap: 60px;
+      align-items: start;
+    }
+    .content-heading {
+      font-family: var(--font-head);
+      font-size: 28px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      line-height: 1.2;
+    }
+    .content-body {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+
+    /* ─── QUOTE SECTION ──────────────────────────────────────── */
+    .quote-section {
+      background: var(--yellow);
+      padding: 80px 12%;
+      display: flex; gap: 60px; align-items: center;
+    }
+    .quote-text-col { flex: 1; }
+    .quote-big {
+      font-family: var(--font-head);
+      font-size: 24px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #1a1a1a;
+      line-height: 1.5; margin-bottom: 0;
+    }
+    .quote-image-col { flex: 0 0 240px; }
+    .quote-image {
+      width: 240px; height: 280px;
+      background-image: url('https://static.wixstatic.com/media/6ea5b4a88f0b4f91945b40499aa0af00.png/v1/fill/w_480,h_560,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/6ea5b4a88f0b4f91945b40499aa0af00.png');
+      background-size: contain; background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    /* ─── KOSTEN SECTION ─────────────────────────────────────── */
+    .kosten-section {
+      background: var(--yellow);
+      padding: 20px 12% 60px;
+    }
+    .kosten-box {
+      border: 1.5px solid #1a1a1a;
+      padding: 36px 48px;
+      max-width: 760px;
+      display: flex; gap: 48px; align-items: flex-start;
+    }
+    .kosten-label-col { flex: 0 0 auto; }
+    .kosten-label {
+      font-family: var(--font-head);
+      font-size: 18px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--teal-dark);
+      border-bottom: 2px solid var(--teal-dark);
+      padding-bottom: 4px; display: block;
+    }
+    .kosten-sublabel {
+      font-family: var(--font-body);
+      font-size: 14px; color: #555; margin-top: 8px;
+    }
+    .kosten-text {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.7; color: #1a1a1a;
+    }
+    .kosten-note {
+      font-family: var(--font-body);
+      font-size: 14px; color: #555; margin-top: 10px;
+    }
+
+    /* ─── CONTACT ────────────────────────────────────────────── */
+    .contact-section {
+      background: var(--yellow);
+      padding: 70px 10%;
+      display: flex; gap: 80px; align-items: flex-start;
+    }
+    .contact-info { flex: 0 0 280px; }
+    .contact-heading {
+      font-family: var(--font-head);
+      font-size: 20px; letter-spacing: 0.1em;
+      color: #1a1a1a; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .contact-info p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.7; color: #1a1a1a; margin-bottom: 8px;
+    }
+    .contact-info a { color: #1a1a1a; text-decoration: underline; }
+    .contact-form { flex: 1; max-width: 500px; }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%; padding: 14px 16px; margin-bottom: 14px;
+      border: 1px solid rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.5);
+      font-family: var(--font-body); font-size: 15px;
+      color: #1a1a1a; border-radius: 0; outline: none; display: block;
+    }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: rgba(0,0,0,0.5); }
+    .contact-form input:focus,
+    .contact-form textarea:focus { background: rgba(255,255,255,0.75); }
+    .contact-form textarea { height: 120px; resize: vertical; }
+    .contact-form button {
+      background: var(--teal-dark); color: #fff;
+      font-family: var(--font-head); font-size: 13px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; padding: 16px 36px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .contact-form button:hover { background: #0d3f3d; }
+
+    /* ─── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      background: var(--mint);
+      padding: 16px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; }
+    footer a { color: #1a1a1a; text-decoration: none; margin-left: 20px; font-size: 13px; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      header { padding: 12px 24px; }
+      nav { display: none; }
+      .hamburger { display: flex; }
+      .hero-title { font-size: 42px; }
+      .content-section { grid-template-columns: 1fr; gap: 32px; }
+      .quote-section { flex-direction: column; }
+      .kosten-box { flex-direction: column; gap: 16px; padding: 24px; }
+      .contact-section { flex-direction: column; gap: 40px; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif" alt="DER REDEWERT Logo">
+  </a>
+  <nav>
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html" class="active">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+<nav class="mobile-nav" id="mobileNav">
+  <a href="index.html">Startseite</a>
+  <a href="coaching.html">Coaching</a>
+  <a href="mediation.html">Mediation</a>
+  <a href="seminare.html">Seminare</a>
+  <a href="ueber-mich.html">Über mich</a>
+  <a href="index.html#kontakt">Kontakt</a>
+</nav>
+
+<section class="hero">
+  <p class="hero-sub">Deine Karriere ist</p>
+  <div class="hero-divider"></div>
+  <h1 class="hero-title">DER REDEWERT</h1>
+</section>
+
+<section class="content-section">
+  <div>
+    <div class="section-line"></div>
+    <h2 class="content-heading">Business<br>Coaching</h2>
+  </div>
+  <div>
+    <p class="content-body">Unterstützt dich bei der Vorbereitung auf neue Aufgaben und Situationen in deinem Berufsleben und der Karriereplanung. Bei der Entwicklung von Sozialkompetenzen und dem Ausbau deiner Kommunikationsfähigkeiten. Im Umgang mit einer neuen Rolle, Verantwortlichkeiten oder strukturellen Veränderungen in der Organisation. Bei Unstimmigkeiten in der Organisationskultur und akuten Konflikten. Auf dem Weg zu einer empathischen und souveränen Führungskraft!</p>
+    <p class="content-body">Coaching kann dich auch im beruflichen Kontext bei persönlichen (Sinn-) Krisen unterstützen, um Bewältigungsstrategien für Stress &amp; Burnout-Prävention zu erarbeiten und bietet einen fundierten Austausch mit einer Unparteiischen.</p>
+  </div>
+</section>
+
+<section class="quote-section">
+  <div class="quote-text-col">
+    <p class="quote-big">Man kann die eigenen Grenzen nur feststellen, indem man sich ihnen bewusst wird und sie überschreitet.</p>
+    <p class="quote-big" style="margin-top:20px;">Das gilt für jene, die wir uns selbst setzen, genauso wie für jene, die Andere uns setzen.</p>
+  </div>
+  <div class="quote-image-col">
+    <div class="quote-image"></div>
+  </div>
+</section>
+
+<section class="kosten-section">
+  <div class="kosten-box">
+    <div class="kosten-label-col">
+      <span class="kosten-label">Kosten</span>
+      <p class="kosten-sublabel">Für Neukunden</p>
+    </div>
+    <div>
+      <p class="kosten-text">Eine Coachingsession dauert 90 Minuten.<br>Diese kostet 170,00 Euro zzgl. 19 % MwSt. für Privatzahlende* und 250,00 Euro zzgl. 19 % MwSt. für Unternehmen.</p>
+    </div>
+  </div>
+</section>
+
+<div id="contact-placeholder"></div>
+<script src="contact-section.js"></script>
+
+<footer>
+  <p>© 2025 DER REDEWERT</p>
+  <div>
+    <a href="impressum-agb.html">Impressum</a>
+    <a href="datenschutzerklaerung.html">Datenschutz</a>
+  </div>
+</footer>
+
+<script>
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('open');
+    mobileNav.classList.toggle('open');
+  });
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

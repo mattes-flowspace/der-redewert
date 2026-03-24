@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kundenstimmen | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:    #8bd0cd;
+      --yellow:  #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid: #57bbbf;
+      --coral:   #f07070;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--coral); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body); font-size: 14px;
+      color: #1a1a1a; text-decoration: none; letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: #8b7a5a; }
+
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px; background: #1a1a1a;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── PAGE HERO ───────────────────────────────────────────── */
+    .page-hero {
+      background: var(--coral);
+      padding: 70px 80px 50px;
+      text-align: center;
+    }
+    .page-hero h1 {
+      font-family: var(--font-head);
+      font-size: 42px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    /* ─── REVIEWS GRID ────────────────────────────────────────── */
+    .reviews-grid {
+      background: var(--coral);
+      padding: 0 60px 80px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .review-card {
+      background: #fff;
+      padding: 36px 30px 30px;
+      position: relative;
+    }
+
+    .review-quote-icon {
+      position: absolute;
+      top: 20px; right: 24px;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .review-quote-icon svg { width: 36px; height: 36px; }
+
+    .review-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.75;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .review-author {
+      font-family: var(--font-body);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--teal-dark);
+      margin-top: 16px;
+    }
+
+    .review-type {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── CONTACT / FOOTER ────────────────────────────────────── */
+    .contact {
+      background: var(--yellow);
+      padding: 70px 80px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      align-items: start;
+    }
+    .contact-info .section-line {
+      width: 40px; height: 3px; background: #1a1a1a; margin-bottom: 20px;
+    }
+    .contact-title {
+      font-family: var(--font-head);
+      font-size: 28px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #1a1a1a; margin-bottom: 20px;
+    }
+    .contact-text {
+      font-family: var(--font-body); font-size: 14px;
+      line-height: 1.75; color: #1a1a1a; margin-bottom: 16px;
+    }
+    .contact-address { font-family: var(--font-body); font-size: 14px; color: #1a1a1a; margin-bottom: 20px; }
+    .social-icons { display: flex; gap: 16px; margin-bottom: 20px; }
+    .social-icons a { color: #1a1a1a; text-decoration: none; font-size: 22px; }
+    .copyright { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; margin-bottom: 12px; }
+    .footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
+    .footer-links a {
+      font-family: var(--font-body); font-size: 12px;
+      color: #1a1a1a; text-decoration: none;
+      background: var(--teal-mid); color: #fff;
+      padding: 6px 14px; border-radius: 20px;
+    }
+    .contact-form { display: flex; flex-direction: column; gap: 10px; }
+    .form-label { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; }
+    .form-input, .form-textarea {
+      width: 100%; border: 1.5px solid #1a1a1a; background: transparent;
+      font-family: var(--font-body); font-size: 13px; color: #1a1a1a;
+      padding: 10px 14px; outline: none;
+    }
+    .form-textarea { min-height: 120px; resize: vertical; }
+    .form-submit {
+      align-self: flex-end; background: #1a1a1a; color: #fff;
+      font-family: var(--font-body); font-size: 13px; letter-spacing: 0.06em;
+      padding: 12px 32px; border: none; cursor: pointer; text-transform: uppercase;
+    }
+    .form-submit:hover { background: var(--teal-dark); }
+    .legal-footer {
+      background: #f0ede5; padding: 8px 60px 16px;
+      font-family: var(--font-body); font-size: 12px;
+    }
+    .legal-footer a { color: #1a1a1a; text-decoration: none; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .reviews-grid { grid-template-columns: repeat(2, 1fr); padding: 0 40px 60px; }
+      .contact { grid-template-columns: 1fr; padding: 60px 40px; gap: 40px; }
+    }
+    @media (max-width: 600px) {
+      header { padding: 12px 20px; }
+      .hamburger { display: flex; }
+      nav {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--mint); flex-direction: column; justify-content: center;
+        align-items: center; gap: 32px; z-index: 150;
+      }
+      nav.open { display: flex; }
+      nav a { font-size: 18px; }
+      .page-hero { padding: 50px 24px 36px; }
+      .page-hero h1 { font-size: 24px; }
+      .reviews-grid { grid-template-columns: 1fr; padding: 0 20px 50px; }
+      .contact { padding: 50px 20px; }
+      .legal-footer { padding: 8px 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif"
+         alt="der-redewert Logo">
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="mainNav">
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html" class="active">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+</header>
+
+<!-- ═══ PAGE HERO ════════════════════════════════════════════════ -->
+<div class="page-hero">
+  <h1>Kundenmeinungen</h1>
+</div>
+
+<!-- ═══ REVIEWS GRID ═════════════════════════════════════════════ -->
+<main class="reviews-grid">
+
+  <!-- Review 1 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Da ich mich in einer beruflichen Schwebeposition und mentalen Blockade befand, in der ich nicht mehr genau meine Interessensbereiche formulieren und mein Arbeitsprofil definieren konnte, habe ich mir das Business Coaching von Wibke zur Hilfe geholt. Die Arbeitsweise von Wibke war dabei unglaublich effektiv. Mit einer wunderbaren Mischung aus Empathie und Professionalität, stellt sie ein Klima her, in dem man sich sofort vertrauensvoll aufgehoben fühlt und zugleich höchst konzentriert arbeiten kann. Das Coaching hat mir umfassend geholfen, meine Gedanken zu sortieren, mir Klarheit zu verschaffen, wo meine wirklichen beruflichen Interessen liegen. Ich bin dankbar, dass Wibke zur richtigen Zeit mit ihren Fähigkeiten am Start war und kann ihr Coaching einfach uneingeschränkt weiterempfehlen.</p>
+    <p class="review-author">J. Röder</p>
+    <p class="review-type">Business Coaching</p>
+  </div>
+
+  <!-- Review 2 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Frau Scharpenberg ist eine sehr freundliche und offene Person – die Teilnehmer waren begeistert von ihrer Empathie und Warmherzigkeit. Ihr Elan und Humor machen das Seminar zu einem spannenden Erlebnis, so dass man ihr am liebsten unendlich lang zuhören würde. Keine Frage bleibt ohne Antwort, Frau Scharpenberg bemüht sich um eine gründliche und vielseitige Beleuchtung. Meine Erwartungen vom Seminar sind übertroffen, ich habe jetzt klare Vorstellung, wie ich das erlernte Material autodidaktisch vertiefen kann und würde jedem diesen Kurs weiterempfehlen.</p>
+    <p class="review-author">L. Gaenko</p>
+    <p class="review-type">Seminar Kommunikation &amp; Konfliktmanagement</p>
+  </div>
+
+  <!-- Review 3 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Liebe Wibke, wenn ich mich nach meinem Wesen bedanken könnte, würden ich dich mit tiefem Herzen umarmen. Ich habe meine gewohnte Welt verlassen, um etwas Neues zu lernen, zu erfahren. Auch wenn ich eine Art Erhalter bin, mit ausgeprägter Neugier, hast du es geschafft mich noch neugieriger zu machen. Dein ganzes Wesen hat mich gefördert, deine Fähigkeit dein Wissen so lebendig zu vermitteln, ist in meinem Leben einzigartig, danke für deine Kompetenz, danke für deine immense Herzensbildung! Du hast die Anker meines Herzens sehr gestärkt. Ich freue mich auf unsere nächste Begegnung.</p>
+    <p class="review-author">Timo S.</p>
+    <p class="review-type">Ausbildung zum Systemischen Coach</p>
+  </div>
+
+  <!-- Review 4 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">In jedem Fall danke ich Dir nochmal ganz herzhaft für Dein sehr aufschlussreiches Coaching – es hat mir sehr geholfen und mir Sicherheit gegeben!</p>
+    <p class="review-author">Jennifer R.</p>
+    <p class="review-type">Coaching</p>
+  </div>
+
+  <!-- Review 5 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Wibkes Elan und Humor machen das Seminar zu einem spannendem Erlebnis, so dass man ihr am liebsten unendlich lang zuhören würde. Keine Frage bleibt ohne Antwort, Wibke bemüht sich um eine gründliche und vielseitige Beleuchtung. Die Teilnehmer waren begeistert von ihrer Empathie und Warmherzigkeit. Meine Erwartungen vom Seminar sind übertroffen, ich habe jetzt klare Vorstellung, wie ich das erlernte Material autodidaktisch vertiefen kann und würde jedem diesen Kurs weiterempfehlen.</p>
+    <p class="review-author">Larissa G.</p>
+    <p class="review-type">Seminar Konfliktmanagement</p>
+  </div>
+
+  <!-- Review 6 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Vielen Dank, Wibke, für diese bereichernden zwei Wochen. Als Modul meiner IMB-Weiterbildung haben mich deine kreativen und professionellen Präsentationen sehr beeindruckt. Du hast das für mich trockene Thema extrem kurzweilig, beneidenswert strukturiert und anschaulich mit stets sympathischer Zugewandtheit vermittelt. Bereichernd war vor allem die dadurch ausgelöste Selbstreflexion und Erkenntnis, dass ich frühere Konflikte mit dem heutigen Wissen sicherlich lösungsorientierter angegangen wäre.</p>
+    <p class="review-author">Sabrina G.</p>
+    <p class="review-type">Kommunikation &amp; Konfliktmanagement</p>
+  </div>
+
+  <!-- Review 7 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">In unserem wachsenden Konflikt half uns glücklicherweise die Mediation mit Wibke Scharpenberg. Über mehrere Monate hinweg hat sie uns einander wieder näher gebracht und uns in die Kunst des miteinander Redens und Zuhörens eingeführt. Sie hat uns liebevoll und aufmerksam begleitet und dabei die für uns richtigen Fragen gestellt. In ihrer neutralen Funktion als Mediatorin ist sie vertrauensvoll und auf Augenhöhe auf uns eingegangen. Ohne die Mediation und die Begleitung von Wibke hätten wir wahrscheinlich kapitulieren müssen und unsere Beziehung hätte keine Zukunft gehabt.</p>
+    <p class="review-author">Katharina &amp; Marcel S.</p>
+    <p class="review-type">Paarmediation</p>
+  </div>
+
+  <!-- Review 8 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Coaching mit Wibke hat mir neue Welten eröffnet. Durch ihre einfühlsame, ruhige und positive Art hat sie mir ermöglicht, Stärken und Ressourcen in mir selber zu entdecken, von denen ich nicht wusste, dass ich sie habe. In unseren Sessions fand ich Inspiration, aber durfte auch gemeinsam konkrete Strategien zur konstruktiven Gesprächsführung erarbeiten, um bestimmte Situationen besser zu meistern und Lösungen zu finden.</p>
+    <p class="review-author">Sibylle M.</p>
+    <p class="review-type">Business-Coaching</p>
+  </div>
+
+  <!-- Review 9 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Es gibt keine Zufälle im Leben. So hat es wunderbar gepasst, dass ich Wibke als Trainerin/Dozentin in einem Seminar über Kommunikation und Konfliktmanagement getroffen habe. Wibke ist nicht nur fachlich unglaublich, sondern auch als Dozentin perfekt. Ihr tiefes und breites Know-how, ihre perfekte Moderation des Kurses, ihre professionelle Gelassenheit – einfach toll! Sie hat mir auch wieder mal gezeigt, dass Kommunikation ein Lebensthema ist. Danke dir ganz doll, liebe Wibke, für meine Erkenntnisse. Auf viele gemeinsame Abenteuer!</p>
+    <p class="review-author">Barbara H.</p>
+    <p class="review-type">Kommunikation &amp; Konfliktmanagement</p>
+  </div>
+
+  <!-- Review 10 -->
+  <div class="review-card">
+    <div class="review-quote-icon">
+      <svg viewBox="0 0 40 40" fill="none"><path d="M8 28c0-6.627 4-12 10-14l1.5 2C16 18 14 21 14 24h4v8H8v-4zm14 0c0-6.627 4-12 10-14l1.5 2C30 18 28 21 28 24h4v8H22v-4z" fill="#57bbbf" opacity="0.5"/></svg>
+    </div>
+    <p class="review-text">Wibke war der Lichtschalter in unserem dunkel gewordenen Beziehungstunnel. Schon in der ersten Sitzung konnten wir die ersten Lichtschalter in unserem dunkel gewordenen Beziehungstunnel wieder finden. Wir haben gelernt, aufkommenden Konfliktsituationen gelassener zu begegnen und friedvoller zu lösen. Was vor einigen Wochen noch als undenkbar erschien, wurde nach wieder für uns möglich. Unsere wöchentlichen „Sitzungen" wurden nach einiger Zeit tatsächlich zu einem von uns sehr geschätzten, wohltuenden Ritual. Wir sind Wibke unglaublich dankbar für ihre Unterstützung, ihre unendliche Geduld und für diese heilsame Erfahrung.</p>
+    <p class="review-author">Steffi &amp; Christian</p>
+    <p class="review-type">Paarmediation</p>
+  </div>
+
+</main>
+
+<!-- ═══ KONTAKT FOOTER ════════════════════════════════════════════ -->
+<section class="contact" id="kontakt">
+  <div class="contact-info">
+    <div class="section-line"></div>
+    <h2 class="contact-title">Kontakt</h2>
+    <p class="contact-text">Ich freue mich auf deinen Kontakt!<br>
+    Melde dich gerne über das nebenstehende Kontaktformular oder direkt über hallo@der-redewert.com</p>
+    <p class="contact-address">10243 Berlin</p>
+    <div class="social-icons">
+      <a href="#" aria-label="LinkedIn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+      <a href="#" aria-label="Xing">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.188 0c-.517 0-.741.325-.927.66 0 0-7.455 13.224-7.702 13.657.015.024 4.919 9.023 4.919 9.023.17.308.436.66.967.66h3.454c.211 0 .375-.078.463-.22.089-.151.089-.346-.009-.536l-4.879-8.916c-.004-.006-.004-.016 0-.022L22.139.756c.095-.191.097-.387.006-.535C22.056.078 21.894 0 21.686 0h-3.498zM3.648 4.74c-.211 0-.385.074-.473.216-.09.149-.078.339.02.531l2.34 4.05c.004.01.004.016 0 .021L1.86 16.051c-.099.188-.093.381 0 .529.085.142.239.234.45.234h3.461c.518 0 .766-.348.945-.667l3.734-6.609-2.378-4.155c-.172-.315-.434-.643-.962-.643H3.648v0z"/></svg>
+      </a>
+    </div>
+    <p class="copyright">© 2025 DER REDEWERT</p>
+    <div class="footer-links">
+      <a href="datenschutzerklaerung.html">Datenschutzerklärung</a>
+      <a href="impressum-agb.html">Impressum &amp; AGB</a>
+    </div>
+  </div>
+
+  <form class="contact-form" name="kontakt-kundenstimmen" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+    <input type="hidden" name="form-name" value="kontakt-kundenstimmen">
+    <input type="hidden" name="bot-field" style="display:none">
+    <label class="form-label">Namen eingeben</label>
+    <input class="form-input" type="text" name="name" placeholder="Name">
+    <label class="form-label">E-Mail-Adresse eingeben *</label>
+    <input class="form-input" type="email" name="email" placeholder="E-Mail-Adresse" required>
+    <label class="form-label">Betreff eingeben</label>
+    <input class="form-input" type="text" name="betreff" placeholder="Betreff">
+    <label class="form-label">Nachricht</label>
+    <textarea class="form-textarea" name="nachricht" placeholder="Nachricht"></textarea>
+    <button class="form-submit" type="submit">Absenden</button>
+  </form>
+</section>
+
+<div class="legal-footer">
+  <a href="#">Do Not Sell My Personal Information</a>
+</div>
+
+<script>
+(function() {
+  var btn = document.getElementById('hamburger');
+  var nav = document.getElementById('mainNav');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('open');
+    nav.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+  });
+  nav.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      btn.classList.remove('open');
+      nav.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>

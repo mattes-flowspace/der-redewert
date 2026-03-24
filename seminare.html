@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seminare | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:      #8bd0cd;
+      --yellow:    #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid:  #57bbbf;
+      --coral:     #f07070;
+      --sage:      #c9ddb8;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body); font-size: 14px;
+      color: #1a1a1a; text-decoration: none; letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: var(--teal-mid); }
+
+    /* ─── HAMBURGER ───────────────────────────────────────────── */
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px; background: #1a1a1a;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── HERO ───────────────────────────────────────────────── */
+    .hero {
+      background: var(--teal-mid);
+      text-align: center;
+      padding: 60px 40px 70px;
+      position: relative;
+      overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 331px;
+    }
+    .hero-inner { position: relative; z-index: 2; }
+    .hero-sub {
+      font-family: var(--font-body);
+      font-size: 18px; letter-spacing: 0.25em;
+      color: #fff; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .hero-divider {
+      width: 40px; height: 2px; background: #fff;
+      margin: 0 auto 18px;
+    }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: 49px; color: #fff;
+      letter-spacing: 0.08em; line-height: 1.05;
+      text-transform: uppercase;
+    }
+    .hero-figure {
+      position: absolute; bottom: 0; height: 90%; z-index: 1;
+    }
+    .hero-figure-left { left: 0; }
+    .hero-figure-right { right: 0; }
+
+    /* ─── WORKSHOP SECTION ───────────────────────────────────── */
+    .workshop-section {
+      background: var(--mint);
+      padding: 60px 8% 60px;
+    }
+    .workshop-inner {
+      border: 1.5px solid #1a1a1a;
+      padding: 52px 56px 48px;
+      max-width: 900px;
+    }
+    .workshop-title {
+      font-family: var(--font-head);
+      font-size: 36px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #1a1a1a;
+      line-height: 1.15; margin-bottom: 28px;
+    }
+    .workshop-body {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.75; color: #1a1a1a;
+      margin-bottom: 14px;
+    }
+    .workshop-meta-heading {
+      font-family: var(--font-head);
+      font-size: 16px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin: 28px 0 12px;
+    }
+    .workshop-meta {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+    }
+
+    /* ─── WHAT PEOPLE SAY ────────────────────────────────────── */
+    .testimonials-section {
+      background: rgb(255, 97, 97);
+      padding: 60px 8% 70px;
+    }
+    .testimonials-heading {
+      font-family: var(--font-head);
+      font-size: 42px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #fff;
+      margin-bottom: 48px;
+    }
+    .testimonial-text {
+      font-family: var(--font-body);
+      font-size: 18px; line-height: 1.75; color: #fff;
+      max-width: 820px; margin-bottom: 16px;
+    }
+    .testimonial-author {
+      font-family: var(--font-body);
+      font-size: 16px; color: rgba(255,255,255,0.75);
+      margin-bottom: 40px;
+    }
+
+    /* ─── CONTACT ────────────────────────────────────────────── */
+    .contact-section {
+      background: var(--coral);
+      padding: 70px 10%;
+      display: flex; gap: 80px; align-items: flex-start;
+    }
+    .contact-info { flex: 0 0 280px; }
+    .contact-heading {
+      font-family: var(--font-head);
+      font-size: 20px; letter-spacing: 0.1em;
+      color: #fff; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .contact-info p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.7; color: #fff;
+      margin-bottom: 8px;
+    }
+    .contact-info a { color: #fff; text-decoration: underline; }
+    .contact-form { flex: 1; max-width: 500px; }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%; padding: 14px 16px; margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,0.6);
+      background: rgba(255,255,255,0.3);
+      font-family: var(--font-body); font-size: 15px;
+      color: #fff; border-radius: 0; outline: none; display: block;
+    }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: rgba(255,255,255,0.75); }
+    .contact-form input:focus,
+    .contact-form textarea:focus { background: rgba(255,255,255,0.45); }
+    .contact-form textarea { height: 120px; resize: vertical; }
+    .contact-form button {
+      background: var(--teal-dark); color: #fff;
+      font-family: var(--font-head); font-size: 13px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; padding: 14px 40px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .contact-form button:hover { background: #0e4341; }
+
+    /* ─── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      background: var(--mint); padding: 28px 60px 20px;
+      display: flex; flex-wrap: wrap;
+      justify-content: space-between; align-items: center; gap: 16px;
+    }
+    footer p { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-family: var(--font-body); font-size: 12px;
+      color: #1a1a1a; text-decoration: none;
+    }
+    .footer-links a:hover { text-decoration: underline; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .hero-title { font-size: 44px; }
+      .seminar-card { padding: 40px 36px; }
+      .card-title { font-size: 28px; }
+      .contact-section { flex-direction: column; gap: 48px; padding: 52px 8%; }
+      .contact-info { flex: none; }
+    }
+    @media (max-width: 600px) {
+      header { padding: 12px 20px; }
+      .hamburger { display: flex; }
+      nav {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--mint); flex-direction: column; justify-content: center;
+        align-items: center; gap: 32px; z-index: 150;
+      }
+      nav.open { display: flex; }
+      nav a { font-size: 18px; }
+      .hero-title { font-size: 28px; }
+      .hero-sub { font-size: 13px; }
+      .intro-section { padding: 52px 6% 40px; }
+      .cards-area { padding: 16px 4% 60px; }
+      .seminar-card { padding: 32px 24px; border-radius: 16px; }
+      .card-title { font-size: 22px; }
+      .contact-section { padding: 44px 6%; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif"
+         alt="der-redewert Logo">
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="mainNav">
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html" class="active">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+</header>
+
+<!-- ═══ HERO ═════════════════════════════════════════════════════ -->
+<div class="hero">
+  <p class="hero-sub">Man kann nicht</p>
+  <div class="hero-divider"></div>
+  <h1 class="hero-title">Nicht kommunizieren</h1>
+</div>
+
+<!-- ═══ INTRO ════════════════════════════════════════════════════ -->
+<section class="intro-section">
+  <div class="section-line"></div>
+  <h2 class="intro-heading">Softskills</h2>
+  <p class="intro-body">Sobald wir Menschen miteinander in den Kontakt treten, ob physisch oder digital, aktivieren wir verschiedene Kommunikationskanäle. Ein konstruktives Miteinander ist auf vielfältige Weise möglich – jedoch sind diese Kanäle störungsanfällig und der Raum für Missverständnisse und Konflikte groß.</p>
+  <p class="intro-body">Diesen Spielraum der Kommunikation gilt es zu erkunden: Durch das Erwerben von Schlüssenqualifikationen, auch SoftSkills genannt. SoftSkills sind Selbststeuerungskompetenzen. Sie sind entscheidend für eine gelungene Kommunikation, unsere Leistungsfähigkeit und unser Wohlbefinden. Ebenso für die Bewältigung von Herausforderungen im täglichen Miteinander und dem Erhalt der psychischen Gesundheit.</p>
+  <p class="intro-body">Ein ganz wichtiger Anteil der Selbststeuerungskompetenzen ist die Stärkung der eigenen Wahrnehmung. Wir trainieren diese gezielt und entwickeln Strategien, um durch Reflexion das eigene Verhalten stimmig zu verändern. Kommunikation ist im heutigen Berufsleben eine absolute Schlüsselqualifikation.</p>
+  <p class="intro-body">Das Ziel beim Erlernen von SoftSkills ist es, Klarheit in der Kommunikation und in der Beziehung zu schaffen. So dass ein konstruktives Miteinander möglich ist. Konstruktive zwischenmenschliche Kommunikation ist für den persönlichen Erfolg und die innere Balance genauso entscheidend wie für den Erfolg eines Teams und Projekts.</p>
+  <p class="intro-body"><strong>Neugierig geworden?</strong> In meinen Seminaren schauen wir uns gezielt die Hürden der Kommunikation an und wie wir einen lösungsorientierten, praktischen Weg gehen, um das Miteinander positiv zu gestalten. Alles was es braucht, ist die Neugier und die Bereitschaft, sich das eigene Gesprächs- und Konfliktverhalten näher anzuschauen und die Lust auf persönliche Weiterentwicklung.</p>
+</section>
+
+<!-- ═══ SEMINAR CARDS ══════════════════════════════════════════════ -->
+<div class="cards-area">
+
+  <!-- CARD 1: KONSTRUKTIVE GESPRÄCHSFÜHRUNG -->
+  <div class="seminar-card">
+    <h2 class="card-title">Konstruktive<br>Gesprächsführung</h2>
+    <div class="card-divider"></div>
+    <p class="card-body">Wie funktioniert Kommunikation? Ein Seminar, das die Theorie mit der Praxis verbindet, Lust macht auf zwischenmenschliche Kommunikation und persönliche Weiterentwicklung. Wir entdecken gemeinsam verschiedene Modelle der Kommunikationspsychologie und verbinden diese mit praktischen Beispielen und eigenen Anliegen. Ich bin begeisterte Kommunikatorin und diese Begeisterung spiegelt sich in meinen Trainings wieder.</p>
+    <p class="card-inhalte">Inhalte</p>
+    <ul class="card-list">
+      <li>Was ist Kommunikation?</li>
+      <li>Kommunikationsmodelle</li>
+      <li>Die Hürden der Kommunikation</li>
+      <li>Gefühle und Bedürfnisse</li>
+      <li>Aktives Zuhören</li>
+      <li>Lösungsorientierte Gesprächsführung</li>
+      <li>Gespräche durch Systemische Fragen leiten</li>
+      <li>Moderationstechniken</li>
+    </ul>
+  </div>
+
+  <!-- CARD 2: WILLST DU STRESS -->
+  <div class="seminar-card">
+    <h2 class="card-title">Willst du Stress,<br>oder was?<br>Anderes?</h2>
+    <div class="card-divider"></div>
+    <p class="card-subtitle">Endlich konfliktfähig! Wie wir es schaffen in schwierigen Gesprächen souverän zu bleiben, Klarheit in Konflikte zu bringen und mit dem Konfliktpartner eine kooperative Lösungsstrategie zu finden.</p>
+    <p class="card-body">Konflikte sind normaler Bestandteil menschlichen Zusammenlebens. Sofern sie konstruktiv ausgetragen werden, können sie zu positiven Entwicklungen und Veränderungen führen. Werden sie unfair ausgetragen oder bleiben sie unerkannt und werden ignoriert, entwickeln Konflikte schnell eine eigene Dynamik und haben die Tendenz zu eskalieren.</p>
+    <p class="card-body">Neben der Vermittlung von theoretischem Wissen zur Konfliktanalyse, Beratungstechniken und Konfliktkompetenzen, runden Übungen an praktischen Beispielen aus dem Alltag das Seminar ab.</p>
+    <p class="card-inhalte">Inhalte</p>
+    <ul class="card-list">
+      <li>Konfliktarten – und ihre Beweggründe</li>
+      <li>Die unterschiedlichen Konfliktstile</li>
+      <li>Konfliktdynamiken und ihre Ursachen</li>
+      <li>Konfliktanalyse mit dem Inneren Team</li>
+      <li>Mediation – der konstruktive Weg zur Konfliktlösung</li>
+      <li>Moderations– und Kommunikationstechniken in Beratungsgesprächen</li>
+    </ul>
+  </div>
+
+  <!-- CARD 3: NIE WIEDER SPRACHLOS -->
+  <div class="seminar-card">
+    <h2 class="card-title">Nie wieder<br>sprachlos!</h2>
+    <div class="card-divider"></div>
+    <p class="card-subtitle">Schlagfertig, souverän und kreativ kontern – Wie wir in schwierigen Gesprächssituationen unsere Souveränität bewahren!</p>
+    <p class="card-body">Das kennt jeder: Die rüde Bemerkung eines/r Kollegen/in, unberechtigte Kritik und unfaire Angriffe am Arbeitsplatz. Genau in diesem Moment fällt uns kein genialer Konter ein. Wir sind verunsichert und vor den Kopf gestoßen. Erst im Aufzug kommt uns die passende Antwort in den Sinn und dann ist es zu spät.</p>
+    <p class="card-body">Schlagfertigkeit ist eine Kunst, bei der es gilt, schnell und clever auf eine Bemerkung oder Frage zu reagieren. Die beleidigte Retourkutsche ist nicht sinnvoll: Taktlosigkeit mit Taktlosigkeit zu beantworten ist nicht gewinnbringend! Wirkungsvoller ist es geistvoll, humorvoll und kreativ zu kontern und das Gegenüber damit zu überraschen.</p>
+    <p class="card-body">Im Seminar erlernen Sie die Kunst der eleganten Schlagfertigkeit und erfahren, dass es sich nicht nur um Techniken handelt, sondern um eine Geisteshaltung. Sie erhalten neue Denkanstöße und lernen in schwierigen Gesprächssituationen überzeugend und selbstsicher zu reagieren.</p>
+  </div>
+
+  <!-- CARD 4: RHETORIK -->
+  <div class="seminar-card">
+    <h2 class="card-title">Rhetorik –<br>Die Kunst des<br>freien Sprechens</h2>
+    <div class="card-divider"></div>
+    <p class="card-body">Das Seminar vermittelt grundlegendes rhetorisches Handwerkszeug. Du wirst in zielgerichteter und erfolgreicher Rhetorik sowie im Aufbau einer wirkungsvollen Rede geschult. Präsentationen werden dir nach diesem Seminar leichter fallen und du wirst souveräner vor anderen Menschen sprechen.</p>
+    <p class="card-body">Wir üben den Einsatz und die Wirkung von Körpersprache und selbstbewusstem Auftreten, die Überwindung von Lampenfieber und den souveränen Umgang mit möglichen Störungen. Wir trainieren die sprachliche und körpersprachliche Ausdrucksfähigkeit anhand einer Vielzahl praktischer Beispiele und Übungen. Gemeinsame kollegiale Auswertung mit Videoanalysen sowie individuelles Coaching sorgen für neue Erkenntnisse über das eigene Auftreten und garantieren den Lernerfolg.</p>
+    <p class="card-inhalte">Inhalte</p>
+    <ul class="card-list">
+      <li>Grundlagen der Kommunikation</li>
+      <li>Aufbau einer Rede – keine Rede ohne Struktur</li>
+      <li>Wie formuliere ich zündend, überzeugend und verständlich?</li>
+      <li>Professionelle Vorbereitung – Ziele und Zuhörer</li>
+      <li>Wie setze ich Sprache und Körpersprache zielgerichtet ein?</li>
+      <li>Umgang mit Lampenfieber</li>
+      <li>Schwierige Redesituationen gekonnt meistern</li>
+    </ul>
+  </div>
+
+</div>
+
+<!-- ═══ KONTAKT ════════════════════════════════════════════════════ -->
+<div id="contact-placeholder"></div>
+<script src="contact-section.js"></script>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════════ -->
+<footer>
+  <p>© 2025 DER REDEWERT</p>
+  <div class="footer-links">
+    <a href="datenschutzerklaerung.html">Datenschutzerklärung</a>
+    <a href="impressum-agb.html">Impressum &amp; AGB</a>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var btn = document.getElementById('hamburger');
+  var nav = document.getElementById('mainNav');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('open');
+    nav.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+  });
+  nav.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      btn.classList.remove('open');
+      nav.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

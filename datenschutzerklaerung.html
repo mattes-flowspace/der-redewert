@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Datenschutzerklärung | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:    #8bd0cd;
+      --yellow:  #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid: #57bbbf;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: #f5f3ee; color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body); font-size: 14px;
+      color: #1a1a1a; text-decoration: none; letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px; background: #1a1a1a;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── PAGE TITLE ──────────────────────────────────────────── */
+    .page-hero {
+      background: var(--teal-dark);
+      padding: 60px 80px 50px;
+    }
+    .page-hero h1 {
+      font-family: var(--font-head);
+      font-size: 30px;
+      color: #fff;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ─── CONTENT ─────────────────────────────────────────────── */
+    .page-content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 60px 40px 80px;
+    }
+
+    .content-section { margin-bottom: 40px; }
+
+    .content-section h2 {
+      font-family: var(--font-head);
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--teal-dark);
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--teal-mid);
+    }
+
+    .content-section h3 {
+      font-family: var(--font-body);
+      font-size: 14px; font-weight: 700;
+      color: #1a1a1a;
+      margin: 16px 0 6px;
+    }
+
+    .content-section p {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.7;
+      color: #333; margin-bottom: 10px;
+    }
+
+    .content-section ul {
+      font-family: var(--font-body);
+      font-size: 14px; line-height: 1.7;
+      color: #333; padding-left: 24px; margin-bottom: 10px;
+    }
+
+    .content-section a { color: var(--teal-dark); text-decoration: underline; }
+
+    /* ─── FOOTER ──────────────────────────────────────────────── */
+    footer {
+      background: var(--mint);
+      padding: 40px 60px 20px;
+      display: flex; flex-wrap: wrap;
+      justify-content: space-between; align-items: flex-start; gap: 20px;
+    }
+    .footer-left p { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; margin-bottom: 8px; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-family: var(--font-body); font-size: 12px; color: #1a1a1a; text-decoration: none; }
+    .footer-links a:hover { text-decoration: underline; }
+
+    @media (max-width: 600px) {
+      header { padding: 12px 20px; }
+      .hamburger { display: flex; }
+      nav {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--mint); flex-direction: column; justify-content: center;
+        align-items: center; gap: 32px; z-index: 150;
+      }
+      nav.open { display: flex; }
+      nav a { font-size: 18px; }
+      .page-hero { padding: 44px 24px 36px; }
+      .page-hero h1 { font-size: 18px; }
+      .page-content { padding: 40px 20px 60px; }
+      footer { padding: 32px 20px 16px; flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif"
+         alt="der-redewert Logo">
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="mainNav">
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+</header>
+
+<!-- ═══ PAGE HERO ════════════════════════════════════════════════ -->
+<div class="page-hero">
+  <h1>Datenschutzerklärung</h1>
+</div>
+
+<!-- ═══ CONTENT ══════════════════════════════════════════════════ -->
+<main class="page-content">
+
+  <div class="content-section">
+    <p>Wir freuen uns sehr über Ihr Interesse an unserem Unternehmen. Datenschutz hat einen besonders hohen Stellenwert für die Geschäftsleitung von DER REDEWERT. Eine Nutzung der Internetseiten der DER REDEWERT ist grundsätzlich ohne jede Angabe personenbezogener Daten möglich. Sofern eine betroffene Person besondere Services unseres Unternehmens über unsere Internetseite in Anspruch nehmen möchte, könnte jedoch eine Verarbeitung personenbezogener Daten erforderlich werden. Ist die Verarbeitung personenbezogener Daten erforderlich und besteht für eine solche Verarbeitung keine gesetzliche Grundlage, holen wir generell eine Einwilligung der betroffenen Person ein.</p>
+    <p>Die Verarbeitung personenbezogener Daten erfolgt stets im Einklang mit der Datenschutz-Grundverordnung und in Übereinstimmung mit den für die DER REDEWERT geltenden landesspezifischen Datenschutzbestimmungen. Mittels dieser Datenschutzerklärung möchte unser Unternehmen die Öffentlichkeit über Art, Umfang und Zweck der von uns erhobenen, genutzten und verarbeiteten personenbezogenen Daten informieren.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>1. Begriffsbestimmungen</h2>
+    <p>Die Datenschutzerklärung der DER REDEWERT beruht auf den Begrifflichkeiten, die durch den Europäischen Richtlinien- und Verordnungsgeber beim Erlass der Datenschutz-Grundverordnung (DS-GVO) verwendet wurden. Unsere Datenschutzerklärung soll sowohl für die Öffentlichkeit als auch für unsere Kunden und Geschäftspartner einfach lesbar und verständlich sein.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>2. Name und Anschrift des Verantwortlichen</h2>
+    <p>Verantwortlicher im Sinne der Datenschutz-Grundverordnung, sonstiger in den Mitgliedstaaten der Europäischen Union geltenden Datenschutzgesetze und anderer Bestimmungen mit datenschutzrechtlichem Charakter ist:</p>
+    <p><strong>Wibke Scharpenberg – DER REDEWERT</strong><br>
+    Kopernikusstraße 3<br>
+    10243 Berlin<br>
+    Deutschland<br>
+    E-Mail: <a href="mailto:hallo@der-redewert.com">hallo@der-redewert.com</a><br>
+    Website: <a href="https://www.der-redewert.com" target="_blank" rel="noopener">www.der-redewert.com</a></p>
+  </div>
+
+  <div class="content-section">
+    <h2>3. Cookies</h2>
+    <p>Die Internetseiten der DER REDEWERT verwenden Cookies. Cookies sind Textdateien, welche über einen Internetbrowser auf einem Computersystem abgelegt und gespeichert werden.</p>
+    <p>Durch den Einsatz von Cookies kann die DER REDEWERT den Nutzern dieser Internetseite nutzerfreundlichere Services bereitstellen, die ohne die Cookie-Setzung nicht möglich wären. Die betroffene Person kann die Setzung von Cookies durch unsere Internetseite jederzeit mittels einer entsprechenden Einstellung des genutzten Internetbrowsers verhindern und damit der Setzung von Cookies dauerhaft widersprechen.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>4. Erfassung allgemeiner Daten und Informationen</h2>
+    <p>Die Internetseite der DER REDEWERT erfasst mit jedem Aufruf der Internetseite durch eine betroffene Person oder ein automatisiertes System eine Reihe von allgemeinen Daten und Informationen. Diese allgemeinen Daten und Informationen werden in den Logfiles des Servers gespeichert. Erfasst werden können die verwendeten Browsertypen und Versionen, das vom zugreifenden System verwendete Betriebssystem, die Internetseite, von welcher ein zugreifendes System auf unsere Internetseite gelangt (sogenannte Referrer), sowie Datum und Uhrzeit eines Zugriffs auf die Internetseite.</p>
+    <p>Bei der Nutzung dieser allgemeinen Daten und Informationen zieht die DER REDEWERT keine Rückschlüsse auf die betroffene Person. Diese Informationen werden vielmehr benötigt, um die Inhalte unserer Internetseite korrekt auszuliefern, die Strafverfolgungsbehörden im Falle eines Cyberangriffes mit den zur Strafverfolgung notwendigen Informationen auszustatten sowie um Angreifern im Falle von Cyberangriffen Informationen bereitzustellen, die zur Rechtsdurchsetzung erforderlich sind.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>5. Kontaktmöglichkeit über die Internetseite</h2>
+    <p>Die Internetseite der DER REDEWERT enthält aufgrund von gesetzlichen Vorschriften Angaben, die eine schnelle elektronische Kontaktaufnahme zu unserem Unternehmen sowie eine unmittelbare Kommunikation mit uns ermöglichen, was ebenfalls eine allgemeine Adresse der sogenannten elektronischen Post (E-Mail-Adresse) umfasst. Sofern eine betroffene Person per E-Mail oder über ein Kontaktformular den Kontakt mit dem für die Verarbeitung Verantwortlichen aufnimmt, werden die von der betroffenen Person übermittelten personenbezogenen Daten automatisch gespeichert. Solche auf freiwilliger Basis von einer betroffenen Person an den für die Verarbeitung Verantwortlichen übermittelten personenbezogenen Daten werden für Zwecke der Bearbeitung oder der Kontaktaufnahme zur betroffenen Person gespeichert.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>9. Rechte der betroffenen Person</h2>
+    <h3>a) Recht auf Bestätigung</h3>
+    <p>Jede betroffene Person hat das vom Europäischen Richtlinien- und Verordnungsgeber eingeräumte Recht, von dem für die Verarbeitung Verantwortlichen eine Bestätigung darüber zu verlangen, ob sie betreffende personenbezogene Daten verarbeitet werden.</p>
+
+    <h3>b) Recht auf Auskunft</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, jederzeit von dem für die Verarbeitung Verantwortlichen unentgeltliche Auskunft über die zu seiner Person gespeicherten personenbezogenen Daten und eine Kopie dieser Auskunft zu erhalten.</p>
+
+    <h3>c) Recht auf Berichtigung</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, die unverzügliche Berichtigung sie betreffender unrichtiger personenbezogener Daten zu verlangen.</p>
+
+    <h3>d) Recht auf Löschung</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, von dem Verantwortlichen zu verlangen, dass die sie betreffenden personenbezogenen Daten unverzüglich gelöscht werden, sofern einer der gesetzlich vorgesehenen Gründe zutrifft und die Verarbeitung nicht erforderlich ist.</p>
+
+    <h3>e) Recht auf Einschränkung der Verarbeitung</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, von dem Verantwortlichen die Einschränkung der Verarbeitung zu verlangen.</p>
+
+    <h3>f) Recht auf Datenübertragbarkeit</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, die sie betreffenden personenbezogenen Daten in einem strukturierten, gängigen und maschinenlesbaren Format zu erhalten.</p>
+
+    <h3>g) Recht auf Widerspruch</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, aus Gründen, die sich aus ihrer besonderen Situation ergeben, jederzeit gegen die Verarbeitung sie betreffender personenbezogener Daten Widerspruch einzulegen.</p>
+
+    <h3>h) Automatisierte Entscheidungen</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, nicht einer ausschließlich auf einer automatisierten Verarbeitung — einschließlich Profiling — beruhenden Entscheidung unterworfen zu werden.</p>
+
+    <h3>i) Recht auf Widerruf einer datenschutzrechtlichen Einwilligung</h3>
+    <p>Jede von der Verarbeitung personenbezogener Daten betroffene Person hat das Recht, eine Einwilligung zur Verarbeitung personenbezogener Daten jederzeit zu widerrufen.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>16. Rechtsgrundlage der Verarbeitung</h2>
+    <p>Art. 6 I lit. a DS-GVO dient unserem Unternehmen als Rechtsgrundlage für Verarbeitungsvorgänge, bei denen wir eine Einwilligung für einen bestimmten Verarbeitungszweck einholen. Ist die Verarbeitung personenbezogener Daten zur Erfüllung eines Vertrags, dessen Vertragspartei die betroffene Person ist, erforderlich, wie dies beispielsweise bei Verarbeitungsvorgängen der Fall ist, die für eine Lieferung von Waren oder die Erbringung einer sonstigen Leistung oder Gegenleistung notwendig sind, so beruht die Verarbeitung auf Art. 6 I lit. b DS-GVO.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>20. Automatisierte Entscheidungsfindung</h2>
+    <p>Als verantwortungsbewusstes Unternehmen verzichten wir auf eine automatische Entscheidungsfindung oder ein Profiling.</p>
+    <p>Diese Datenschutzerklärung wurde durch den Datenschutzerklärungs-Generator der DGD Deutsche Gesellschaft für Datenschutz GmbH, die als <a href="https://dg-datenschutz.de/datenschutz-dienstleistungen/externer-datenschutzbeauftragter/" target="_blank" rel="noopener">Externer Datenschutzbeauftragter München</a> tätig ist, in Kooperation mit dem <a href="https://www.wbs-law.de/it-recht/datenschutzrecht/" target="_blank" rel="noopener">Datenschutzrecht Anwalt Christian Solmecke</a> erstellt.</p>
+  </div>
+
+</main>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-left">
+    <p>© 2025 DER REDEWERT</p>
+    <div class="footer-links">
+      <a href="datenschutzerklaerung.html">Datenschutzerklärung</a>
+      <a href="impressum-agb.html">Impressum &amp; AGB</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var btn = document.getElementById('hamburger');
+  var nav = document.getElementById('mainNav');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('open');
+    nav.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+  });
+  nav.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      btn.classList.remove('open');
+      nav.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+</script>
+
+</body>
+</html>

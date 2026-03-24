@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Startseite | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal;
+      font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal;
+      font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'playfairdisplay-bold';
+      font-style: normal;
+      font-weight: 700;
+      src: url('https://static.parastorage.com/tag-bundler/api/v1/fonts-cache/googlefont/woff2/s/playfairdisplay/v13/n7G4PqJvFP2Kubl0VBLDEA9QP145tN5qB9RQEnC5ftI.woff2') format('woff2');
+    }
+    @font-face {
+      font-family: 'montserrat';
+      font-style: normal;
+      font-weight: 400;
+      src: url('https://static.parastorage.com/tag-bundler/api/v1/fonts-cache/googlefont/woff2/s/montserrat/v14/JTUPjIg1_i6t8kCHKm459WxZcgvz_PZwjimrqw.woff2') format('woff2');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:    #8bd0cd;
+      --yellow:  #dec328;
+      --teal-dark: #155e5b;
+      --pink:    #d391bc;
+      --cream:   #e9db89;
+      --navy:    #494f69;
+      --teal-mid: #57bbbf;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); background: var(--mint); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: #1a1a1a;
+      text-decoration: none;
+      letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: #8b7a5a; }
+
+    /* ─── HERO ───────────────────────────────────────────────── */
+    .hero {
+      background: var(--yellow);
+      text-align: center;
+      padding: 60px 40px 70px;
+    }
+    .hero-sub {
+      font-family: 'montserrat', sans-serif;
+      font-size: 27px;
+      letter-spacing: 2.7px;
+      color: #1a1a1a;
+      text-transform: uppercase;
+    }
+    .hero-divider {
+      width: 40px; height: 2px;
+      background: #fff;
+      margin: 14px auto 20px;
+    }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: 90px;
+      font-weight: 400;
+      color: #fff;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    /* ─── INTRO TEXT ─────────────────────────────────────────── */
+    .intro {
+      background: var(--mint);
+      padding: 60px 60px 40px;
+    }
+    .section-line {
+      width: 40px; height: 3px;
+      background: #1a1a1a;
+      margin-bottom: 28px;
+    }
+    .intro-text {
+      font-family: var(--font-head);
+      font-size: 41px;
+      line-height: 49.2px;
+      color: #1a1a1a;
+      max-width: 760px;
+      letter-spacing: normal;
+      font-weight: 400;
+      text-transform: none;
+    }
+
+    /* ─── VIDEO / DEIN ZIEL ──────────────────────────────────── */
+    .video-section {
+      background: var(--teal-dark);
+      padding: 0;
+      position: relative;
+      overflow: hidden;
+      min-height: 420px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .video-overlay-text {
+      font-family: var(--font-head);
+      font-size: 72px;
+      color: var(--yellow);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      position: absolute;
+      z-index: 2;
+      text-align: center;
+      pointer-events: none;
+    }
+    .video-player {
+      width: 90%; max-width: 1240px;
+      position: relative;
+      background: #000;
+    }
+    .video-player video {
+      width: 100%; height: auto;
+      display: block;
+    }
+    .play-btn {
+      width: 56px; height: 56px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    .play-btn::after {
+      content: '';
+      border-style: solid;
+      border-width: 8px 0 8px 16px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 4px;
+    }
+
+    /* ─── ÜBER MICH ──────────────────────────────────────────── */
+    .about {
+      background: var(--mint);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 580px;
+    }
+    .about-text {
+      padding: 70px 60px 60px;
+    }
+    .about-text .section-line { margin-bottom: 24px; }
+    .about-title {
+      font-family: var(--font-head);
+      font-size: 36px;
+      letter-spacing: 0.08em;
+      color: #1a1a1a;
+      text-transform: uppercase;
+    }
+    .about-subtitle {
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: normal;
+      margin: 10px 0 24px;
+    }
+    .about-body {
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.4;
+      color: #1a1a1a;
+      max-width: 480px;
+    }
+    .about-body p + p { margin-top: 16px; }
+    .about-body .vision-link {
+      font-style: italic; margin-top: 16px; display: block;
+    }
+    .btn {
+      display: inline-block;
+      margin-top: 28px;
+      padding: 10px 22px;
+      background: var(--teal-mid);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      border-radius: 30px;
+      border: none; cursor: pointer;
+    }
+    .about-photo {
+      overflow: hidden;
+    }
+    .about-photo img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      display: block;
+    }
+
+    /* ─── QUOTE BANNER ───────────────────────────────────────── */
+    .quote-banner {
+      background: var(--yellow);
+      padding: 50px 80px 50px 60%;
+      min-height: 140px;
+      display: flex; align-items: center;
+    }
+    .quote-text {
+      font-family: 'playfairdisplay-bold', 'Playfair Display', Georgia, serif;
+      font-size: 29px;
+      line-height: 1.45;
+      color: #fff;
+      letter-spacing: normal;
+      font-weight: 700;
+    }
+    .quote-text .attribution {
+      font-size: 14px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ─── SERVICES ───────────────────────────────────────────── */
+    .services {
+      background: var(--mint);
+      padding: 70px 60px;
+    }
+    .services-title {
+      font-family: var(--font-head);
+      font-size: 32px;
+      color: #1a1a1a;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      max-width: 780px;
+      margin: 0 auto 48px;
+    }
+    .service-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .service-card {
+      border: 1.5px solid #1a1a1a;
+      padding: 40px 50px;
+      text-align: center;
+    }
+    .service-card-title {
+      font-family: var(--font-head);
+      font-size: 18px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+    }
+    .service-divider {
+      width: 44px; height: 2px;
+      background: #1a1a1a;
+      margin: 0 auto 24px;
+    }
+    .service-body {
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.4;
+      color: #1a1a1a;
+      margin-bottom: 24px;
+    }
+
+    /* ─── VISION ─────────────────────────────────────────────── */
+    .vision-section {
+      background: var(--mint);
+      padding: 60px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .vision-blob {
+      position: relative;
+      max-width: 700px; width: 100%;
+    }
+    .vision-blob img {
+      width: 100%;
+    }
+    .vision-text-overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+    }
+    .vision-small {
+      font-family: var(--font-head);
+      font-size: 18px;
+      color: #fff;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .vision-big {
+      font-family: var(--font-head);
+      font-size: 64px;
+      color: #fff;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      line-height: 1;
+    }
+    .vision-sub {
+      font-family: var(--font-head);
+      font-size: 20px;
+      color: #fff;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ─── LGBTQIA+ ───────────────────────────────────────────── */
+    .lgbtq {
+      background: var(--pink);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 60px 80px;
+      gap: 40px;
+    }
+    .lgbtq-text { }
+    .lgbtq-title {
+      font-family: var(--font-head);
+      font-size: 56px;
+      color: #fff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.1;
+      margin-bottom: 24px;
+    }
+    .lgbtq-body {
+      font-family: var(--font-head);
+      font-size: 24px;
+      color: #1a1a1a;
+      letter-spacing: normal;
+      text-transform: none;
+      line-height: 1.4;
+    }
+    .lgbtq-img img {
+      width: 100%;
+      max-width: 380px;
+      display: block;
+    }
+
+    /* ─── ONLINE FORMATE ─────────────────────────────────────── */
+    .online {
+      background: var(--mint);
+      padding: 70px 60px 50px;
+    }
+    .online .section-line { margin-bottom: 20px; }
+    .online-title {
+      font-family: var(--font-head);
+      font-size: 42px;
+      letter-spacing: normal;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    .online-subtitle {
+      font-family: var(--font-head);
+      font-size: 24px;
+      letter-spacing: normal;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      margin-bottom: 22px;
+      line-height: 1.7;
+    }
+    .online-body {
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.4;
+      color: #1a1a1a;
+      max-width: 680px;
+    }
+
+    /* ─── KOSTENLOSES KENNENLERNEN ───────────────────────────── */
+    .free-session {
+      background: linear-gradient(to bottom, var(--mint) 0%, #c8d882 100%);
+      padding: 70px 60px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 40px;
+    }
+    .free-session-content .section-line { margin-bottom: 20px; }
+    .free-arrows {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 16px;
+    }
+    .arrow-img { height: 28px; }
+    .free-title {
+      font-family: var(--font-head);
+      font-size: 42px;
+      letter-spacing: normal;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
+    .free-body {
+      font-family: var(--font-body);
+      font-size: 17px;
+      line-height: 1.4;
+      color: #1a1a1a;
+      max-width: 520px;
+      margin-bottom: 28px;
+    }
+    .btn-outline {
+      display: inline-block;
+      padding: 10px 22px;
+      background: var(--teal-mid);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      border-radius: 30px;
+    }
+    .free-illustration img {
+      width: 220px;
+    }
+
+    /* ─── KUNDENMEINUNGEN ────────────────────────────────────── */
+    .reviews {
+      background: var(--cream);
+      padding: 70px 0 80px;
+      overflow: hidden;
+    }
+    .reviews-title {
+      font-family: var(--font-head);
+      font-size: 28px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      text-align: center;
+      margin-bottom: 52px;
+      padding: 0 60px;
+    }
+
+    /* ── Marquee ── */
+    .marquee-wrapper {
+      position: relative;
+      width: 100%;
+    }
+    .marquee-wrapper::before,
+    .marquee-wrapper::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 120px;
+      z-index: 2;
+      pointer-events: none;
+    }
+    .marquee-wrapper::before {
+      left: 0;
+      background: linear-gradient(to right, var(--cream) 0%, transparent 100%);
+    }
+    .marquee-wrapper::after {
+      right: 0;
+      background: linear-gradient(to left, var(--cream) 0%, transparent 100%);
+    }
+    .marquee-track {
+      display: flex;
+      gap: 22px;
+      padding: 16px 40px 36px;
+      width: max-content;
+      animation: marquee-scroll 55s linear infinite;
+      cursor: default;
+    }
+    .marquee-track:hover {
+      animation-play-state: paused;
+    }
+    @keyframes marquee-scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ── Single card ── */
+    .r-card {
+      width: 300px;
+      flex-shrink: 0;
+      background: var(--navy);
+      border-radius: 6px;
+      padding: 28px 26px 22px;
+      position: relative;
+      cursor: pointer;
+      transition: transform 0.22s ease, box-shadow 0.22s ease;
+      border-top: 4px solid var(--teal-mid);
+    }
+    .r-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.22);
+    }
+    .r-card:hover .r-read-more {
+      color: #fff;
+    }
+    .r-quote-icon {
+      font-size: 52px;
+      line-height: 1;
+      color: var(--teal-mid);
+      opacity: 0.35;
+      position: absolute;
+      top: 14px;
+      right: 18px;
+      font-family: Georgia, serif;
+      pointer-events: none;
+    }
+    .r-name {
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--teal-mid);
+      margin-bottom: 3px;
+      padding-right: 30px;
+    }
+    .r-type {
+      font-family: var(--font-body);
+      font-size: 11px;
+      color: #8ba8a8;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .r-preview {
+      font-family: var(--font-body);
+      font-size: 12.5px;
+      line-height: 1.75;
+      color: #c5d5d8;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .r-read-more {
+      display: inline-block;
+      margin-top: 14px;
+      font-family: var(--font-body);
+      font-size: 11.5px;
+      color: var(--teal-mid);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.18s;
+    }
+
+    /* ── Slide-up panel ── */
+    .review-panel-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 20, 22, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.32s ease;
+    }
+    .review-panel-backdrop.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .review-panel {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: var(--navy);
+      border-radius: 20px 20px 0 0;
+      padding: 48px 60px 52px;
+      z-index: 201;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+      max-height: 72vh;
+      overflow-y: auto;
+    }
+    .review-panel.open {
+      transform: translateY(0);
+    }
+    .panel-handle {
+      width: 44px; height: 4px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 2px;
+      margin: 0 auto 36px;
+    }
+    .panel-close {
+      position: absolute;
+      top: 22px; right: 28px;
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #fff;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.18s;
+    }
+    .panel-close:hover { background: rgba(255,255,255,0.16); }
+    .panel-meta {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .panel-name {
+      font-family: var(--font-body);
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--teal-mid);
+    }
+    .panel-type {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: #8ba8a8;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .panel-text {
+      font-family: var(--font-body);
+      font-size: 15px;
+      line-height: 1.85;
+      color: #c5d5d8;
+      max-width: 780px;
+    }
+    .panel-text::before {
+      content: '\201E';
+      font-size: 48px;
+      color: var(--teal-mid);
+      opacity: 0.5;
+      display: block;
+      line-height: 0.8;
+      margin-bottom: 16px;
+      font-family: Georgia, serif;
+    }
+
+    /* ─── KONTAKT / FOOTER ───────────────────────────────────── */
+    .contact {
+      background: var(--yellow);
+      padding: 70px 60px;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 60px;
+    }
+    .contact-info .section-line { background: #1a1a1a; margin-bottom: 20px; }
+    .contact-title {
+      font-family: var(--font-head);
+      font-size: 28px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #1a1a1a;
+      margin-bottom: 20px;
+    }
+    .contact-text {
+      font-family: var(--font-body);
+      font-size: 14px;
+      line-height: 1.75;
+      color: #1a1a1a;
+      margin-bottom: 20px;
+    }
+    .contact-address {
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: #1a1a1a;
+      margin-bottom: 24px;
+    }
+    .social-icons { display: flex; gap: 16px; align-items: center; margin-bottom: 28px; }
+    .social-icons a { color: #1a1a1a; text-decoration: none; font-size: 22px; }
+    .copyright {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+    .footer-links { display: flex; gap: 12px; flex-wrap: wrap; }
+    .footer-links a {
+      display: inline-block;
+      padding: 8px 18px;
+      background: var(--teal-mid);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 12px;
+      border-radius: 30px;
+      text-decoration: none;
+    }
+
+    /* Form */
+    .contact-form { }
+    .form-label {
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: #1a1a1a;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #1a1a1a;
+      background: transparent;
+      font-family: var(--font-body);
+      font-size: 13px;
+      color: #1a1a1a;
+      margin-bottom: 16px;
+      outline: none;
+    }
+    .form-input::placeholder, .form-textarea::placeholder { color: #555; }
+    .form-textarea { height: 100px; resize: none; }
+    .form-submit {
+      float: right;
+      padding: 10px 28px;
+      background: #1a1a1a;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      border: none;
+      cursor: pointer;
+    }
+
+    /* ─── DNSMPI FOOTER ──────────────────────────────────────── */
+    .legal-footer {
+      background: var(--yellow);
+      padding: 14px 60px 28px;
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+    .legal-footer a {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: #1a1a1a;
+      text-decoration: underline;
+    }
+
+    /* ─── HAMBURGER (mobile only, hidden on desktop) ─────────── */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 6px;
+      z-index: 1001;
+    }
+    .hamburger span {
+      display: block;
+      width: 24px;
+      height: 2px;
+      background: #1a1a1a;
+      transition: transform 0.28s ease, opacity 0.18s ease;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ═══ RESPONSIVE — iPhone 14 / max 600px ═══════════════════ */
+    @media (max-width: 600px) {
+
+      /* Header */
+      header { padding: 10px 20px; position: sticky; }
+      .logo img { height: 42px; }
+      .hamburger { display: flex; }
+      nav {
+        display: none;
+        flex-direction: column;
+        position: fixed;
+        inset: 0;
+        background: var(--mint);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+        gap: 36px;
+      }
+      nav.open { display: flex; }
+      nav a { font-size: 17px; letter-spacing: 0.1em; }
+
+      /* Hero */
+      .hero { padding: 48px 24px 56px; }
+      .hero-title { font-size: 52px; letter-spacing: 0.08em; }
+      .hero-sub { font-size: 11px; letter-spacing: 0.2em; }
+
+      /* Intro */
+      .intro { padding: 44px 24px 32px; }
+      .intro-text { font-size: 24px; line-height: 34px; max-width: 100%; letter-spacing: 0.3px; }
+
+      /* Video */
+      .video-overlay-text { font-size: 38px; letter-spacing: 0.12em; }
+      .video-player { width: 100%; aspect-ratio: 16/9; }
+      .video-section { min-height: 220px; }
+
+      /* About */
+      .about { grid-template-columns: 1fr; min-height: auto; }
+      .about-photo { height: 280px; order: -1; }
+      .about-text { padding: 40px 24px 32px; }
+      .about-body { max-width: 100%; }
+
+      /* Quote Banner */
+      .quote-banner { padding: 40px 24px; }
+      .quote-text { font-size: 15px; }
+
+      /* Services */
+      .services { padding: 50px 24px; }
+      .services-title { font-size: 22px; margin-bottom: 32px; }
+      .service-card { padding: 28px 22px; }
+      .service-card-title { font-size: 15px; }
+
+      /* Vision */
+      .vision-section { padding: 36px 24px; }
+      .vision-big { font-size: 40px; }
+      .vision-sub { font-size: 14px; }
+      .vision-small { font-size: 14px; }
+
+      /* LGBTQIA+ */
+      .lgbtq {
+        grid-template-columns: 1fr;
+        padding: 44px 24px;
+        gap: 28px;
+      }
+      .lgbtq-title { font-size: 36px; letter-spacing: 0.02em; }
+      .lgbtq-body { font-size: 15px; }
+      .lgbtq-img { display: flex; justify-content: center; }
+      .lgbtq-img img { max-width: 240px; }
+
+      /* Online Formate */
+      .online { padding: 50px 24px 36px; }
+      .online-title { font-size: 26px; letter-spacing: 0.02em; }
+      .online-subtitle { font-size: 15px; }
+
+      /* Free Session */
+      .free-session {
+        grid-template-columns: 1fr;
+        padding: 50px 24px;
+        gap: 0;
+      }
+      .free-illustration { display: none; }
+      .free-title { font-size: 28px; letter-spacing: -1px; line-height: 36px; }
+
+      /* Kundenmeinungen */
+      .reviews { padding: 50px 0 60px; }
+      .reviews-title { font-size: 20px; padding: 0 24px; margin-bottom: 36px; }
+      .r-card { width: 270px; }
+      .marquee-wrapper::before,
+      .marquee-wrapper::after { width: 60px; }
+      .review-panel { padding: 32px 22px 40px; }
+      .panel-name { font-size: 17px; }
+      .panel-text { font-size: 14px; }
+
+      /* Kontakt / Footer */
+      .contact {
+        grid-template-columns: 1fr;
+        padding: 50px 24px;
+        gap: 36px;
+      }
+      .contact-title { font-size: 22px; }
+      .form-submit { float: none; width: 100%; }
+
+      /* Legal footer */
+      .legal-footer { padding: 12px 24px 20px; }
+    }
+
+    /* ═══ RESPONSIVE — Tablet / max 900px ══════════════════════ */
+    @media (min-width: 601px) and (max-width: 900px) {
+      header { padding: 10px 30px; }
+      nav { gap: 18px; }
+      nav a { font-size: 13px; }
+      .hero-title { font-size: 70px; }
+      .intro { padding: 50px 40px 32px; }
+      .intro-text { font-size: 26px; }
+      .about { grid-template-columns: 1fr 1fr; }
+      .about-text { padding: 50px 36px 40px; }
+      .quote-banner { padding: 40px 40px 40px 50%; }
+      .services { padding: 60px 40px; }
+      .lgbtq { padding: 50px 40px; gap: 28px; }
+      .lgbtq-title { font-size: 34px; }
+      .lgbtq-body { font-size: 18px; }
+      .online-subtitle { font-size: 18px; }
+      .online { padding: 60px 40px 40px; }
+      .free-session { padding: 60px 40px; }
+      .free-illustration img { width: 150px; }
+      .contact { padding: 60px 40px; gap: 36px; }
+      .legal-footer { padding: 12px 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif"
+         alt="der-redewert Logo">
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="mainNav">
+    <a href="index.html" class="active">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="#kontakt">Kontakt</a>
+  </nav>
+</header>
+
+<!-- ═══ HERO ═════════════════════════════════════════════════════ -->
+<section class="hero">
+  <p class="hero-sub">Auf der Suche nach</p>
+  <div class="hero-divider"></div>
+  <h1 class="hero-title">KLRHT?</h1>
+</section>
+
+<!-- ═══ INTRO TEXT ═══════════════════════════════════════════════ -->
+<section class="intro">
+  <div class="section-line"></div>
+  <p class="intro-text">
+    Unruhe im Kopf oder Bauch?<br>
+    Das ist der Rede wert.<br>
+    Mit Coaching und Mediation<br>
+    zu Klarheit für deinen Weg.
+  </p>
+</section>
+
+<!-- ═══ VIDEO / DEIN ZIEL ════════════════════════════════════════ -->
+<section class="video-section">
+  <div class="video-overlay-text">DEIN&nbsp;&nbsp;ZIEL</div>
+  <div class="video-player">
+    <video controls preload="metadata" poster="">
+      <source src="startseite%20der-redewert.mp4" type="video/mp4">
+    </video>
+  </div>
+</section>
+
+<!-- ═══ ÜBER MICH ════════════════════════════════════════════════ -->
+<section class="about">
+  <div class="about-text">
+    <div class="section-line"></div>
+    <h2 class="about-title">Über mich</h2>
+    <p class="about-subtitle">Klarheit, Empathie, Kreativität</p>
+    <div class="about-body">
+      <p>Schön, dass du hier bist. Ich bin Wibke, und auf dieser Website möchte ich kurz erläutern, warum du der Redewert bist.</p>
+      <p>Hattest du auch schon einmal das Gefühl vor einem Berg voller Aufgaben, Möglichkeiten, Entscheidungen und vor allem voller Fragezeichen zu stehen?
+      Wenn eine Vielzahl an Herausforderungen den klaren Blick verstellt und die Balance wegbricht ist Systemisches Coaching, Mediation und Supervision eine wertvolle Unterstützung, um den eigenen Weg klar vor sich zu sehen. Um Krisen zu meistern und die Türen zu neuen Lösungen zu öffnen.</p>
+      <p>Als systemische Coach (1:1 und Teams), Mediatorin und Trainerin für Kommunikation begleite ich Menschen in Veränderungsprozessen zu mehr Klarheit für ihren Weg. Als Sparringpartnerin auf Augenhöhe.</p>
+      <span class="vision-link">Ich habe eine Vision ...</span>
+    </div>
+    <a href="#" class="btn">Mehr erfahren</a>
+  </div>
+  <div class="about-photo">
+    <img src="https://static.wixstatic.com/media/3ad277_c2d0801b295c4124b74466690336e122~mv2.jpg/v1/fill/w_549,h_772,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/3ad277_c2d0801b295c4124b74466690336e122~mv2.jpg"
+         alt="Wibke Scharpenberg">
+  </div>
+</section>
+
+<!-- ═══ QUOTE BANNER ═════════════════════════════════════════════ -->
+<div class="quote-banner">
+  <p class="quote-text">
+    „Es gibt viele Wege und<br>
+    viele Wegweiser – aber<br>
+    nur unser eigener Kompass<br>
+    weiß die Richtung."<span class="attribution"> Max Lüscher</span>
+  </p>
+</div>
+
+<!-- ═══ SERVICES ═════════════════════════════════════════════════ -->
+<section class="services">
+  <div class="section-line"></div>
+  <h2 class="services-title">Dabei kann ich<br>dich unterstützen</h2>
+  <div class="service-cards">
+
+    <div class="service-card">
+      <h3 class="service-card-title">Coaching</h3>
+      <div class="service-divider"></div>
+      <p class="service-body">Was sind deine Ziele, wohin soll die Reise für dich gehen? Was möchtest du entdecken, was möchtest du erreichen? Im Coaching begleite ich dich zu deinen Zielen und unterstütze dich Schritt für Schritt in der Umsetzung. Wir widmen uns deinen Fähigkeiten, Stärken &amp; Visionen. Das Coaching bringt dich in die Klarheit und zu deinen eigenen Lösungen.</p>
+      <a href="#" class="btn">Mehr erfahren</a>
+    </div>
+
+    <div class="service-card">
+      <h3 class="service-card-title">Teamcoaching</h3>
+      <div class="service-divider"></div>
+      <p class="service-body">Teams stehen heutzutage vor verschiedenen Herausforderungen - darunter finden sich die zunehmend schnelle Veränderung der Arbeitswelt genauso wie die täglichen Hürden der Kommunikation und Zusammenarbeit. Unzufriedenheit, Unklarheiten und Überlastung führen auch bei euch zur Beeinträchtigung des positiven Miteinanders und der Produktivität? Oder setzt sich gerade das Team neu zusammen und ihr wollte gezielt eine wertschätzende und effektive Arbeitsumgebung schaffen? Als systemischer agiler Teamcoach unterstütze ich Teams dabei, ihre Ziele zu erreichen und das volle Potenzial des Teams auszuschöpfen. Was genau mache ich als Teamcoach?</p>
+      <a href="#" class="btn">Mehr erfahren</a>
+    </div>
+
+    <div class="service-card">
+      <h3 class="service-card-title">Mediation und Paarcoaching</h3>
+      <div class="service-divider"></div>
+      <p class="service-body">Ein Konflikt in deiner Partnerschaft, mit Kollegen oder in der Familie raubt dir die Kraft? Ihr dreht euch im Kreis und findet alleine keine passende Lösung? Eine Mediation ermöglicht euch neue &amp; nachhaltige Lösungen für euren Konflikt zu finden. Die professionelle Begleitung eröffnet euch durch den strukturierten Prozess neue Ansätze und Perspektiven für den Weg zu einer WIN-WIN Lösung.</p>
+      <a href="#" class="btn">Mehr erfahren</a>
+    </div>
+
+    <div class="service-card">
+      <h3 class="service-card-title">Seminare &amp; Workshops</h3>
+      <div class="service-divider"></div>
+      <p class="service-body">Ich leite Seminare, Workshops und Retreats zu den Themen Kommunikation, Konfliktmanagement, Resilienz und Achtsamkeit. In meinen Trainings geht es darum deine Kompetenzen zu erweitern und dich in Kontakt zu dir, deinen Fähigkeiten und Bedürfnissen zu bringen. An meiner Seite sind tolle Kolleg*innen, die durch Yoga, Pilates und Meditation auch den Bereich des Embodiment integrieren. Wenn du Lust auf Veränderung im Kreis von anderen Gleichgesinnten hast, dann wirf einen Blick auf die anstehenden Termine oder melde dich bei Interesse an einem Inhouse-Seminar.</p>
+      <a href="#" class="btn">Mehr erfahren</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ VISION ════════════════════════════════════════════════════ -->
+<section class="vision-section">
+  <div class="vision-blob">
+    <img src="https://static.wixstatic.com/media/b622d6413c7b484380cb8fc6ed6c4f20.png/v1/fill/w_672,h_453,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Aquarell-Form%20%20%20%20%20%20%20%20.png"
+         alt="Vision">
+    <div class="vision-text-overlay">
+      <p class="vision-small">Deine</p>
+      <p class="vision-big">VISION</p>
+      <p class="vision-sub">ist der Redewert!</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LGBTQIA+ ══════════════════════════════════════════════════ -->
+<section class="lgbtq">
+  <div class="lgbtq-text">
+    <h2 class="lgbtq-title">LGBTQIA+<br>WELCOME</h2>
+    <p class="lgbtq-body">
+      Mein Angebot ist ein<br>
+      Safe Space für alle<br>
+      MenscheN – unabhängig von sexueller<br>
+      Orientierung, geschlechtlicher Identität<br>
+      oder Lebensform.<br>
+      Vielfalt ist willkommen und erwünscht.
+    </p>
+  </div>
+  <div class="lgbtq-img">
+    <img src="https://static.wixstatic.com/media/11062b_5d293f56e48c4534b9edf2e85e4d5b8bf000.png/v1/fill/w_544,h_544,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/11062b_5d293f56e48c4534b9edf2e85e4d5b8bf000.png"
+         alt="LGBTQIA+ Illustration">
+  </div>
+</section>
+
+<!-- ═══ ONLINE FORMATE ════════════════════════════════════════════ -->
+<section class="online">
+  <div class="section-line"></div>
+  <h2 class="online-title">Online Formate</h2>
+  <p class="online-subtitle">
+    Unabhängig von deinem Standort -<br>
+    Coaching funktioniert auch online!
+  </p>
+  <p class="online-body">
+    Wir haben die Möglichkeit Online-Sessions per Zoom oder Teams durchzuführen. Damit sind erfolgreiche Coachings und Mediationen wie in Präsenz möglich. Deine Ziele lassen sich auch sehr gut von zu hause aus klären und in strukturierten Schritten umsetzen. Wenn du Fragen zum Format hast, zögere nicht mich anzusprechen! Schreibe mir gerne eine Nachricht über das Kontaktformular.
+  </p>
+</section>
+
+<!-- ═══ KOSTENLOSES KENNENLERNEN ══════════════════════════════════ -->
+<section class="free-session">
+  <div class="free-session-content">
+    <div class="section-line"></div>
+    <div class="free-arrows">
+      <img class="arrow-img" src="https://static.wixstatic.com/media/442b843ace074e788d2c78bffd4e3586.png/v1/fill/w_90,h_42,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/442b843ace074e788d2c78bffd4e3586.png" alt="→">
+      <h2 class="free-title">Kostenloses<br>Kennenlernen</h2>
+      <img class="arrow-img" src="https://static.wixstatic.com/media/9df35518723e4e8496e1a80e5c989496.png/v1/fill/w_124,h_105,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/Pfeil%20.png" alt="←">
+    </div>
+    <p class="free-body">In einem kostenlosen Erstgespräch (20min) klären wir, was dein Anliegen ist und wie ich dich am besten unterstützen kann. Schicke mir gerne einfach eine Mail über das Kontaktfeld und ich melde mich bei dir!</p>
+    <a href="#kontakt" class="btn-outline">↑ Jetzt Erstgespräch buchen!</a>
+  </div>
+  <div class="free-illustration">
+    <img src="https://static.wixstatic.com/media/2049f7f4ffdc48609efde296172737d8.jpg/v1/crop/x_1618,y_0,w_1882,h_1968/fill/w_429,h_448,al_c,q_80,usm_0.66_1.00_0.01,enc_avif,quality_auto/Illustrated%20White%20Cats.jpg"
+         alt="Illustration Stuhl mit Katze">
+  </div>
+</section>
+
+<!-- ═══ KUNDENMEINUNGEN ═══════════════════════════════════════════ -->
+<section class="reviews">
+  <h2 class="reviews-title">Kundenmeinungen</h2>
+  <div class="marquee-wrapper">
+    <div class="marquee-track" id="marqueeTrack">
+
+      <div class="r-card" data-full="In jedem Fall danke ich Dir nochmal ganz herzhaft für Dein sehr aufschlussreiches Coaching – es hat mir sehr geholfen und mir Sicherheit gegeben!" data-name="Jennifer R." data-type="Coaching">
+        <span class="r-quote-icon">"</span>
+        <p class="r-name">Jennifer R.</p>
+        <p class="r-type">Coaching</p>
+        <p class="r-preview">In jedem Fall danke ich Dir nochmal ganz herzhaft für Dein sehr aufschlussreiches Coaching – es hat mir sehr geholfen und mir Sicherheit gegeben!</p>
+        <span class="r-read-more">Mehr lesen →</span>
+      </div>
+
+      <div class="r-card" data-full="Wibkes Elan und Humor machen das Seminar zu einem spannendem Erlebnis, so dass man ihr am liebsten unendlich lang zuhören würde. Keine Frage bleibt ohne Antwort, Wibke bemüht sich um eine gründliche und vielseitige Beleuchtung. Die Teilnehmer waren begeistert von ihrer Empathie und Warmherzigkeit. Meine Erwartungen vom Seminar sind übertroffen, ich habe jetzt klare Vorstellung, wie ich das erlernte Material autodidaktisch vertiefen kann und würde  jedem diesen Kurs weiterempfehlen." data-name="Larissa G." data-type="Seminar Konfliktmanagement">
+        <span class="r-quote-icon">"</span>
+        <p class="r-name">Larissa G.</p>
+        <p class="r-type">Seminar Konfliktmanagement</p>
+        <p class="r-preview">Wibkes Elan und Humor machen das Seminar zu einem spannendem Erlebnis, so dass man ihr am liebsten unendlich lang zuhören würde…</p>
+        <span class="r-read-more">Mehr lesen →</span>
+      </div>
+
+      <div class="r-card" data-full="Vielen Dank, Wibke, für diese bereichernden zwei Wochen. Als Modul meiner IMB-Weiterbildung haben mich deine kreativen und professionellen Präsentationen sehr beeindruckt. Du hast das für mich trockene Thema extrem kurzweilig, beneidenswert strukturiert und anschaulich mit stets sympathischer Zugewandtheit vermittelt. Bereichernd war vor allem die dadurch ausgelöste Selbstreflexion und Erkenntnis, dass ich frühere Konflikte mit dem heutigen Wissen sicherlich lösungsorientierter angegangen wäre." data-name="Sabrina G." data-type="Kommunikation &amp; Konfliktmanagement">
+        <span class="r-quote-icon">"</span>
+        <p class="r-name">Sabrina G.</p>
+        <p class="r-type">Kommunikation &amp; Konfliktmanagement</p>
+        <p class="r-preview">Vielen Dank, Wibke, für diese bereichernden zwei Wochen. Du hast das für mich trockene Thema extrem kurzweilig und anschaulich vermittelt…</p>
+        <span class="r-read-more">Mehr lesen →</span>
+      </div>
+
+      <div class="r-card" data-full="In unserem wachsenden Konflikt ging es um die Liebe zu einer weiteren Frau und keiner wollte von seinem Standpunkt zurückweichen. Die Fronten waren deutlich verhärtet. Die Hilfe von außen fanden wir glücklicherweise in der Mediation mit und durch Wibke Scharpenberg. Über mehrere Monate hinweg hat sie uns einander wieder näher gebracht und uns in die Kunst des miteinander Redens und Zuhörens eingeführt. Sie hat uns liebevoll und aufmerksam begleitet und dabei die für uns richtigen Fragen gestellt. Mit ihr haben wir verstanden und uns klar gemacht, wie wichtig unsere eigenen Bedürfnisse und Wünsche und die des Partners sind. Wibke hat uns gezeigt, dass der Raum zum Fühlen, Denken und Kommunizieren eine enorme Rolle dabei spielt. In ihrer neutralen Funktion als Mediatorin ist sie vertrauensvoll und auf Augenhöhe auf uns eingegangen. Ohne die Mediation und die Begleitung von Wibke hätten wir wahrscheinlich kapitulieren müssen und unsere Beziehung hätte keine Zukunft gehabt. So sind wir bei- und miteinander in die vertrauensvolle und optimistische Arbeit für unsere Liebe und unsere Familie gegangen." data-name="Katharina &amp; Marcel S." data-type="Paarmediation">
+        <span class="r-quote-icon">"</span>
+        <p class="r-name">Katharina &amp; Marcel S.</p>
+        <p class="r-type">Paarmediation</p>
+        <p class="r-preview">Die Fronten waren deutlich verhärtet. Wibke hat uns liebevoll begleitet und die für uns richtigen Fragen gestellt. Ohne sie hätten wir wahrscheinlich kapitulieren müssen…</p>
+        <span class="r-read-more">Mehr lesen →</span>
+      </div>
+
+      <div class="r-card" data-full="Coaching mit Wibke hat mir neue Welten eröffnet. Durch ihre einfühlsame, ruhige, und positive Art hat sie mir ermöglicht, Stärken und Ressourcen in mir selber zu entdecken von denen ich nicht wusste, dass ich sie habe. In unseren Sessions fand ich Inspiration, aber durfte auch gemeinsam konkrete Strategien zur konstruktiven Gesprächsführung erarbeiten um bestimmte Situationen besser zu meistern und Lösungen zu finden." data-name="Sibylle M." data-type="Business-Coaching">
+        <span class="r-quote-icon">"</span>
+        <p class="r-name">Sibylle M.</p>
+        <p class="r-type">Business-Coaching</p>
+        <p class="r-preview">Coaching mit Wibke hat mir neue Welten eröffnet. Sie hat mir ermöglicht, Stärken und Ressourcen in mir zu entdecken, von denen ich nicht wusste, dass ich sie habe.</p>
+        <span class="r-read-more">Mehr lesen →</span>
+      </div>
+
+      <div class="r-card" data-full="Es gibt keine Zufälle im Leben. So hat es wunderbar gepasst, dass ich Wibke als Trainerin/Dozentin in einem Seminar über Kommunikation und Konfliktmanagement getroffen habe. Keine Zufälle deshalb, weil es letztendlich dazu geführt hat, dass ich meine Ausrichtung neu justiert habe. Wibke ist nicht nur fachlich (Kommunikationstheorie) unglaublich, sondern auch als Dozentin perfekt. Ihr tiefes und breites Know-how, ihre perfekte Moderation des Kurses, ihre professionelle Gelassenheit, die Gestaltung des Kurses mit Vortrag und Workshop sowie Energizern zwischendurch – einfach toll! Sie hat mir auch wieder mal gezeigt, dass Kommunikation ein Lebensthema ist und gewaltfreie Kommunikation das Leben rundum besser machen kann. Ich freue mich, dass ich Wibke bald wieder treffe in anderen Seminaren. Danke dir ganz doll, liebe Wibke, für meine Erkenntnisse. Auf viele gemeinsame Abenteuer!" data-name="Barbara H." data-type="Kommunikation &amp; Konfliktmanagement">
+        <span class="r-quote-icon">"</span>
+        <p class="r-name">Barbara H.</p>
+        <p class="r-type">Kommunikation &amp; Konfliktmanagement</p>
+        <p class="r-preview">Es gibt keine Zufälle im Leben. Wibke ist nicht nur fachlich unglaublich, sondern auch als Dozentin perfekt – einfach toll! Auf viele gemeinsame Abenteuer!</p>
+        <span class="r-read-more">Mehr lesen →</span>
+      </div>
+
+      <div class="r-card" data-full="Weil sich die Konflikte in unserer festgefahrenen Paarbeziehung zusehens gehäuft haben und aus eigener Kraft keine nachhaltigen, friedvollen Lösungen mehr gefunden werden konnten, haben wir einen für uns neuen Versuch gewagt… Wir haben Wibke in unserer Mediation als einen sehr einfühlsamen und ausgleichenden Menschen erlebt. Sie hat eine unglaubliche Gabe, Menschen wahrzunehmen um diese dann mit großer Aufmerksamkeit und Empathie durch den Prozess zu begleiten. Ihre strukturierte und professionelle Arbeitsweise schaffte schnell Vertrauen. Trotz schwieriger Themen konnte Wibke immer wieder eine wohlige und entspannte Atmosphäre für uns schaffen. Nach und nach waren wir wieder in der Lage, Liebe und Verständnis für einander zuzulassen. Schon in der ersten Sitzung konnten wir die ersten Lichtschalter in unserem dunkel gewordenen Beziehungstunnel wieder finden. Wir haben gelernt, aufkommenden Konfliktsituationen gelassener zu begegnen und friedvoller zu lösen. Was vor einigen Wochen noch als undenkbar erschien, wurde nach wieder für uns möglich. Unsere wöchentlichen „Sitzungen" wurden nach einiger Zeit tatsächlich zu einem von uns sehr geschätzten, wohltuenden Ritual. Wir sind Wibke unglaublich dankbar für ihre Unterstützung, ihre unendliche Geduld und für diese heilsame Erfahrung." data-name="Steffi &amp; Christian" data-type="Paarmediation">
+        <span class="r-quote-icon">"</span>
+        <p class="r-name">Steffi &amp; Christian</p>
+        <p class="r-type">Paarmediation</p>
+        <p class="r-preview">Wibke hat eine unglaubliche Gabe, Menschen wahrzunehmen und mit Empathie zu begleiten. Schon in der ersten Sitzung fanden wir den Lichtschalter in unserem Beziehungstunnel…</p>
+        <span class="r-read-more">Mehr lesen →</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Review panel backdrop -->
+<div class="review-panel-backdrop" id="reviewBackdrop"></div>
+
+<!-- Slide-up review panel -->
+<div class="review-panel" id="reviewPanel">
+  <div class="panel-handle"></div>
+  <div class="panel-content">
+    <p class="panel-type" id="panelType"></p>
+    <p class="panel-name" id="panelName"></p>
+    <p class="panel-text" id="panelText"></p>
+  </div>
+  <button class="panel-close" id="panelClose" aria-label="Schließen">✕</button>
+</div>
+
+<script>
+(function() {
+  // Duplicate cards for seamless infinite loop
+  const track = document.getElementById('marqueeTrack');
+  const cards = Array.from(track.children);
+  cards.forEach(function(card) {
+    track.appendChild(card.cloneNode(true));
+  });
+
+  const panel = document.getElementById('reviewPanel');
+  const backdrop = document.getElementById('reviewBackdrop');
+  const panelName = document.getElementById('panelName');
+  const panelType = document.getElementById('panelType');
+  const panelText = document.getElementById('panelText');
+
+  function openPanel(name, type, full) {
+    panelName.textContent = name;
+    panelType.textContent = type;
+    panelText.textContent = full;
+    panel.classList.add('open');
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closePanel() {
+    panel.classList.remove('open');
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  // Click on any card (including duplicates)
+  document.querySelector('.marquee-track').addEventListener('click', function(e) {
+    const card = e.target.closest('.r-card');
+    if (!card) return;
+    openPanel(card.dataset.name, card.dataset.type, card.dataset.full);
+  });
+
+  document.getElementById('panelClose').addEventListener('click', closePanel);
+  backdrop.addEventListener('click', closePanel);
+
+  // Swipe down to close on mobile
+  let startY = 0;
+  panel.addEventListener('touchstart', function(e) { startY = e.touches[0].clientY; });
+  panel.addEventListener('touchend', function(e) {
+    if (e.changedTouches[0].clientY - startY > 60) closePanel();
+  });
+})();
+</script>
+
+<!-- ═══ KONTAKT / FOOTER ══════════════════════════════════════════ -->
+<section class="contact" id="kontakt">
+  <div class="contact-info">
+    <div class="section-line"></div>
+    <h2 class="contact-title">Kontakt</h2>
+    <p class="contact-text">Ich freue mich auf deinen Kontakt!<br>
+    Melde dich gerne über das neben&shy;stehende Kontaktformular oder direkt über hallo@der-redewert.com</p>
+    <p class="contact-address">10243 Berlin</p>
+    <div class="social-icons">
+      <!-- LinkedIn icon -->
+      <a href="#" aria-label="LinkedIn">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      </a>
+      <!-- Xing icon -->
+      <a href="#" aria-label="Xing">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M18.188 0c-.517 0-.741.325-.927.66 0 0-7.455 13.224-7.702 13.657.015.024 4.919 9.023 4.919 9.023.17.308.436.66.967.66h3.454c.211 0 .375-.078.463-.22.089-.151.089-.346-.009-.536l-4.879-8.916c-.004-.006-.004-.016 0-.022L22.139.756c.095-.191.097-.387.006-.535C22.056.078 21.894 0 21.686 0h-3.498zM3.648 4.74c-.211 0-.385.074-.473.216-.09.149-.078.339.02.531l2.34 4.05c.004.01.004.016 0 .021L1.86 16.051c-.099.188-.093.381 0 .529.085.142.239.234.45.234h3.461c.518 0 .766-.348.945-.667l3.734-6.609-2.378-4.155c-.172-.315-.434-.643-.962-.643H3.648v0z"/></svg>
+      </a>
+    </div>
+    <p class="copyright">© 2025 DER REDEWERT</p>
+    <div class="footer-links">
+      <a href="#">Datenschutzerklärung</a>
+      <a href="#">Impressum &amp; AGB</a>
+    </div>
+  </div>
+
+  <form class="contact-form" name="kontakt" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+    <input type="hidden" name="form-name" value="kontakt">
+    <input type="hidden" name="bot-field" style="display:none">
+
+    <label class="form-label">Namen eingeben</label>
+    <input class="form-input" type="text" name="name" placeholder="Name">
+
+    <label class="form-label">E-Mail-Adresse eingeben *</label>
+    <input class="form-input" type="email" name="email" placeholder="E-Mail-Adresse" required>
+
+    <label class="form-label">Betreff eingeben</label>
+    <input class="form-input" type="text" name="betreff" placeholder="Betreff">
+
+    <label class="form-label">Nachricht</label>
+    <textarea class="form-textarea" name="nachricht" placeholder="Nachricht"></textarea>
+
+    <button class="form-submit" type="submit">Absenden</button>
+  </form>
+</section>
+
+<div class="legal-footer">
+  <a href="#">Do Not Sell My Personal Information</a>
+</div>
+
+<script>
+(function() {
+  var btn = document.getElementById('hamburger');
+  var nav = document.getElementById('mainNav');
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('open');
+    nav.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+  });
+  // Close nav when a link is clicked
+  nav.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      btn.classList.remove('open');
+      nav.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>

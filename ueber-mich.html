@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Über mich | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'playfairdisplay-bold';
+      font-style: normal; font-weight: 700;
+      src: url('https://static.parastorage.com/tag-bundler/api/v1/fonts-cache/googlefont/woff2/s/playfairdisplay/v13/n7G4PqJvFP2Kubl0VBLDEA9QP145tN5qB9RQEnC5ftI.woff2') format('woff2');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:      #8bd0cd;
+      --yellow:    #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid:  #57bbbf;
+      --coral:     #f07070;
+      --sage:      #c9ddb8;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --font-serif: 'playfairdisplay-bold', Georgia, serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body);
+      font-size: 14px; color: #1a1a1a;
+      text-decoration: none; letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: var(--teal-mid); }
+
+    /* ─── HAMBURGER ───────────────────────────────────────────── */
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span {
+      display: block; width: 24px; height: 2px; background: #1a1a1a;
+      transition: transform 0.3s, opacity 0.3s;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    /* ─── HERO ───────────────────────────────────────────────── */
+    .hero {
+      background: var(--yellow);
+      text-align: center;
+      padding: 60px 40px 70px;
+    }
+    .hero-sub {
+      font-family: var(--font-body);
+      font-size: 18px; letter-spacing: 0.25em;
+      color: #fff; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .hero-divider {
+      width: 40px; height: 2px; background: #fff;
+      margin: 0 auto 18px;
+    }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: 72px; color: #fff;
+      letter-spacing: 0.1em; line-height: 1;
+      text-transform: uppercase;
+    }
+
+    /* ─── SECTION BASE ───────────────────────────────────────── */
+    .section-line {
+      width: 40px; height: 3px; background: #1a1a1a;
+      margin-bottom: 20px;
+    }
+    .section-head {
+      font-family: var(--font-head);
+      font-size: 26px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 24px;
+    }
+
+    /* ─── VISION SECTION ─────────────────────────────────────── */
+    .vision-section {
+      background: var(--mint);
+      display: flex; align-items: flex-start;
+      padding: 80px 10% 60px;
+      gap: 40px;
+      position: relative; overflow: hidden;
+    }
+    .vision-text { flex: 0 0 42%; }
+    .vision-body {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.7; color: #1a1a1a;
+      margin-bottom: 16px;
+    }
+    .vision-image {
+      flex: 0 0 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .vision-image img {
+      max-width: 320px; max-height: 380px;
+      object-fit: contain;
+    }
+
+    /* ─── QUOTE / BIO SECTION ────────────────────────────────── */
+    .bio-section {
+      background: var(--sage);
+      padding: 80px 10% 60px;
+    }
+    .bio-quote {
+      font-family: var(--font-serif);
+      font-size: 28px; line-height: 1.4;
+      color: #1a1a1a; font-style: italic;
+      max-width: 640px; margin-bottom: 60px;
+      font-weight: 700;
+    }
+    .bio-inner {
+      display: flex; gap: 60px; align-items: flex-start;
+    }
+    .bio-text-col { flex: 1; }
+    .bio-subhead {
+      font-family: var(--font-head);
+      font-size: 18px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 20px;
+    }
+    .bio-body {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.8; color: #1a1a1a;
+      margin-bottom: 14px;
+    }
+    .bio-cta {
+      display: inline-block;
+      margin-top: 32px;
+      background: none;
+      border: 2px solid #1a1a1a;
+      font-family: var(--font-body);
+      font-size: 14px; letter-spacing: 0.05em;
+      color: #1a1a1a; text-decoration: none;
+      padding: 12px 28px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .bio-cta:hover { background: #1a1a1a; color: #fff; }
+
+    /* ─── ELEMENT SECTION ────────────────────────────────────── */
+    .element-section {
+      background: var(--sage);
+      padding: 40px 10% 60px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      display: flex; align-items: center; gap: 40px;
+    }
+    .element-heading {
+      font-family: var(--font-head);
+      font-size: 52px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #1a1a1a;
+      line-height: 1.1; flex: 1;
+    }
+    .element-image { flex: 0 0 140px; text-align: right; }
+    .element-image img { max-width: 120px; }
+
+    /* ─── AUSBILDUNGEN + KUNDEN ──────────────────────────────── */
+    .credentials-section {
+      background: var(--sage);
+      padding: 0 10% 80px;
+      display: flex; gap: 80px;
+    }
+    .credentials-col { flex: 1; }
+    .credentials-col h3 {
+      font-family: var(--font-head);
+      font-size: 18px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 24px;
+    }
+    .credentials-col ul {
+      list-style: none; padding: 0;
+    }
+    .credentials-col ul li {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 2;
+      color: #1a1a1a;
+    }
+
+    /* ─── GEDANKEN + BILDER ──────────────────────────────────── */
+    .gedanken-section {
+      background: var(--coral);
+      padding: 70px 10% 60px;
+      text-align: center;
+    }
+    .gedanken-heading {
+      font-family: var(--font-head);
+      font-size: 36px; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #fff;
+      margin-bottom: 32px;
+    }
+    .gedanken-quote {
+      font-family: var(--font-body);
+      font-size: 18px; line-height: 1.8; color: #fff;
+      max-width: 640px; margin: 0 auto 40px;
+    }
+    .gedanken-author {
+      font-family: var(--font-body);
+      font-size: 15px; color: rgba(255,255,255,0.85);
+      margin-bottom: 60px;
+    }
+    .gedanken-images {
+      display: flex; justify-content: center;
+      gap: 60px; align-items: center;
+      flex-wrap: wrap;
+    }
+    .gedanken-images img {
+      height: 140px; width: auto; object-fit: contain;
+    }
+
+    /* ─── CONTACT ────────────────────────────────────────────── */
+    .contact-section {
+      background: var(--yellow);
+      padding: 70px 10%;
+      display: flex; gap: 80px; align-items: flex-start;
+    }
+    .contact-info { flex: 0 0 280px; }
+    .contact-heading {
+      font-family: var(--font-head);
+      font-size: 20px; letter-spacing: 0.1em;
+      color: #fff; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .contact-info p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.7; color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+    .contact-info a { color: #1a1a1a; text-decoration: underline; }
+    .contact-form { flex: 1; max-width: 500px; }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%; padding: 14px 16px; margin-bottom: 14px;
+      border: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.4);
+      font-family: var(--font-body); font-size: 15px;
+      color: #1a1a1a; border-radius: 0; outline: none; display: block;
+    }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: #555; }
+    .contact-form input:focus,
+    .contact-form textarea:focus { background: rgba(255,255,255,0.6); }
+    .contact-form textarea { height: 120px; resize: vertical; }
+    .contact-form button {
+      background: var(--teal-dark); color: #fff;
+      font-family: var(--font-head); font-size: 13px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; padding: 14px 40px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .contact-form button:hover { background: #0e4341; }
+
+    /* ─── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      background: var(--mint); padding: 28px 60px 20px;
+      display: flex; flex-wrap: wrap;
+      justify-content: space-between; align-items: center; gap: 16px;
+    }
+    footer p { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      font-family: var(--font-body); font-size: 12px;
+      color: #1a1a1a; text-decoration: none;
+    }
+    .footer-links a:hover { text-decoration: underline; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .hero-title { font-size: 48px; }
+      .vision-section { flex-direction: column; padding: 60px 8% 40px; }
+      .vision-text { flex: none; width: 100%; }
+      .vision-image { text-align: center; }
+      .bio-inner { flex-direction: column; gap: 32px; }
+      .element-heading { font-size: 36px; }
+      .credentials-section { flex-direction: column; gap: 48px; padding: 0 8% 60px; }
+      .contact-section { flex-direction: column; gap: 48px; padding: 52px 8%; }
+      .contact-info { flex: none; }
+    }
+
+    @media (max-width: 600px) {
+      header { padding: 12px 20px; }
+      .hamburger { display: flex; }
+      nav {
+        display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: var(--mint); flex-direction: column; justify-content: center;
+        align-items: center; gap: 32px; z-index: 150;
+      }
+      nav.open { display: flex; }
+      nav a { font-size: 18px; }
+      .hero-title { font-size: 32px; }
+      .hero-sub { font-size: 13px; }
+      .vision-section,
+      .bio-section { padding: 48px 6% 40px; }
+      .element-heading { font-size: 26px; }
+      .element-section { flex-direction: column; gap: 20px; padding: 40px 6% 40px; }
+      .credentials-section { padding: 0 6% 48px; }
+      .gedanken-heading { font-size: 24px; }
+      .contact-section { padding: 44px 6%; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER ══════════════════════════════════════════════════ -->
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif"
+         alt="der-redewert Logo">
+  </a>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+  <nav id="mainNav">
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html" class="active">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+</header>
+
+<!-- ═══ HERO ═════════════════════════════════════════════════════ -->
+<div class="hero">
+  <p class="hero-sub">Durch Klarheit zu neuen</p>
+  <div class="hero-divider"></div>
+  <h1 class="hero-title">Lösungen kommen</h1>
+</div>
+
+<!-- ═══ MEINE VISION ══════════════════════════════════════════════ -->
+<section class="vision-section">
+  <div class="vision-text">
+    <div class="section-line"></div>
+    <h2 class="section-head">Meine Vision</h2>
+    <p class="vision-body">ist, dass du deinen Selbstwert aufbaust und aktiv in die Selbstführung gehst. Ich unterstütze Menschen dabei, die identischste und kraftvollste Version ihrer selbst zu werden.</p>
+    <p class="vision-body">Ich bin der Überzeugung, dass jeder Mensch, der sich selbst wertschätzt und in seiner Präsenz ist, weniger Konflikte mit sich und anderen hat. Innerer Frieden strahlt nach außen und bereichert unsere Gemeinschaft und das Miteinander auf diesem Planeten.</p>
+  </div>
+  <div class="vision-image">
+    <img src="https://static.wixstatic.com/media/b09c422ef2674033a3e2d6008ba26e0c.jpg/v1/crop/x_0,y_0,w_1687,h_1688/fill/w_320,h_320,al_c,q_90,usm_0.66_1.00_0.01/b09c422ef2674033a3e2d6008ba26e0c.jpg"
+         alt="Illustration">
+  </div>
+</section>
+
+<!-- ═══ BIO ═══════════════════════════════════════════════════════ -->
+<section class="bio-section">
+  <p class="bio-quote">Jede Kurve meines Lebenswegs hat mir neue Perspektiven geöffnet und Außergewöhnliches beschert.</p>
+
+  <div class="bio-inner">
+    <div class="bio-text-col">
+      <div class="section-line"></div>
+      <h2 class="bio-subhead">Über mich</h2>
+
+      <p class="bio-body">Kommunikation ist meine Leidenschaft! Sie zu erforschen, zu verstehen und in der Praxis mit meinen Klient:innen zu schulen. Wenn ich Menschen in ihrer Entwicklung begleiten darf, bin ich in meinem Element! Neugier, Kreativität &amp; Weiterentwicklung sind die tragenden Fundamente in meinem Leben.</p>
+
+      <p class="bio-body">Meine Freunde beschreiben mich als lebensfroh, authentisch und bodenständig. Mein Hund Kasimir, meine Familie und meine Freunde sind es, die mich als Person geprägt haben, meinen Austausch mit anderen, meine Interessen und Aktivitäten.</p>
+
+      <p class="bio-body">Nach einem Umbruch in meinem Leben entschied ich mich 2015 dazu, die verbale Kommunikation in mein Berufsleben zu holen und absolvierte eine Ausbildung zur Moderatorin und Sprecherin.</p>
+
+      <p class="bio-body">Bald darauf weckte ein Seminar „Rhetorik und Körpersprache" mein Interesse an der Arbeit mit Gruppen. Seit 2016 gebe ich Seminare im Bereich Kommunikation und Weiterentwicklung: Kommunikation verstehen und gelungene Gespräche führen, Konfliktmanagement, Rhetorik und Präsenztraining, Training für Soft Skills sowie Achtsamkeit und Resilienz.</p>
+
+      <p class="bio-body">Im Laufe der Zeit wurde mir klar, dass ich tiefer in die Thematik des lösungsorientierten und persönlichkeitszentrierten Arbeitens mit Menschen eintauchen möchte. Es ist mir ein großes Anliegen, den Menschen besser zu verstehen und so zu begleiten, dass Klarheit, Kraft und Wachstum möglich werden. Ich habe meinen Wunsch 2018 mit einer Ausbildung zur systemischen Coach und zur zertifizierten Mediatorin verwirklicht. Bis heute vertiefe ich mein Wissen über Weiterbildungen zur Resilienztrainerin, Paarcoaching, Teamcoach (systemisch/agil) und verschiedenen Coachingtools.</p>
+
+      <p class="bio-body">Seit 2018 begleite ich Menschen vor allem in beruflichen Veränderungsprozessen und Konflikten, immer in Richtung Klarheit und Selbstwirksamkeit. Seit 3 Jahren arbeite ich mit vielen jungen Führungskräften und wir sind aktiv und begeistert dabei, die Arbeitswelt mit Führungsskills der Zukunft zu verändern.</p>
+
+      <p class="bio-body">Mein Antrieb ist die Neugier und die Überzeugung, dass jeder Mensch mit allen Themen, Herausforderungen, Zielen und Visionen der Redewert ist.</p>
+
+      <p class="bio-body">Jede kritische Lebenssituation birgt eine Chance für mehr Klarheit und neue Lösungsansätze. Durch die verschiedenen Stationen in meinem Leben habe ich ein Talent für Perspektivwechsel entwickelt, was mir dabei hilft, mich mit meinen Klient:innen empathisch und wertschätzend zu verbinden.</p>
+
+      <p class="bio-body">Mit großer Freude bilde ich seit inzwischen 4 Jahren systemische Coaches aus. Im Team mit tollen Kolleginnen verhelfen wir Menschen dazu, ihre Skills und das Mindset in systemischen Coachingtechniken auszubauen und zu vertiefen. Diese Skills sind für alle Berufsfelder eine echte Bereicherung.</p>
+
+      <p class="bio-body">Mein Bedürfnis nach Abenteuer und Entdeckung erfülle ich durch Reisen mit meiner Familie und Freunden. Seit 14 Jahren ist Berlin mein Lebensmittelpunkt. Ich liebe die Seen der Uckermark. Mit dem Stand-up-Paddle inmitten der Natur, Sonne auf der Haut und von Wasser umgeben, komme ich wunderbar zur Ruhe.</p>
+
+      <p class="bio-body">Ein weiterer wichtiger Teil meines Lebens ist das Thema Achtsamkeit und Gesundheit. Ich meditiere seit über 20 Jahren und lasse diese kraftvollen Techniken der Achtsamkeit in meine Arbeit einfließen. Ich nehme mir jedes Jahr eine Auszeit mit Ayurveda und unterstütze mich so auf allen Ebenen, um meinen Weg weiter mit viel Freude und Energie zu gehen. In einer Zeit schnellerer Veränderungen ist es für mich unerlässlich, einen Zugang zur inneren Ruhe zu haben.</p>
+
+      <p class="bio-body">Ich liebe es, Menschen bei ihrer Weiterentwicklung zu begleiten und sie auf dem Weg zu Klarheit und Selbstführung zu unterstützen. Ich freue mich darauf, auch dich oder dein Team bei einem Anliegen zu unterstützen.<br>Denn du bist der Redewert.</p>
+
+      <a href="index.html#kontakt" class="bio-cta">Jetzt Erstgespräch buchen!</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ELEMENT STATEMENT ══════════════════════════════════════════ -->
+<section class="element-section">
+  <h2 class="element-heading">Wenn ich Menschen<br>in ihrer Entwicklung<br>begleiten darf,<br>bin ich in<br>meinem Element.</h2>
+  <div class="element-image">
+    <img src="https://static.wixstatic.com/media/fe5bc9fba2664bd38591ff1b3f3c4fd6.png/v1/fill/w_140,h_140,al_c,q_95,usm_0.66_1.00_0.01/fe5bc9fba2664bd38591ff1b3f3c4fd6.png"
+         alt="Dekoration">
+  </div>
+</section>
+
+<!-- ═══ AUSBILDUNGEN + KUNDEN ══════════════════════════════════════ -->
+<section class="credentials-section">
+  <div class="credentials-col">
+    <h3>Ausbildungen</h3>
+    <ul>
+      <li>Teamcoaching (systemisch/agil) // 2023</li>
+      <li>Vertiefung Paarcoaching // 2022</li>
+      <li>The Work für Coaches // 2021</li>
+      <li>Online Trainerin für digitales Lernen // 2021</li>
+      <li>Resilienztrainerin // 2021</li>
+      <li>zertif. Mediatorin // 2018–2019</li>
+      <li>Systemische Coach // 2018</li>
+      <li>Moderatorin &amp; Sprecherin // 2016</li>
+    </ul>
+  </div>
+  <div class="credentials-col">
+    <h3>Kunden</h3>
+    <ul>
+      <li>IG Metall</li>
+      <li>Friedrich-Ebert Stiftung</li>
+      <li>audible</li>
+      <li>Oetker Digital</li>
+      <li>Volkssolidarität</li>
+      <li>Anne-Frank Zentrum</li>
+      <li>Leonardo DaVinci Campus</li>
+      <li>Syntax Institut</li>
+      <li>Studierendenwerk Darmstadt</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══ GEDANKEN UND BILDER ═══════════════════════════════════════ -->
+<section class="gedanken-section">
+  <h2 class="gedanken-heading">Gedanken und Bilder</h2>
+  <p class="gedanken-quote">
+    Sind die Sprache unseres Verstandes.<br>
+    Gefühle und Emotionen sind die Sprache unseres Körpers.<br>
+    So wie du denkst und wie du fühlst, so bist du!<br>
+    Dein ICH ist das Ergebnis der Zusammenarbeit von Verstand und Körper.
+  </p>
+  <p class="gedanken-author">– Dr. Joe Dispenza –</p>
+  <div class="gedanken-images">
+    <img src="https://static.wixstatic.com/media/26412a73d5144587ba3dc06fc7979fdc.png/v1/crop/x_49,y_0,w_2140,h_2130/fill/w_160,h_160,al_c,q_90,usm_0.66_1.00_0.01/26412a73d5144587ba3dc06fc7979fdc.png"
+         alt="Dekoration">
+    <img src="https://static.wixstatic.com/media/f0b968c2672740508f94fe2383278daa.png/v1/fill/w_120,h_160,al_c,q_90,usm_0.66_1.00_0.01/f0b968c2672740508f94fe2383278daa.png"
+         alt="Dekoration">
+    <img src="https://static.wixstatic.com/media/b09c422ef2674033a3e2d6008ba26e0c.jpg/v1/crop/x_0,y_0,w_1687,h_1688/fill/w_160,h_160,al_c,q_90,usm_0.66_1.00_0.01/b09c422ef2674033a3e2d6008ba26e0c.jpg"
+         alt="Dekoration">
+  </div>
+</section>
+
+<!-- ═══ KONTAKT ════════════════════════════════════════════════════ -->
+<div id="contact-placeholder"></div>
+<script src="contact-section.js"></script>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════════ -->
+<footer>
+  <p>© 2025 DER REDEWERT</p>
+  <div class="footer-links">
+    <a href="datenschutzerklaerung.html">Datenschutzerklärung</a>
+    <a href="impressum-agb.html">Impressum &amp; AGB</a>
+  </div>
+</footer>
+
+<script>
+(function() {
+  var btn = document.getElementById('hamburger');
+  var nav = document.getElementById('mainNav');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    btn.classList.toggle('open');
+    nav.classList.toggle('open');
+    document.body.style.overflow = nav.classList.contains('open') ? 'hidden' : '';
+  });
+  nav.querySelectorAll('a').forEach(function(link) {
+    link.addEventListener('click', function() {
+      btn.classList.remove('open');
+      nav.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  });
+})();
+</script>
+<script src="nav.js"></script>
+</body>
+</html>

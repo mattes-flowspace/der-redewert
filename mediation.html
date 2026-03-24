@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mediation | der-redewert</title>
+  <style>
+    @font-face {
+      font-family: 'lulo-clean-w01-one-bold';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/e3cf8f7e-35c4-446f-9b93-de93e989f66f/v1/lulo-clean-w01-one-bold.woff') format('woff');
+    }
+    @font-face {
+      font-family: 'din-next-w01-light';
+      font-style: normal; font-weight: 400;
+      src: url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff2') format('woff2'),
+           url('https://static.parastorage.com/fonts/v2/eca8b0cd-45d8-43cf-aee7-ca462bc5497c/v1/din-next-w01-light.woff') format('woff');
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --mint:      #8bd0cd;
+      --yellow:    #dec328;
+      --teal-dark: #155e5b;
+      --teal-mid:  #57bbbf;
+      --coral:     #f07070;
+      --sage:      #c9ddb8;
+      --salmon:    #c9a090;
+      --font-head: 'lulo-clean-w01-one-bold', sans-serif;
+      --font-body: 'din-next-w01-light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-body); color: #1a1a1a; overflow-x: hidden; }
+
+    /* ─── HEADER ─────────────────────────────────────────────── */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--mint);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .logo img { height: 58px; display: block; }
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      font-family: var(--font-body); font-size: 14px;
+      color: #1a1a1a; text-decoration: none; letter-spacing: 0.03em;
+    }
+    nav a:hover { text-decoration: underline; }
+    nav a.active { color: var(--teal-dark); font-weight: 700; }
+    .hamburger {
+      display: none; flex-direction: column; justify-content: center; gap: 5px;
+      background: none; border: none; cursor: pointer; padding: 4px; z-index: 200;
+    }
+    .hamburger span { display: block; width: 24px; height: 2px; background: #1a1a1a; transition: transform 0.3s, opacity 0.3s; }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mobile-nav {
+      display: none; position: fixed; top: 82px; left: 0; right: 0;
+      background: var(--mint); padding: 24px 40px; z-index: 99;
+      flex-direction: column; gap: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+    }
+    .mobile-nav.open { display: flex; }
+    .mobile-nav a { font-size: 16px; color: #1a1a1a; text-decoration: none; }
+
+    /* ─── HERO ───────────────────────────────────────────────── */
+    .hero {
+      background: var(--yellow);
+      text-align: center;
+      padding: 70px 40px 80px;
+    }
+    .hero-sub {
+      font-family: var(--font-body);
+      font-size: 18px; letter-spacing: 0.25em;
+      color: #fff; text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .hero-divider { width: 40px; height: 2px; background: #fff; margin: 0 auto 18px; }
+    .hero-title {
+      font-family: var(--font-head);
+      font-size: 72px; color: #fff;
+      letter-spacing: 0.12em; line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    .section-line { width: 40px; height: 3px; background: #1a1a1a; margin-bottom: 20px; }
+
+    /* ─── WAS IST MEDIATION ──────────────────────────────────── */
+    .was-section {
+      background: var(--teal-mid);
+      padding: 70px 12% 60px;
+    }
+    .section-heading {
+      font-family: var(--font-head);
+      font-size: 28px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 24px; line-height: 1.2;
+    }
+    .was-section p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+      max-width: 820px; margin-bottom: 16px;
+    }
+
+    /* ─── MITEINANDER REDEN ──────────────────────────────────── */
+    .miteinander-section {
+      background: var(--mint);
+      padding: 80px 12%;
+      text-align: center;
+    }
+    .miteinander-heading {
+      font-family: var(--font-head);
+      font-size: 42px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #fff;
+      line-height: 1.2;
+    }
+
+    /* ─── PROZESSBEREICHE ────────────────────────────────────── */
+    .bereiche-section {
+      background: var(--sage);
+      padding: 70px 12% 20px;
+      position: relative;
+    }
+    .bereiche-heading {
+      font-family: var(--font-head);
+      font-size: 30px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 48px; line-height: 1.25;
+      max-width: 560px;
+    }
+    .yellow-dots {
+      position: absolute; top: 60px; right: 12%;
+      width: 80px; height: 80px;
+      background-image: url('https://static.wixstatic.com/media/47e7bfb15bb84835902b40036da139c1.png/v1/fill/w_160,h_160,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/47e7bfb15bb84835902b40036da139c1.png');
+      background-size: contain; background-repeat: no-repeat;
+    }
+
+    /* ─── MEDIATION CARDS ────────────────────────────────────── */
+    .mediation-card {
+      border: 1.5px solid #1a1a1a;
+      padding: 40px 48px;
+      margin-bottom: 32px;
+      background: transparent;
+    }
+    .mediation-card:last-child { margin-bottom: 48px; }
+    .card-title {
+      font-family: var(--font-head);
+      font-size: 22px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      text-align: center; margin-bottom: 12px;
+    }
+    .card-divider { width: 40px; height: 2px; background: #1a1a1a; margin: 0 auto 20px; }
+    .card-body {
+      font-family: var(--font-body);
+      font-size: 15px; line-height: 1.8; color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+    .card-cta {
+      display: flex; justify-content: center; margin-top: 20px;
+    }
+    .card-btn {
+      display: inline-block;
+      font-family: var(--font-body); font-size: 14px;
+      color: #fff; background: var(--teal-mid);
+      border-radius: 24px; padding: 12px 28px;
+      text-decoration: none; letter-spacing: 0.03em;
+      transition: background 0.2s;
+    }
+    .card-btn:hover { background: var(--teal-dark); }
+
+    /* ─── WIE ARBEITE ICH ────────────────────────────────────── */
+    .wie-section {
+      background: #b8ceaa;
+      padding: 70px 12% 60px;
+    }
+    .wie-heading {
+      font-family: var(--font-head);
+      font-size: 28px; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 28px; line-height: 1.2;
+    }
+    .wie-section p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+      max-width: 760px; margin-bottom: 16px;
+    }
+
+    /* ─── KOSTEN ─────────────────────────────────────────────── */
+    .kosten-section {
+      background: #c8a898;
+      padding: 70px 12%;
+    }
+    .kosten-heading {
+      font-family: var(--font-head);
+      font-size: 22px; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #1a1a1a;
+      margin-bottom: 20px;
+    }
+    .kosten-main {
+      font-family: var(--font-body);
+      font-size: 17px; font-weight: 700;
+      line-height: 1.6; color: #1a1a1a; margin-bottom: 12px;
+    }
+    .kosten-body {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.8; color: #1a1a1a;
+      max-width: 720px;
+    }
+
+    /* ─── CONTACT ────────────────────────────────────────────── */
+    .contact-section {
+      background: var(--yellow);
+      padding: 70px 10%;
+      display: flex; gap: 80px; align-items: flex-start;
+    }
+    .contact-info { flex: 0 0 280px; }
+    .contact-heading {
+      font-family: var(--font-head);
+      font-size: 20px; letter-spacing: 0.1em;
+      color: #1a1a1a; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .contact-info p {
+      font-family: var(--font-body);
+      font-size: 16px; line-height: 1.7; color: #1a1a1a; margin-bottom: 8px;
+    }
+    .contact-info a { color: #1a1a1a; text-decoration: underline; }
+    .contact-form { flex: 1; max-width: 500px; }
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%; padding: 14px 16px; margin-bottom: 14px;
+      border: 1px solid rgba(0,0,0,0.3);
+      background: rgba(255,255,255,0.5);
+      font-family: var(--font-body); font-size: 15px;
+      color: #1a1a1a; border-radius: 0; outline: none; display: block;
+    }
+    .contact-form input::placeholder,
+    .contact-form textarea::placeholder { color: rgba(0,0,0,0.5); }
+    .contact-form input:focus,
+    .contact-form textarea:focus { background: rgba(255,255,255,0.75); }
+    .contact-form textarea { height: 120px; resize: vertical; }
+    .contact-form button {
+      background: var(--teal-dark); color: #fff;
+      font-family: var(--font-head); font-size: 13px;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; padding: 16px 36px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .contact-form button:hover { background: #0d3f3d; }
+
+    /* ─── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      background: var(--mint);
+      padding: 16px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    footer p { font-family: var(--font-body); font-size: 13px; color: #1a1a1a; }
+    footer a { color: #1a1a1a; text-decoration: none; margin-left: 20px; font-size: 13px; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      header { padding: 12px 24px; }
+      nav { display: none; }
+      .hamburger { display: flex; }
+      .hero-title { font-size: 48px; }
+      .miteinander-heading { font-size: 28px; }
+      .mediation-card { padding: 28px 24px; }
+      .yellow-dots { display: none; }
+      .contact-section { flex-direction: column; gap: 40px; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="index.html" class="logo">
+    <img src="https://static.wixstatic.com/media/3ad277_2dabdcf28f53462f8f5d9dc393bd2036~mv2.gif" alt="DER REDEWERT Logo">
+  </a>
+  <nav>
+    <a href="index.html">Startseite</a>
+    <a href="coaching.html">Coaching</a>
+    <a href="mediation.html" class="active">Mediation</a>
+    <a href="seminare.html">Seminare</a>
+    <a href="ueber-mich.html">Über mich</a>
+    <a href="index.html#kontakt">Kontakt</a>
+  </nav>
+  <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+    <span></span><span></span><span></span>
+  </button>
+</header>
+<nav class="mobile-nav" id="mobileNav">
+  <a href="index.html">Startseite</a>
+  <a href="coaching.html">Coaching</a>
+  <a href="mediation.html">Mediation</a>
+  <a href="seminare.html">Seminare</a>
+  <a href="ueber-mich.html">Über mich</a>
+  <a href="index.html#kontakt">Kontakt</a>
+</nav>
+
+<section class="hero">
+  <p class="hero-sub">In jedem Konflikt stecken neue</p>
+  <div class="hero-divider"></div>
+  <h1 class="hero-title">Chancen</h1>
+</section>
+
+<section class="was-section">
+  <div class="section-line"></div>
+  <h2 class="section-heading">Was ist Mediation?</h2>
+  <p>Mediation ist ein strukturierter, lösungsorientierter Prozess zur Beilegung von Konflikten. Es ist ein außergerichtliches und konstruktives Verfahren um Konflikte so zu bearbeiten, dass nachhaltige WIN-WIN Lösungen entstehen. WIN-WIN bedeutet, dass alle beteiligten Konfliktparteien die Lösungstrategie mitgestalten, mittragen und an der Umsetzung beteiligt sind.</p>
+  <p>In Konflikten verhärten sich oft die Fronten der Konfliktbeteiligten zueinander, so dass eine konstruktive Kommunikation und ein lösungsorientiertes Verhalten erschwert bzw. unmöglich ist. Mediation bietet den sicheren Rahmen gemeinsam zu einem positiven Kommunikationsstil zu finden und den Raum für eigene, nachhaltige Lösungen zu öffnen. Mediation ist ein Verfahren, das von gegenseitigem Respekt, der Akzeptanz von Unterschieden und der gemeinsamen Lösungssuche geprägt ist.</p>
+</section>
+
+<section class="miteinander-section">
+  <h2 class="miteinander-heading">Miteinander reden<br>ist die Einladung<br>der Lösung</h2>
+</section>
+
+<section class="bereiche-section">
+  <div class="yellow-dots"></div>
+  <div class="section-line"></div>
+  <h2 class="bereiche-heading">Ich biete Prozessbegleitung in folgenden Bereichen</h2>
+
+  <div class="mediation-card">
+    <h3 class="card-title">Paarmediation</h3>
+    <div class="card-divider"></div>
+    <p class="card-body">Wenn es in der Partnerschaft zu Konflikten kommt und die Kommunikation nicht mehr funktioniert, wird es Zeit durch die Begleitung eines/r Mediators/in aus dem Konfliktmuster auszusteigen und neue Lösungswege zu gehen. Mediation bietet den sicheren Rahmen gemeinsam zu einem positiven Kommunikationsstil zu finden und den Raum für eigene, nachhaltige Lösungen zu öffnen.</p>
+    <p class="card-body">Wenn ihr als Paar alleine nicht mehr weiter kommt, bietet Mediation eine Option um gemeinsam den Lösungsprozess zu gestalten, so dass alle Anteile Raum bekommen.</p>
+    <div class="card-cta">
+      <a href="paarmediation.html" class="card-btn">Mehr erfahren</a>
+    </div>
+  </div>
+
+  <div class="mediation-card">
+    <h3 class="card-title">Familienmediation</h3>
+    <div class="card-divider"></div>
+    <p class="card-body">Wenn Konflikte zwischen Generationen, Eltern oder Geschwistern entstehen, kann dies das Gefüge einer Familie stark belasten oder gar sprengen. Scheidung, Erbangelegenheiten, Patchwork oder Rollenverteilung sind nur einige Beispiele der Konfliktbereiche.</p>
+    <p class="card-body">Wenn du denkst, dass eure Verbindung wichtig für eine gemeinsame Lösung ist, lass uns gemeinsam in den Prozess gehen. Denn eure Lösung ist DER REDEWERT.</p>
+  </div>
+
+  <div class="mediation-card">
+    <h3 class="card-title">Kollegiale Mediation</h3>
+    <div class="card-divider"></div>
+    <p class="card-body">Konflikte am Arbeitsplatz sind keine Seltenheit! Ob mit Kolleg*innen oder Chef*in, Konflikte im oder zwischen Teams – dort wo Konflikte die Spannung erhöhen, ist Leichtigkeit in der Zusammenarbeit verständlicherweise schwer. Im Arbeitskontext treffen viele unterschiedliche Menschentypen, Arbeitsbereiche, Ziele, Interessen und Erwartungen sowie Umsetzungsstrategien aufeinander.</p>
+    <p class="card-body">Wenn die Zusammenarbeit auf der Beziehungsebene gestört ist, kann eine neutrale Unterstützung von Außen für Klarheit sorgen und dadurch wieder konstruktive Wege der Zusammenarbeit ermöglichen. Mediation ist ein nachhaltiges und lösungsorientiertes Verfahren, dass jede Partei auch für zukünftige Konfliktlösungen unterstützen kann und somit das kollegiale Miteinander auf Dauer stärkt.</p>
+  </div>
+</section>
+
+<section class="wie-section">
+  <div class="section-line"></div>
+  <h2 class="wie-heading">Wie arbeite ich?</h2>
+  <p>In der Mediation arbeiten wir lösungs- und bedürfnisorientiert. Im Prozess lege ich meinen Fokus auf die gleichwertige und neutrale Unterstützung aller Konfliktbeteiligten. Es ist mir ein wichtiges Anliegen, einen sicheren Raum zu schaffen, in dem sich Konfliktbeteiligte für den Prozess, die eigenen Bedürfnisse und die Perspektive des/der Anderen öffnen können. Meine besondere Kompetenz für die Mediation ist das Halten der Struktur, meine Klarheit im Prozess und die empathische Ruhe, mit der ich eine Mediation leite.</p>
+  <p>Meine persönliche Verantwortung als Mediatorin sehe ich darin, wertschätzende Kommunikation zu ermöglichen und den Weg zu neuen Lösungen zu öffnen. Die Klient*innen müssen die Bereitschaft für Kommunikation und Ergebnisoffenheit mitbringen, damit eine Mediation erfolgreich sein kann.</p>
+</section>
+
+<section class="kosten-section">
+  <div class="section-line"></div>
+  <h2 class="kosten-heading">Kosten</h2>
+  <p class="kosten-main">Jeder Termin dauert 90 Minuten. Die Kosten betragen 230,00 Euro inkl. 19 % MwSt.</p>
+  <p class="kosten-body">Jeder Termin wird neu festgelegt und besprochen. Es gibt weder eine Mindestanzahl von Terminen noch Paketbuchungen. Mir ist es sehr wichtig, dass ihr jedes Mal frei entscheidet, ob ihr die Zusammenarbeit für hilfreich einschätzt und weiter mit mir zusammen an euren Lösungen arbeiten möchtet.</p>
+</section>
+
+<div id="contact-placeholder"></div>
+<script src="contact-section.js"></script>
+
+<footer>
+  <p>© 2025 DER REDEWERT</p>
+  <div>
+    <a href="impressum-agb.html">Impressum</a>
+    <a href="datenschutzerklaerung.html">Datenschutz</a>
+  </div>
+</footer>
+
+<script>
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobileNav');
+  hamburger.addEventListener('click', () => {
+    hamburger.classList.toggle('open');
+    mobileNav.classList.toggle('open');
+  });
+</script>
+<script src="nav.js"></script>
+</body>
+</html>
