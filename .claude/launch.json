@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "der-redewert preview",
+      "runtimeExecutable": "/Users/mattes/Library/Application Support/com.raycast.macos/NodeJS/runtime/22.14.0/bin/node",
+      "runtimeArgs": ["/Users/mattes/Library/CloudStorage/Dropbox/KI RND/Wibs Webseite/CLAUDE_CODE_VARIANTE/serve.js"],
+      "port": 8765,
+      "autoPort": true
+    }
+  ]
+}
