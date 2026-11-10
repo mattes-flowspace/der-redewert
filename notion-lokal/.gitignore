@@ -1,0 +1,5 @@
+# Persönliche Daten niemals ins Git-Repo!
+daten/
+sicherung_*.zip
+export_*/
+__pycache__/
