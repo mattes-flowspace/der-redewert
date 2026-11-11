@@ -107,10 +107,13 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
 
 | Aktion | So geht's |
 |---|---|
-| Blöcke einfügen | im Editor `/` tippen: Überschriften, To-dos, Toggles, Spalten, Board, Tabelle, Bild, Video, Seitenlink … Mit Tippen filtern, Enter fügt ein |
-| Text formatieren | Text mit der Maus markieren: Es erscheint eine Leiste für fett, kursiv, unterstrichen, Link, Textfarbe, Hintergrundfarbe und Blocktyp (Überschrift, Liste, To-do). Geht ohne Editor |
-| Text bearbeiten | auf den Text klicken, der Cursor landet an der Stelle. „Fertig“, Esc oder ein Klick daneben beendet (speichert automatisch) |
-| Checkbox abhaken | direkt anklicken, ohne Bearbeiten-Modus |
+| Text schreiben | einfach in den Text klicken und tippen. Überschriften, Listen, Fett und Farben sind sofort formatiert zu sehen. Esc oder ein Klick daneben beendet (speichert automatisch) |
+| Neuer Absatz / Listenpunkt | Enter. In einer Liste beendet ein zweites Enter die Liste. Umschalt+Enter macht einen Zeilenumbruch |
+| Blöcke einfügen | `/` tippen: Überschriften, To-dos, Toggles, Spalten, Board, Tabelle, Bild, Video, Seitenlink … Mit Tippen filtern, Enter fügt ein |
+| Kurzbefehle | am Zeilenanfang `# ` `## ` `### ` für Überschriften, `- ` für Listen, `[] ` für To-dos, `> ` für Zitate, `1. ` für nummerierte Listen |
+| Text formatieren | Text markieren: Es erscheint eine Leiste für fett, kursiv, unterstrichen, Link, Textfarbe, Hintergrundfarbe und Blocktyp. Strg/Cmd+B, I, U gehen auch |
+| Tabellen, Code, ganzer Rohtext | unter dem Text „Als Markdown bearbeiten“ |
+| Checkbox abhaken | direkt anklicken |
 | Bild einfügen | im Editor einfügen (Strg+V), hineinziehen oder „🖼 Bild/Datei“ |
 | Datenbank/Board in eine Seite einbetten | im Editor „🗃️ Datenbank“ |
 | Link auf andere Seite | im Editor „🔗 Seite“ |

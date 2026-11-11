@@ -1,5 +1,5 @@
 {
-  "version": "2026.11.11.4",
-  "notes": "Text markieren und formatieren: fett, kursiv, Farben, Hintergrund, Überschriften",
+  "version": "2026.11.12.1",
+  "notes": "Neuer Editor: Text direkt in der Seite schreiben, Formatierung sofort sichtbar. Neue, ruhigere Gestaltung.",
   "files": ["app.py", "static/index.html", "README.md", "version.json"]
 }
