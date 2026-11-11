@@ -447,6 +447,75 @@ table.db td.tcell .open{font-size:10px;letter-spacing:.06em;border-radius:2px}
 .cell input[type=text],.cell textarea,.prop .v input[type=text],.prop .v textarea{outline:0;border-bottom:1px solid var(--accent);border-radius:0;padding:0;background:transparent}
 .date.today{color:var(--accent)}
 
+/* Ansichten: Zeitleiste, Kalender, Liste */
+.tabs{display:flex;overflow-x:auto;scrollbar-width:none;max-width:100%}
+.tabs::-webkit-scrollbar{display:none}
+.tl-head{display:flex;align-items:center;gap:12px;padding:6px 0 14px;flex-wrap:wrap}
+.tl-head .sp{flex:1}
+.tl-label{font-size:20px;font-weight:600;letter-spacing:-.014em}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.seg button{font-size:12px;padding:4px 11px;border-radius:0;color:var(--muted);border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--text);color:var(--bg)}
+.tl-scroll{overflow-x:auto;border-top:1px solid var(--text)}
+.tl-grid{min-width:860px}
+.tl-grid.z-month{min-width:1040px}
+.tl-axisrow,.tl-row{display:flex;align-items:stretch}
+.tl-name{width:220px;flex:none;position:sticky;left:0;background:var(--bg);z-index:2;display:flex;align-items:center;gap:9px;padding:0 12px 0 0;font-size:13.5px;cursor:pointer;min-width:0;border-right:1px solid var(--line)}
+.tl-row .tl-name:hover{color:var(--accent)}
+.tl-axis{position:relative;flex:1;height:44px;border-bottom:1px solid var(--line)}
+.tl-m{position:absolute;top:0;height:22px;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:6px 0 0 6px;white-space:nowrap;overflow:hidden}
+.tl-d{position:absolute;top:22px;height:22px;font-size:10.5px;color:var(--muted);text-align:center;font-variant-numeric:tabular-nums;padding-top:3px;white-space:nowrap}
+.z-quarter .tl-d{text-align:left;padding-left:5px}
+.tl-d.we{opacity:.55}
+.tl-today{position:absolute;bottom:-4px;width:7px;height:7px;border-radius:50%;background:var(--accent);transform:translateX(-50%);z-index:3}
+.tl-body{position:relative;min-height:60px}
+.tl-bgwrap{position:absolute;left:220px;right:0;top:0;bottom:0;pointer-events:none}
+.tl-bg{position:absolute;inset:0}
+.tl-bg i{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
+.tl-bg i.wk{opacity:.5}
+.tl-bg b{position:absolute;top:0;bottom:0;background:var(--hover)}
+.tl-bg u{position:absolute;top:0;bottom:0;width:1px;background:var(--accent)}
+.tl-row{height:34px;border-bottom:1px solid color-mix(in srgb,var(--line) 55%,transparent)}
+.tl-track{position:relative;flex:1;min-width:0}
+.tl-bar{position:absolute;top:6px;height:21px;min-width:9px;border-radius:2px;border:1px solid rgba(0,0,0,.14);font-size:12px;line-height:19px;padding:0 6px;white-space:nowrap;overflow:hidden;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;z-index:1;box-sizing:border-box}
+:root[data-theme="dark"] .tl-bar{border-color:rgba(255,255,255,.16)}
+.tl-bar:hover{border-color:var(--text)}
+.tl-bar span{pointer-events:none;overflow:hidden;text-overflow:ellipsis;display:block}
+.tl-bar.cutl{border-left-style:dashed;border-radius:0 2px 2px 0}.tl-bar.cutr{border-right-style:dashed;border-radius:2px 0 0 2px}
+.tl-bar .rz{position:absolute;right:0;top:0;bottom:0;width:7px;cursor:ew-resize}
+.tl-bar.short span{display:none}
+.tl-lab{position:absolute;top:7px;font-size:12px;line-height:19px;white-space:nowrap;color:var(--muted);pointer-events:none}
+.tl-undated{margin-top:18px;border-top:1px solid var(--line);padding-top:8px}
+.tl-undated summary{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;list-style:none;padding:4px 0}
+.tl-undated summary::-webkit-details-marker{display:none}
+.tl-undated summary::before{content:"+ ";font-family:var(--mono)}
+.tl-undated[open] summary::before{content:"– "}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--text);border-left:1px solid var(--line)}
+.cal-wd{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding:8px 8px 7px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cal-d{min-height:108px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px 5px 6px;min-width:0}
+.cal-d.we{background:color-mix(in srgb,var(--hover) 55%,transparent)}
+.cal-d.out .cal-n span{opacity:.35}
+.cal-d.over{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.cal-n{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-variant-numeric:tabular-nums;height:24px;margin-bottom:2px}
+.cal-n span{min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%}
+.cal-d.today .cal-n span{background:var(--accent);color:#fff;font-weight:600}
+.cal-n button{opacity:0;color:var(--muted);width:20px;height:20px;padding:0;line-height:1}
+.cal-d:hover .cal-n button{opacity:1}.cal-n button:hover{color:var(--accent)}
+.cal-e{display:flex;align-items:center;gap:6px;font-size:12.5px;line-height:1.35;padding:2px 3px;border-radius:2px;cursor:pointer;min-width:0}
+.cal-e:hover{background:var(--hover)}
+.cal-more{font-size:11px;color:var(--muted);padding:1px 3px}
+.cal-in{width:100%;border:0;border-bottom:1px solid var(--accent);background:transparent;font-size:12.5px;padding:2px 0;outline:0;border-radius:0}
+.lv-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px;min-width:0}
+.lv-row:hover .lv-t{color:var(--accent)}
+.lv-dot{width:8px;height:8px;border-radius:50%;flex:none;border:1px solid rgba(0,0,0,.12)}
+.lv-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.lv-row .lv-t{flex:1}
+.lv-m{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:12.5px;flex:none;max-width:60%;overflow:hidden}
+.lv-m .tag{margin:0}
+@media (max-width:760px){ .tl-name{width:120px} .tl-bgwrap{left:120px} .cal-d{min-height:74px;padding:2px} .cal-e .lv-t{font-size:11px} .lv-m{display:none} }
+
 /* Menüs, Leisten, Dialoge */
 .pop{border:1px solid var(--line);border-radius:4px;padding:6px;font-size:13.5px}
 .pop label{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;margin:8px 8px 4px}
@@ -862,7 +931,7 @@ function md(src, off=0){
 // Zustand, Einstellungen & Routing
 // ===========================================================================
 let TREE = [], CURRENT = null, PEEK = null;
-let META = {favorites:[], home:null, theme:"auto", wide:{}, views:{}, closed:{}, expanded:[]};
+let META = {favorites:[], home:null, theme:"auto", wide:{}, views:{}, closed:{}, expanded:[], dbs:{}};
 let LIVE = [];   // aktive Datenbank-Ansichten (für Aktualisierung nach Änderungen)
 const metaSavers = {};
 function saveMeta(key){ (metaSavers[key] ||= debounce(()=>api("PUT","/api/meta/"+encodeURIComponent(key), META[key]).catch(e=>toast(e.message)), 400))(); }
@@ -1682,8 +1751,8 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   }
   host.innerHTML = "";
   const hasSelect = p.schema.some(c=>c.type==="select");
-  const st = Object.assign({view: hasSelect?"board":"table", sort:null, dir:1, filter:"", group:null, hidden:[], cardProps:null}, META.views[viewKey]||{});
-  const persist = () => { const {view,sort,dir,filter,group,hidden,cardProps} = st; META.views[viewKey] = {view,sort,dir,filter,group,hidden,cardProps}; saveMeta("views"); };
+  const st = Object.assign({view: hasSelect?"board":"table", sort:null, dir:1, filter:"", group:null, hidden:[], cardProps:null, dateCol:null, zoom:"year"}, META.views[viewKey]||{});
+  const persist = () => { const {view,sort,dir,filter,group,hidden,cardProps,dateCol,zoom} = st; META.views[viewKey] = {view,sort,dir,filter,group,hidden,cardProps,dateCol,zoom}; saveMeta("views"); };
   const saveSchema = () => save(p.id,{schema:p.schema});
   const tcol = () => p.schema.find(c=>c.type==="title")?.name || "Name";
   let qaGroup = null, editRowId = null;
@@ -1691,7 +1760,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   const body = h("div");
   const filterInp = h("input",{class:"filter", placeholder:"Filtern", value:st.filter});
   filterInp.oninput = debounce(()=>{ st.filter = filterInp.value; persist(); draw(); }, 200);
-  const tabs = h("span",{style:"display:flex"});
+  const tabs = h("span",{class:"tabs"});
   const bar = h("div",{class:"dbbar"}, tabs, h("span",{class:"sp"}), filterInp,
     h("button",{class:"btn", title:"Ansicht anpassen", onclick:e=>viewMenu(e.currentTarget)},"Ansicht"),
     h("button",{class:"btn primary", onclick:()=>quickNew()},"Neu"));
@@ -1719,10 +1788,10 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
 
   const draw = () => {
     tabs.innerHTML = "";
-    for (const [k,lb] of [["board","Board"],["table","Tabelle"]]) tabs.append(h("button",{class:"tab"+(st.view===k?" on":""), onclick:()=>{st.view=k; persist(); draw();}}, lb));
+    for (const [k,lb] of [["board","Board"],["table","Tabelle"],["timeline","Zeitleiste"],["calendar","Kalender"],["list","Liste"]]) tabs.append(h("button",{class:"tab"+(st.view===k?" on":""), onclick:()=>{st.view=k; persist(); draw();}}, lb));
     const sl = body.querySelector(".board")?.scrollLeft, tl = body.querySelector(".tablewrap")?.scrollLeft;
     body.innerHTML = "";
-    body.append(st.view==="board" ? drawBoard() : drawTable());
+    body.append(({board:drawBoard, table:drawTable, timeline:drawTimeline, calendar:drawCalendar, list:drawList})[st.view]?.() || drawTable());
     if (sl && body.querySelector(".board")) body.querySelector(".board").scrollLeft = sl;
     if (tl && body.querySelector(".tablewrap")) body.querySelector(".tablewrap").scrollLeft = tl;
     body.querySelector("textarea.qa")?.focus();
@@ -1730,6 +1799,8 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
 
   const createRow = async (title, props={}) => {
     const full = {...props, [tcol()]: title};
+    const ad = autoDateCol();                      // neue Einträge bekommen das heutige Datum
+    if (ad && !full[ad.name]) full[ad.name] = isoOf(new Date());
     const r = await api("POST","/api/page",{kind:"row", parent_id:p.id, title, props:full});
     const maxSort = Math.max(0, ...p.rows.map(x=>x.sort||0)) + 1;
     const row = {id:r.id, title, props:full, icon:"", sort:maxSort, has_content:false};
@@ -1738,7 +1809,148 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   };
   const quickNew = async () => {
     if (st.view==="board"){ const gc = groupCol(); const first = gc && visibleGroups(gc)[0]; qaGroup = first ? first.key : ""; draw(); return; }
+    if (st.view!=="table"){ const row = await createRow(""); draw(); return openPeek(row.id); }
     const row = await createRow(""); editRowId = row.id; draw();
+  };
+
+  // ---------------- Datum: gemeinsame Helfer für Zeitleiste und Kalender ----------------
+  const DAY = 864e5;
+  const dateCols = () => p.schema.filter(c=>c.type==="date");
+  const dateCol = () => dateCols().find(c=>c.name===st.dateCol) || dateCols().find(c=>/^(date|datum|fällig|due)/i.test(c.name)) || dateCols()[0];
+  const autoDateCol = () => { const v = META.dbs[p.id]?.autoDate; if (v===false) return null; return dateCols().find(c=>c.name===v) || dateCol() || null; };
+  const midnight = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+  const diffDays = (a, b) => Math.round((midnight(b)-midnight(a))/DAY);
+  const spanOf = (r, col) => { const parts = String(r.props[col.name]||"").split("→"), a = parseISO(parts[0]), b = parseISO(parts[1]); if (!a) return null; const s = midnight(a.d), e = b ? midnight(b.d) : s; return {s, e: e<s ? s : e}; };
+  const spanValue = (s, e) => isoOf(s) + (e > s ? " → "+isoOf(e) : "");
+  const rowColor = r => { const gc = groupCol(); const v = gc && gc.type==="select" && r.props[gc.name]; return v ? optColor(gc, v) : "var(--t-gray)"; };
+  const noDateCol = () => h("div",{class:"hint", style:"padding:24px 0"},"Diese Ansicht braucht eine Eigenschaft vom Typ „Datum“. ",
+    h("button",{class:"btn", style:"text-decoration:underline", onclick:async()=>{ p.schema.push({name:"Datum", type:"date"}); await saveSchema(); draw(); }},"Datum-Eigenschaft anlegen"));
+  let anchor = midnight(new Date());      // welcher Zeitraum gerade gezeigt wird
+  const navBar = (label, step, extra) => h("div",{class:"tl-head"},
+    h("div",{class:"tl-label"}, label), h("span",{class:"sp"}), extra,
+    h("span",{class:"seg"},
+      h("button",{title:"Zurück", onclick:()=>{ step(-1); draw(); }},"‹"),
+      h("button",{onclick:()=>{ anchor = midnight(new Date()); draw(); }},"Heute"),
+      h("button",{title:"Weiter", onclick:()=>{ step(1); draw(); }},"›")));
+  const undated = (rows, col) => { const list = rows.filter(r=>!spanOf(r, col)); if (!list.length) return null;
+    return h("details",{class:"tl-undated"}, h("summary",{}, `Ohne Datum · ${list.length}`),
+      h("div",{}, list.map(r=>h("div",{class:"lv-row", onclick:()=>openPeek(r.id)}, h("span",{class:"lv-dot", style:`background:${rowColor(r)}`}), h("span",{class:"lv-t"}, r.title||"Ohne Titel"))))); };
+
+  // ---------------- Zeitleiste ----------------
+  const drawTimeline = () => {
+    const col = dateCol(); if (!col) return noDateCol();
+    const zoom = ["month","quarter","year"].includes(st.zoom) ? st.zoom : "year";
+    const y = anchor.getFullYear(), m = anchor.getMonth();
+    let rs, re, label;
+    if (zoom==="year"){ rs = new Date(y,0,1); re = new Date(y,11,31); label = String(y); }
+    else if (zoom==="quarter"){ const q = Math.floor(m/3); rs = new Date(y,q*3,1); re = new Date(y,q*3+3,0); label = `${q+1}. Quartal ${y}`; }
+    else { rs = new Date(y,m,1); re = new Date(y,m+1,0); label = rs.toLocaleDateString("de-DE",{month:"long", year:"numeric"}); }
+    const N = diffDays(rs, re)+1, pct = n => (n/N*100)+"%";
+    const step = d => { anchor = zoom==="year" ? new Date(y+d,0,1) : zoom==="quarter" ? new Date(y, m+3*d, 1) : new Date(y, m+d, 1); };
+    const seg = h("span",{class:"seg"}, [["month","Monat"],["quarter","Quartal"],["year","Jahr"]].map(([k,lb])=>h("button",{class:zoom===k?"on":"", onclick:()=>{ st.zoom=k; persist(); draw(); }}, lb)));
+    const rows = sortedRows(), items = rows.map(r=>({r, sp:spanOf(r, col)})).filter(x=>x.sp && x.sp.e >= rs && x.sp.s <= re);
+    if (!st.sort) items.sort((a,b)=>a.sp.s-b.sp.s || a.sp.e-b.sp.e);
+    // Achse
+    const axis = h("div",{class:"tl-axis"}), bg = h("div",{class:"tl-bg"});
+    for (let d = new Date(rs); d <= re; d = new Date(d.getFullYear(), d.getMonth()+1, 1)){
+      const ms = d < rs ? rs : d, me = new Date(d.getFullYear(), d.getMonth()+1, 0) > re ? re : new Date(d.getFullYear(), d.getMonth()+1, 0);
+      axis.append(h("div",{class:"tl-m", style:`left:${pct(diffDays(rs,ms))};width:${pct(diffDays(ms,me)+1)}`}, d.toLocaleDateString("de-DE",{month: zoom==="year" ? "short" : "long"})));
+      bg.append(h("i",{style:`left:${pct(diffDays(rs,ms))}`}));
+    }
+    if (zoom!=="year") for (let k=0; k<N; k++){ const d = addDays(rs,k), wd = d.getDay();
+      if (zoom==="month" || wd===1) axis.append(h("div",{class:"tl-d"+(wd===0||wd===6?" we":""), style:`left:${pct(k)};width:${pct(zoom==="month"?1:7)}`}, zoom==="month" ? d.getDate() : d.getDate()+"."));
+      if (zoom==="month" && (wd===0||wd===6)) bg.append(h("b",{style:`left:${pct(k)};width:${pct(1)}`}));
+      if (zoom==="quarter" && wd===1) bg.append(h("i",{class:"wk", style:`left:${pct(k)}`})); }
+    const today = midnight(new Date());
+    if (today >= rs && today <= re){ bg.append(h("u",{style:`left:${pct(diffDays(rs,today)+.5)}`})); axis.append(h("div",{class:"tl-today", style:`left:${pct(diffDays(rs,today)+.5)}`})); }
+    const bodyEl = h("div",{class:"tl-body"}, h("div",{class:"tl-bgwrap"}, bg));
+    for (const {r, sp} of items){
+      const s = sp.s < rs ? rs : sp.s, e = sp.e > re ? re : sp.e, len = diffDays(s,e)+1;
+      const bar = h("div",{class:"tl-bar"+(sp.s<rs?" cutl":"")+(sp.e>re?" cutr":""), style:`left:${pct(diffDays(rs,s))};width:${pct(len)};background:${rowColor(r)}`, title:`${r.title||"Ohne Titel"} · ${dateEl(r.props[col.name])?.textContent||""}`},
+        h("span",{}, r.title||"Ohne Titel"), h("i",{class:"rz"}));
+      const track = h("div",{class:"tl-track"}, bar);
+      // kurze Balken: Titel daneben statt abgeschnitten darin
+      if (zoom!=="year" && len/N < 0.12){ bar.classList.add("short"); track.append(h("span",{class:"tl-lab", style:`left:calc(${pct(diffDays(rs,s)+len)} + 7px)`}, r.title||"Ohne Titel")); }
+      bar.addEventListener("pointerdown", ev => {
+        if (ev.button) return; ev.preventDefault();
+        const pxDay = track.getBoundingClientRect().width / N, sx = ev.clientX, resize = ev.target.classList.contains("rz"), w0 = bar.getBoundingClientRect().width;
+        let dd = 0, moved = false; bar.setPointerCapture(ev.pointerId);
+        const mv = e2 => { const dx = e2.clientX-sx; if (Math.abs(dx) > 4) moved = true; dd = Math.round(dx/pxDay);
+          if (resize) bar.style.width = Math.max(pxDay, w0+dd*pxDay)+"px"; else bar.style.transform = `translateX(${dd*pxDay}px)`; };
+        const up = async () => { bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up); bar.removeEventListener("pointercancel", up);
+          if (!moved) return openPeek(r.id);
+          if (dd){ const ns = resize ? sp.s : addDays(sp.s, dd); let ne = addDays(sp.e, dd); if (ne < ns) ne = ns;
+            r.props[col.name] = spanValue(ns, ne); draw(); await save(r.id,{props:r.props}); } else draw(); };
+        bar.addEventListener("pointermove", mv); bar.addEventListener("pointerup", up); bar.addEventListener("pointercancel", up);
+      });
+      const row = h("div",{class:"tl-row"}, h("div",{class:"tl-name", title:r.title, onclick:()=>openPeek(r.id)}, h("span",{class:"lv-dot", style:`background:${rowColor(r)}`}), h("span",{class:"lv-t"}, r.title||"Ohne Titel")), track);
+      row.oncontextmenu = ev => { ev.preventDefault(); rowMenu(r, ev); };
+      bodyEl.append(row);
+    }
+    if (!items.length) bodyEl.append(h("div",{class:"hint", style:"padding:18px 0 18px 232px"},"Keine Einträge in diesem Zeitraum."));
+    const others = rows.filter(r=>{ const sp = spanOf(r,col); return sp && (sp.e < rs || sp.s > re); }).length;
+    return h("div",{class:"tl"}, navBar(label, step, seg),
+      h("div",{class:"tl-scroll"}, h("div",{class:"tl-grid z-"+zoom}, h("div",{class:"tl-axisrow"}, h("div",{class:"tl-name"}), axis), bodyEl)),
+      h("div",{class:"hint", style:"padding:10px 0 0"}, `${items.length} Einträge im Zeitraum` + (others ? ` · ${others} außerhalb` : "") + " · Balken ziehen verschiebt, rechter Rand ändert das Ende"),
+      undated(rows, col));
+  };
+
+  // ---------------- Kalender ----------------
+  const drawCalendar = () => {
+    const col = dateCol(); if (!col) return noDateCol();
+    const y = anchor.getFullYear(), m = anchor.getMonth(), first = new Date(y,m,1);
+    const start = addDays(first, -((first.getDay()+6)%7)), today = midnight(new Date());
+    const rows = sortedRows(), spans = rows.map(r=>({r, sp:spanOf(r,col)})).filter(x=>x.sp);
+    const grid = h("div",{class:"cal"});
+    for (const wd of ["Mo","Di","Mi","Do","Fr","Sa","So"]) grid.append(h("div",{class:"cal-wd"}, wd));
+    const weeks = (diffDays(start, new Date(y,m+1,0)) >= 35) ? 42 : 35;
+    for (let k=0; k<weeks; k++){
+      const d = addDays(start,k), iso = isoOf(d);
+      const cell = h("div",{class:"cal-d"+(d.getMonth()!==m?" out":"")+(+d===+today?" today":"")+(d.getDay()===0||d.getDay()===6?" we":"")},
+        h("div",{class:"cal-n"}, h("span",{}, d.getDate()), h("button",{title:"Eintrag an diesem Tag", onclick:ev=>{ ev.stopPropagation(); addAt(cell, iso); }},"+")));
+      const list = spans.filter(x=>x.sp.s <= d && x.sp.e >= d);
+      for (const {r, sp} of list.slice(0,4)){
+        const en = h("div",{class:"cal-e", draggable:"true", title:r.title, onclick:ev=>{ ev.stopPropagation(); openPeek(r.id); }}, h("span",{class:"lv-dot", style:`background:${rowColor(r)}`}), h("span",{class:"lv-t"}, r.title||"Ohne Titel"));
+        en.ondragstart = ev => { ev.dataTransfer.setData("text/nl-cal", JSON.stringify({id:r.id, from:iso})); };
+        en.oncontextmenu = ev => { ev.preventDefault(); rowMenu(r, ev); };
+        cell.append(en);
+      }
+      if (list.length > 4) cell.append(h("div",{class:"cal-more"}, `+ ${list.length-4} weitere`));
+      cell.ondragover = ev => { ev.preventDefault(); cell.classList.add("over"); };
+      cell.ondragleave = () => cell.classList.remove("over");
+      cell.ondrop = async ev => { cell.classList.remove("over"); let data; try { data = JSON.parse(ev.dataTransfer.getData("text/nl-cal")); } catch { return; }
+        const r = p.rows.find(x=>x.id===data.id), sp = r && spanOf(r,col); if (!sp) return;
+        const dd = diffDays(parseISO(data.from).d, d); if (!dd) return;
+        r.props[col.name] = spanValue(addDays(sp.s,dd), addDays(sp.e,dd)); draw(); await save(r.id,{props:r.props}); };
+      grid.append(cell);
+    }
+    const addAt = (cell, iso) => {
+      if (cell.querySelector("input")) return;
+      const inp = h("input",{class:"cal-in", placeholder:"Titel, Enter"}); cell.append(inp); inp.focus();
+      let done = false;
+      const fin = async ok => { if (done) return; done = true; const t = inp.value.trim(); if (ok && t){ await createRow(t, {[col.name]: iso}); } draw(); };
+      inp.onkeydown = ev => { if (ev.key==="Enter") fin(true); if (ev.key==="Escape") fin(false); };
+      inp.onblur = () => fin(true);
+    };
+    return h("div",{class:"tl"}, navBar(first.toLocaleDateString("de-DE",{month:"long", year:"numeric"}), d => { anchor = new Date(y, m+d, 1); }),
+      grid, undated(rows, col));
+  };
+
+  // ---------------- Liste ----------------
+  const drawList = () => {
+    const rows = sortedRows(), gc = groupCol();
+    const shown = st.cardProps || p.schema.filter(c=>["select","multi_select","date"].includes(c.type)).map(c=>c.name);
+    const box = h("div",{class:"lv"});
+    for (const r of rows){
+      const meta = h("span",{class:"lv-m"});
+      for (const name of shown){ const x = p.schema.find(c=>c.name===name), v = r.props[name]; if (!x || !v || x.type==="title" || x.type==="checkbox") continue; const sp = h("span",{}); renderCellValue(sp, x, v); meta.append(sp); }
+      const row = h("div",{class:"lv-row", onclick:()=>openPeek(r.id)}, h("span",{class:"lv-dot", style:`background:${rowColor(r)}`}), h("span",{class:"lv-t"}, (r.icon?r.icon+" ":"")+(r.title||"Ohne Titel")), meta);
+      row.oncontextmenu = ev => { ev.preventDefault(); rowMenu(r, ev); };
+      box.append(row);
+    }
+    if (!rows.length) box.append(h("div",{class:"hint", style:"padding:18px 0"},"Noch keine Einträge."));
+    return h("div",{}, box, h("div",{class:"newrow", onclick:quickNew},"＋ Neu"));
   };
   const removeRow = async r => {
     await api("DELETE",`/api/page/${r.id}`); p.rows = p.rows.filter(x=>x.id!==r.id); draw();
@@ -2009,6 +2221,17 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
         }
       }
     }
+    if (dateCols().length){
+      if (["timeline","calendar"].includes(st.view) && dateCols().length > 1){
+        const ds = h("select",{}, dateCols().map(c=>h("option",{value:c.name, selected:c.name===dateCol().name}, c.name)));
+        ds.onchange = () => { st.dateCol = ds.value; persist(); draw(); };
+        pop.append(h("label",{},"Datum für diese Ansicht"), ds);
+      }
+      const cur = autoDateCol();
+      const as = h("select",{}, h("option",{value:""},"Nicht automatisch"), dateCols().map(c=>h("option",{value:c.name, selected:cur && c.name===cur.name}, "Heute in „"+c.name+"“")));
+      as.onchange = () => { META.dbs[p.id] = {...(META.dbs[p.id]||{}), autoDate: as.value || false}; saveMeta("dbs"); };
+      pop.append(h("label",{},"Datum bei neuen Einträgen"), as);
+    }
     pop.append(h("hr"), h("button",{class:"item", onclick:e=>{ addColumn(anchor); }},"＋ Eigenschaft hinzufügen"));
   };
 
@@ -2277,7 +2500,7 @@ try { if (localStorage.getItem("nl_side")==="0") document.body.classList.add("si
 (async () => {
   try { Object.assign(META, await api("GET","/api/meta")); } catch(e){}
   for (const k of ["favorites","expanded"]) if (!Array.isArray(META[k])) META[k] = [];
-  for (const k of ["wide","views","closed"]) if (!META[k] || typeof META[k]!=="object") META[k] = {};
+  for (const k of ["wide","views","closed","dbs"]) if (!META[k] || typeof META[k]!=="object") META[k] = {};
   applyTheme();
   await loadTree();
   route();

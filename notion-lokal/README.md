@@ -103,6 +103,22 @@ Seiten können Datenbanken **einbetten**. Damit funktioniert ein Dashboard wie d
 
 Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben der Board-Spalten** nicht. Bring sie über „⋯“ einmal in die gewünschte Reihenfolge, danach bleibt sie erhalten, auch bei einem erneuten Import. Spalten-Layouts (nebeneinander) exportiert Notion ebenfalls nicht, die Inhalte stehen dann untereinander.
 
+## Ansichten einer Datenbank
+
+Jede Datenbank lässt sich über die Reiter auf fünf Arten zeigen. Die Wahl wird pro Stelle gespeichert, an der die Datenbank eingebettet ist.
+
+| Ansicht | Wofür |
+|---|---|
+| **Board** | Karten in Spalten nach Status, per Ziehen verschieben |
+| **Tabelle** | alle Eigenschaften nebeneinander, direkt in den Zellen bearbeiten |
+| **Zeitleiste** | Einträge als Balken über die Zeit. Umschalten zwischen Monat, Quartal und Jahr. Balken ziehen verschiebt den Termin, der rechte Rand ändert das Ende |
+| **Kalender** | Monatsraster. „+“ an einem Tag legt dort einen Eintrag an, Einträge lassen sich auf einen anderen Tag ziehen |
+| **Liste** | kompakte Zeilen zum schnellen Überfliegen |
+
+Zeitleiste und Kalender nutzen eine Eigenschaft vom Typ „Datum“. Gibt es mehrere, wählst du sie unter „Ansicht“.
+
+**Automatisches Datum:** Neue Einträge bekommen das heutige Datum. Unter „Ansicht“ → „Datum bei neuen Einträgen“ stellst du das pro Datenbank um oder ab.
+
 ## Bedienung
 
 | Aktion | So geht's |
