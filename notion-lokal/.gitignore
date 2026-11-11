@@ -3,3 +3,5 @@ daten/
 sicherung_*.zip
 export_*/
 __pycache__/
+alte-version/
+*.neu

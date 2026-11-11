@@ -261,6 +261,7 @@ textarea.qa{width:100%;border:0;outline:2px solid var(--accent);border-radius:6p
     <button class="side-btn" id="btnImport">📥 Notion importieren</button>
     <button class="side-btn" id="btnExport">📤 Export (Markdown/CSV)</button>
     <button class="side-btn" id="btnTrash">🗑️ Papierkorb</button>
+    <button class="side-btn" id="btnUpdate">⟳ Nach Updates suchen</button>
     <button class="side-btn" id="btnTheme">🌓 Darstellung: Automatisch</button>
   </footer>
 </nav>
@@ -1458,6 +1459,35 @@ $("#btnNewPage").onclick = () => newPage(null);
 $("#btnNewDb").onclick = () => newPage(null, "database");
 $("#btnMore").onclick = moreMenu;
 $("#homeBtn").onclick = () => { closePeek(); if (META.home && NODE[META.home]) go(META.home); else location.hash = "#/alle"; };
+// ---- Updates ----------------------------------------------------------------
+async function checkUpdate(manual){
+  const btn = $("#btnUpdate");
+  let u;
+  try { u = await api("GET","/api/update"); } catch(e){ if (manual) toast(e.message); return; }
+  btn.title = "Installierte Version: " + u.current;
+  if (u.available){
+    btn.textContent = "⬆️ Update " + u.latest + " installieren"; btn.style.color = "var(--accent)"; btn.dataset.ready = "1";
+    if (manual) installUpdate(u);
+  } else {
+    btn.textContent = "⟳ Nach Updates suchen"; btn.style.color = ""; delete btn.dataset.ready;
+    if (manual) toast(u.reachable ? "Du hast die neueste Version (" + u.current + ")." : "Update-Server nicht erreichbar. Bist du online?");
+  }
+  return u;
+}
+async function installUpdate(u){
+  if (!confirm(`Update auf Version ${u.latest} installieren?` + (u.notes ? `\n\nNeu: ${u.notes}` : "") + "\n\nDeine Daten bleiben unverändert. Die App startet kurz neu.")) return;
+  flushAll();
+  const ov = dialog(h("div",{class:"body"}, h("h2",{},"⬆️ Update wird installiert …"), h("p",{class:"hint"},"Bitte einen Moment warten. Die Seite lädt danach von selbst neu.")));
+  try { await api("POST","/api/update"); }
+  catch(e){ ov.close(); toast("Update fehlgeschlagen: " + e.message); return; }
+  // warten, bis der Server wieder antwortet, dann neu laden
+  for (let i=0; i<40; i++){
+    await new Promise(r=>setTimeout(r, 700));
+    try { const r = await fetch("/api/update", {cache:"no-store"}); if (r.ok){ const j = await r.json(); if (j.current === u.latest || i > 6){ location.reload(); return; } } } catch(e){}
+  }
+  ov.close(); toast("Update eingespielt. Bitte die App einmal neu starten.");
+}
+$("#btnUpdate").onclick = () => checkUpdate(true);
 $("#btnTheme").onclick = () => { META.theme = ({auto:"light", light:"dark", dark:"auto"})[META.theme||"auto"]; saveMeta("theme"); applyTheme(); };
 $("#btnFav").onclick = () => { if (!CURRENT) return; const id = CURRENT.id; const on = META.favorites.includes(id);
   META.favorites = on ? META.favorites.filter(x=>x!==id) : [...META.favorites, id]; saveMeta("favorites"); $("#btnFav").textContent = on ? "☆" : "★"; renderTree(); };
@@ -1485,6 +1515,7 @@ try { if (localStorage.getItem("nl_side")==="0") document.body.classList.add("si
   await loadTree();
   route();
   checkLock();
+  checkUpdate(false);
 })();
 </script>
 </body>

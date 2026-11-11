@@ -63,6 +63,14 @@ python3 app.py export ./export # alles als Markdown + CSV (lesbar mit jedem Edit
 
 Ein Export als ZIP geht auch über **„Export“** in der Seitenleiste.
 
+## Updates
+
+Die App prüft beim Öffnen, ob im GitHub-Repository eine neuere Version liegt. Dann erscheint unten in der Seitenleiste **„⬆️ Update … installieren“**. Ein Klick lädt die neuen Programmdateien, ersetzt die alten und startet die App neu. Manuell prüfst du mit „⟳ Nach Updates suchen“ oder im Terminal mit `python3 app.py update`.
+
+- Der Ordner `daten/` wird dabei nie angefasst.
+- Die vorherigen Programmdateien liegen danach in `alte-version/`. Läuft nach einem Update etwas nicht, kopierst du sie zurück.
+- Die App lädt nur von `raw.githubusercontent.com` aus dem eigenen Repository. Es werden keine Daten von dir übertragen.
+
 ## An PC und Mac über Dropbox nutzen
 
 Liegt der Ordner `notion-lokal` in der Dropbox, kannst du an mehreren Rechnern mit denselben Daten arbeiten, aber immer nur **abwechselnd**:

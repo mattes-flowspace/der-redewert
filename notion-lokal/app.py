@@ -11,6 +11,7 @@ Benutzung:
     python3 app.py import Export.zip    # Notion-Export importieren
     python3 app.py export ./ordner      # Alles als Markdown + CSV exportieren
     python3 app.py backup               # ZIP-Sicherung des Datenordners anlegen
+    python3 app.py update               # neueste Version von GitHub einspielen
 """
 
 import csv
@@ -22,6 +23,8 @@ import mimetypes
 import os
 import platform
 import signal
+import subprocess
+import urllib.request
 import time
 import re
 import shutil
@@ -856,6 +859,89 @@ def _backup_loop():
 
 
 # ---------------------------------------------------------------------------
+# Updates direkt aus dem GitHub-Repository
+# ---------------------------------------------------------------------------
+
+UPDATE_SOURCES = [u for u in os.environ.get("NOTION_LOKAL_UPDATE_URL", "").split(",") if u] or [
+    "https://raw.githubusercontent.com/mattes-flowspace/der-redewert/main/notion-lokal/",
+    "https://raw.githubusercontent.com/mattes-flowspace/der-redewert/claude/notion-offline-backup-p71d1a/notion-lokal/",
+]
+HTTPD = None
+RESTART = False
+
+
+def _vtuple(v):
+    return tuple(int(x) for x in re.findall(r"\d+", str(v or "0")))
+
+
+def local_version():
+    try:
+        with open(os.path.join(BASE_DIR, "version.json"), encoding="utf-8") as fh:
+            return json.load(fh).get("version", "0")
+    except (OSError, ValueError):
+        return "0"
+
+
+def _fetch(url, timeout=8):
+    req = urllib.request.Request(url, headers={"User-Agent": "notion-lokal-updater", "Cache-Control": "no-cache"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        return r.read()
+
+
+def check_update():
+    """Neueste Version aus den Quellen ermitteln. Gibt (info, quelle) oder (None, None) zurück."""
+    best, src = None, None
+    for base in UPDATE_SOURCES:
+        try:
+            info = json.loads(_fetch(base + "version.json").decode("utf-8"))
+        except Exception:  # noqa: BLE001  (offline, Zweig existiert nicht …)
+            continue
+        if best is None or _vtuple(info.get("version")) > _vtuple(best.get("version")):
+            best, src = info, base
+    return best, src
+
+
+def apply_update():
+    info, base = check_update()
+    if not info or _vtuple(info.get("version")) <= _vtuple(local_version()):
+        return {"updated": False, "version": local_version()}
+    files = {}
+    for rel in info.get("files", []):
+        target = os.path.normpath(os.path.join(BASE_DIR, rel))
+        inside = target.startswith(BASE_DIR + os.sep)
+        if not inside or os.path.isabs(rel) or target.startswith(os.path.abspath(DATA_DIR) + os.sep):
+            raise ValueError(f"Unzulässiger Dateipfad im Update: {rel}")
+        data = _fetch(base + urllib.parse.quote(rel), timeout=30)
+        if not data.strip():
+            raise ValueError(f"Leere Datei im Update: {rel}")
+        files[target] = data
+    main_py = os.path.join(BASE_DIR, "app.py")
+    if main_py in files:
+        compile(files[main_py].decode("utf-8"), "app.py", "exec")   # kaputtes Update gar nicht erst einspielen
+    # alte Programmdateien aufheben, dann ersetzen
+    old_dir = os.path.join(BASE_DIR, "alte-version")
+    for target, data in files.items():
+        if os.path.exists(target):
+            keep = os.path.join(old_dir, os.path.relpath(target, BASE_DIR))
+            os.makedirs(os.path.dirname(keep), exist_ok=True)
+            shutil.copy2(target, keep)
+    for target, data in files.items():
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        tmp = target + ".neu"
+        with open(tmp, "wb") as fh:
+            fh.write(data)
+        os.replace(tmp, target)
+    return {"updated": True, "version": info.get("version"), "restart": main_py in files}
+
+
+def _restart_soon():
+    global RESTART
+    RESTART = True
+    if HTTPD:
+        threading.Thread(target=HTTPD.shutdown, daemon=True).start()
+
+
+# ---------------------------------------------------------------------------
 # HTTP-Server + JSON-API
 # ---------------------------------------------------------------------------
 
@@ -953,6 +1039,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_trash()
             if path == "/api/lock":
                 return self._json(lock_status())
+            if path == "/api/update":
+                info, _src = check_update()
+                cur = local_version()
+                newer = bool(info) and _vtuple(info.get("version")) > _vtuple(cur)
+                return self._json({"current": cur, "reachable": info is not None, "available": newer,
+                                   "latest": (info or {}).get("version"), "notes": (info or {}).get("notes", "")})
             if path == "/api/meta":
                 con = connect()
                 return self._json({r["key"]: json.loads(r["value"]) for r in con.execute("SELECT * FROM meta")})
@@ -984,6 +1076,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_upload((q.get("page") or ["allgemein"])[0], (q.get("name") or ["datei"])[0])
             if url.path == "/api/import":
                 return self.api_import()
+            if url.path == "/api/update":
+                res = apply_update()
+                self._json(res)
+                if res.get("restart"):
+                    _restart_soon()
+                return
             if url.path == "/api/lock/takeover":
                 take_lock()
                 return self._json(lock_status())
@@ -1360,8 +1458,9 @@ class Handler(BaseHTTPRequestHandler):
 
 def serve(open_browser=True):
     url = f"http://{'127.0.0.1' if HOST == '0.0.0.0' else HOST}:{PORT}/"
+    global HTTPD
     try:
-        httpd = ThreadingHTTPServer((HOST, PORT), Handler)
+        httpd = HTTPD = ThreadingHTTPServer((HOST, PORT), Handler)
     except OSError:
         print(f"Notion Lokal läuft auf diesem Rechner bereits: {url}")
         if open_browser and not os.environ.get("NOTION_LOKAL_NO_BROWSER"):
@@ -1372,7 +1471,7 @@ def serve(open_browser=True):
     _heartbeat_loop()
     if other is None:
         _backup_loop()
-    print(f"Notion Lokal läuft auf {url}")
+    print(f"Notion Lokal {local_version()} läuft auf {url}")
     print(f"Daten liegen in: {DATA_DIR}")
     if other:
         print(f"ACHTUNG: Die App ist noch auf „{other['host']}“ geöffnet (letzte Aktivität vor "
@@ -1397,6 +1496,11 @@ def serve(open_browser=True):
         print("\nBeendet.")
     finally:
         release_lock()
+        httpd.server_close()
+    if RESTART:
+        print("Update eingespielt – starte neu …")
+        env = dict(os.environ, NOTION_LOKAL_NO_BROWSER="1")
+        sys.exit(subprocess.call([sys.executable, os.path.abspath(__file__)], env=env))
 
 
 def main(argv):
@@ -1414,6 +1518,9 @@ def main(argv):
         print(f"{n} Seiten nach {dest} exportiert.")
     elif cmd == "backup":
         print("Sicherung erstellt:", backup())
+    elif cmd == "update":
+        res = apply_update()
+        print(f"Aktualisiert auf {res['version']}." if res["updated"] else f"Bereits aktuell ({res['version']}).")
     else:
         sys.exit(__doc__)
 

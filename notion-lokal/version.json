@@ -1,0 +1,5 @@
+{
+  "version": "2026.11.11.2",
+  "notes": "Updates direkt in der App einspielen",
+  "files": ["app.py", "static/index.html", "README.md", "version.json"]
+}
