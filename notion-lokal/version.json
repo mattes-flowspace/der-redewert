@@ -1,5 +1,5 @@
 {
-  "version": "2026.11.11.3",
-  "notes": "/-Befehle im Editor, Spalten-Layout, Video/Audio, Inhaltsverzeichnis",
+  "version": "2026.11.11.4",
+  "notes": "Text markieren und formatieren: fett, kursiv, Farben, Hintergrund, Überschriften",
   "files": ["app.py", "static/index.html", "README.md", "version.json"]
 }

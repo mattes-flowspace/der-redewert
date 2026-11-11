@@ -214,6 +214,24 @@ textarea.qa{width:100%;border:0;outline:2px solid var(--accent);border-radius:6p
 #peek h1.title{font-size:30px}
 #peek .edbar{top:0}
 
+/* Formatierungsleiste + Farben */
+:root{--c-gray:#787774;--c-brown:#9f6b53;--c-orange:#d9730d;--c-yellow:#cb912f;--c-green:#448361;--c-blue:#337ea9;--c-purple:#9065b0;--c-pink:#c14c8a;--c-red:#d44c47}
+:root[data-theme="dark"]{--c-gray:#9b9b9b;--c-brown:#ba856f;--c-orange:#c77d48;--c-yellow:#ca9849;--c-green:#529e72;--c-blue:#5e87c9;--c-purple:#9d68d3;--c-pink:#d15796;--c-red:#df5452}
+.tc-gray{color:var(--c-gray)}.tc-brown{color:var(--c-brown)}.tc-orange{color:var(--c-orange)}.tc-yellow{color:var(--c-yellow)}.tc-green{color:var(--c-green)}.tc-blue{color:var(--c-blue)}.tc-purple{color:var(--c-purple)}.tc-pink{color:var(--c-pink)}.tc-red{color:var(--c-red)}
+.doc mark{background:var(--t-yellow);color:inherit;border-radius:3px;padding:.05em .15em}
+mark.bgc-gray{background:var(--t-gray)}mark.bgc-brown{background:var(--t-brown)}mark.bgc-orange{background:var(--t-orange)}mark.bgc-yellow{background:var(--t-yellow)}mark.bgc-green{background:var(--t-green)}mark.bgc-blue{background:var(--t-blue)}mark.bgc-purple{background:var(--t-purple)}mark.bgc-pink{background:var(--t-pink)}mark.bgc-red{background:var(--t-red)}
+.pop.fmt{position:fixed;min-width:0;max-width:none;padding:4px;overflow:visible;z-index:92}
+.fmt .row{display:flex;gap:1px;align-items:center}
+.fmt .row>button{min-width:30px;height:30px;padding:0 7px;font-size:14px;border-radius:5px;white-space:nowrap}
+.fmt .row>button:hover,.fmt .row>button.on{background:var(--hover)}
+.fmt .sep{width:1px;height:20px;background:var(--line);margin:0 3px}
+.fmt .sub{border-top:1px solid var(--line);margin-top:4px;padding-top:4px}
+.fmt .sub .item{border-radius:4px}
+.fmt .lab{font-size:11px;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:4px 6px 2px}
+.fmt .sw{display:flex;gap:4px;padding:2px 6px 6px}
+.fmt .sw button{width:24px;height:24px;border-radius:5px;border:1px solid var(--line);font-weight:600;font-size:13px;padding:0}
+.fmt .sw button:hover{outline:2px solid var(--accent)}
+
 /* Popover, Dialoge */
 .pop{position:fixed;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:8px;padding:6px;z-index:90;min-width:230px;max-width:320px;max-height:70vh;overflow:auto;font-size:14px}
 .pop .item{display:flex;gap:6px;align-items:center;width:100%;text-align:left;padding:5px 8px}
@@ -412,12 +430,61 @@ function inline(s){
   s = s.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\*)/g,"$1<em>$2</em>").replace(/(^|[^_\w])_([^_\s][^_]*?)_(?!\w)/g,"$1<em>$2</em>");
   s = s.replace(/~~([^~]+)~~/g,"<del>$1</del>");
   s = s.replace(/&lt;br\s*\/?&gt;/g,"<br>").replace(/&lt;(\/?)(u|mark|sub|sup)&gt;/g,"<$1$2>");
+  s = s.replace(COLOR_OPEN_RE, '<span class="tc-$1">').replace(/&lt;\/font&gt;/g, "</span>").replace(BG_OPEN_RE, '<mark class="bgc-$1">');
   s = s.replace(/\u0000(\d+)\u0000/g, (_,i)=>`<code>${esc(codes[+i])}</code>`);
   return s;
 }
 const indentOf = l => l.match(/^(\s*)/)[1].replace(/\t/g,"    ").length;
 const LIST_RE = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
 const EMBED_RE = /^\[((?:[^\[\]]|\[[^\]]*\])*)\]\(#\/p\/([0-9a-zA-Z_-]+)\)$/;
+
+// ===========================================================================
+// Formatierungsleiste (erscheint, wenn Text markiert ist)
+// ===========================================================================
+const COLOR_OPEN_RE = /&lt;font color=&quot;(gray|brown|orange|yellow|green|blue|purple|pink|red)&quot;&gt;/g;
+const BG_OPEN_RE = /&lt;mark style=&quot;background:\s*(gray|brown|orange|yellow|green|blue|purple|pink|red)&quot;&gt;/g;
+const PREFIX_RE = /^(\s*)(#{1,6}\s+|[-*+]\s+\[[ xX]\]\s+|[-*+]\s+|\d+[.)]\s+|>\s?)?/;
+const BLOCK_TYPES = [["T","Text",""],["H1","Überschrift 1","# "],["H2","Überschrift 2","## "],["H3","Überschrift 3","### "],["•","Aufzählung","- "],["1.","Nummerierte Liste","1. "],["☑","To-do","- [ ] "],["❝","Zitat","> "]];
+function fmtWrap(kind, arg){
+  return ({bold:["**","**"], italic:["*","*"], underline:["<u>","</u>"], strike:["~~","~~"], code:["`","`"],
+    color:[`<font color="${arg}">`,"</font>"], bg:[`<mark style="background:${arg}">`,"</mark>"]})[kind];
+}
+const stripColor = t => t.replace(/<font color="[a-z]+">|<\/font>/g,"");
+const stripBg = t => t.replace(/<mark style="background:\s*[a-z]+">|<mark>|<\/mark>/g,"");
+function stripFmt(t){
+  return stripBg(stripColor(t)).replace(/\*\*|~~|`|<\/?u>/g,"").replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\*)/g,"$1$2");
+}
+let FMT = null;
+function closeFmt(){ if (FMT){ FMT.remove(); FMT = null; } }
+document.addEventListener("mousedown", e => { if (FMT && !FMT.contains(e.target)) closeFmt(); });
+function showFmt(rect, act){
+  closeFmt();
+  const bar = h("div",{class:"pop fmt", onmousedown:e=>{ if (e.target.tagName!=="INPUT") e.preventDefault(); }});
+  const sub = h("div",{class:"sub", style:"display:none"});
+  let open = null;
+  const toggleSub = (key, build) => { if (open===key){ open=null; sub.style.display="none"; return; } open=key; sub.innerHTML=""; build(); sub.style.display="block"; place(); };
+  const B = (label, title, fn, style) => h("button",{title, style, onclick:fn}, label);
+  const types = () => { for (const [ic,name,pre] of BLOCK_TYPES) sub.append(h("button",{class:"item", onclick:()=>act("type", pre)}, h("span",{style:"width:24px;text-align:center;color:var(--muted)"}, ic), name)); };
+  const colors = () => {
+    const row = (kind) => h("div",{class:"sw"},
+      h("button",{title:"Standard", onclick:()=>act(kind, null)}, kind==="color" ? "A" : "∅"),
+      TAGCOLORS.map(c => h("button",{title:COLORNAMES[c], style: kind==="color" ? `color:var(--c-${c})` : `background:var(--t-${c})`, onclick:()=>act(kind, c)}, kind==="color" ? "A" : "")));
+    sub.append(h("div",{class:"lab"},"TEXTFARBE"), row("color"), h("div",{class:"lab"},"HINTERGRUND"), row("bg"));
+  };
+  bar.append(h("div",{class:"row"},
+    B("T Text ▾","Blocktyp ändern",()=>toggleSub("type", types)), h("span",{class:"sep"}),
+    B("B","Fett",()=>act("bold"),"font-weight:700"), B("I","Kursiv",()=>act("italic"),"font-style:italic;font-family:Georgia,serif"),
+    B("U","Unterstrichen",()=>act("underline"),"text-decoration:underline"), B("S","Durchgestrichen",()=>act("strike"),"text-decoration:line-through"),
+    B("</>","Code",()=>act("code"),"font-size:12px"), B("🔗","Link",()=>act("link")), h("span",{class:"sep"}),
+    B(h("span",{style:"border-bottom:3px solid var(--c-red);padding:0 2px;font-weight:600"},"A"),"Farbe",()=>toggleSub("color", colors)),
+    B("T×","Formatierung entfernen",()=>act("clear"))), sub);
+  document.body.append(bar); FMT = bar;
+  const place = () => { const w = bar.offsetWidth, ht = bar.offsetHeight;
+    bar.style.left = Math.max(8, Math.min(rect.left, innerWidth-w-8))+"px";
+    let top = rect.top-ht-8; if (top < 50) top = Math.min(rect.bottom+8, innerHeight-ht-8);
+    bar.style.top = top+"px"; };
+  place();
+}
 
 function md(src, off=0){
   const lines = String(src||"").replace(/\r\n/g,"\n").split("\n");
@@ -721,6 +788,64 @@ function renderDoc(p, compact){
       const set = new Set(META.closed[p.id]||[]); d.open ? set.delete(d.dataset.s) : set.add(d.dataset.s);
       META.closed[p.id] = [...set]; if (!set.size) delete META.closed[p.id]; saveMeta("closed");
     }, true);
+    // ----- Text markieren -> Formatierungsleiste (ohne in den Editor zu wechseln) -----
+    const locate = () => {
+      const sel = getSelection(); if (!sel.rangeCount || sel.isCollapsed) return null;
+      const range = sel.getRangeAt(0), raw = sel.toString(), text = raw.trim();
+      if (!text) return null;
+      const elOf = n => (n.nodeType===1 ? n : n.parentElement);
+      const sEl = elOf(range.startContainer)?.closest("[data-l]"), eEl = elOf(range.endContainer)?.closest("[data-l]");
+      if (!sEl || !doc.contains(sEl) || elOf(range.startContainer).closest(".embed, .toc, pre")) return null;
+      const a = +sEl.dataset.l, lines = p.content.split("\n");
+      if (lines[a] === undefined) return null;
+      let b = a;
+      if (!/^(H[1-6]|SPAN|SUMMARY)$/.test(sEl.tagName)) while (b+1 < lines.length && lines[b+1].trim() !== "") b++;
+      let lineStart = 0; for (let k=0; k<a; k++) lineStart += lines[k].length+1;
+      let limit = lineStart; for (let k=a; k<=b; k++) limit += lines[k].length+1;
+      const loc = {a, b, lineStart, limit, tag:sEl.tagName, text};
+      if (sEl !== eEl || /\n/.test(text)){ loc.err = "Bitte Text innerhalb einer Zeile markieren."; return loc; }
+      // die wievielte Fundstelle im Absatz ist markiert? -> dieselbe im Quelltext nehmen
+      const pre = document.createRange(); pre.selectNodeContents(sEl); pre.setEnd(range.startContainer, range.startOffset);
+      const beforeLen = pre.toString().length + (raw.length - raw.trimStart().length);
+      const full = sEl.textContent; let n = 0, k = -1;
+      while ((k = full.indexOf(text, k+1)) !== -1 && k < beforeLen) n++;
+      let pos = lineStart-1;
+      for (let i=0; i<=n; i++){ pos = p.content.indexOf(text, pos+1); if (pos < 0) break; }
+      if (pos < 0 || pos+text.length > limit) loc.err = "Hier steckt schon Formatierung im markierten Text. Markiere einen kleineren Teil oder klicke in den Text, um ihn direkt zu bearbeiten.";
+      else loc.pos = pos;
+      return loc;
+    };
+    const commit = content => {
+      const sc = wrap.closest(".peek-body") || $("#main"), top = sc.scrollTop;
+      wrap.style.minHeight = wrap.offsetHeight+"px";
+      p.content = content; saver(); saver.flush(); closeFmt(); getSelection().removeAllRanges(); show();
+      sc.scrollTop = top; setTimeout(()=>{ wrap.style.minHeight = ""; }, 900);
+    };
+    const fmtAct = (kind, arg) => {
+      const loc = locate(); if (!loc) return closeFmt();
+      const c = p.content, lines = c.split("\n");
+      if (kind==="type"){
+        if (loc.tag==="SUMMARY") return toast("Der Titel eines Toggles lässt sich nur im Editor ändern.");
+        lines[loc.a] = lines[loc.a].replace(PREFIX_RE, (m, ind) => ind + arg); return commit(lines.join("\n"));
+      }
+      if (kind==="clear"){ for (let k=loc.a; k<=loc.b; k++) lines[k] = stripFmt(lines[k]); return commit(lines.join("\n")); }
+      if ((kind==="color" || kind==="bg") && !arg){ for (let k=loc.a; k<=loc.b; k++) lines[k] = (kind==="color"?stripColor:stripBg)(lines[k]); return commit(lines.join("\n")); }
+      if (loc.err) return toast(loc.err);
+      const {pos, text} = loc;
+      if (kind==="link"){ const u = prompt("Link-Adresse:", "https://"); if (!u || u==="https://") return; return commit(c.slice(0,pos)+`[${text}](${u})`+c.slice(pos+text.length)); }
+      const [o, cl] = fmtWrap(kind, arg);
+      if (c.slice(pos-o.length, pos)===o && c.slice(pos+text.length, pos+text.length+cl.length)===cl)   // schon gesetzt -> wieder entfernen
+        return commit(c.slice(0,pos-o.length)+text+c.slice(pos+text.length+cl.length));
+      commit(c.slice(0,pos)+o+text+cl+c.slice(pos+text.length));
+    };
+    const selCheck = () => setTimeout(() => {
+      const sel = getSelection();
+      if (!sel.rangeCount || sel.isCollapsed || !doc.contains(sel.anchorNode) || !sel.toString().trim()) return;
+      if (!locate()) return;
+      showFmt(sel.getRangeAt(0).getBoundingClientRect(), fmtAct);
+    }, 10);
+    doc.addEventListener("mouseup", selCheck); doc.addEventListener("touchend", selCheck);
+    doc.addEventListener("keyup", e => { if (e.shiftKey) selCheck(); });
     wrap.append(doc);
     for (const toc of doc.querySelectorAll(".toc")){
       const hs = [...doc.querySelectorAll("h1,h2,h3")];
@@ -755,7 +880,7 @@ function renderDoc(p, compact){
       const s = ta.value.lastIndexOf("\n", ta.selectionStart-1)+1;
       ta.setRangeText(pre, s, s, "end"); ta.focus(); changed();
     };
-    const done = () => { closeSlash(); saver.flush(); show(); };
+    const done = () => { closeSlash(); closeFmt(); saver.flush(); show(); };
 
     // ----- „/“-Befehle wie in Notion -----
     let slash = null;
@@ -817,11 +942,11 @@ function renderDoc(p, compact){
       ["S","Durchgestrichen","Text durchstreichen","strike durchgestrichen",()=>ins("~~","~~")],
       ["`","Code im Text","Kurzer Code im Satz","inline code",()=>ins("`","`")],
     ];
-    const caretXY = () => {
+    const caretXY = (at) => {
       const d = document.createElement("div"), cs = getComputedStyle(ta);
       for (const k of ["fontFamily","fontSize","lineHeight","padding","letterSpacing","tabSize"]) d.style[k] = cs[k];
       Object.assign(d.style, {whiteSpace:"pre-wrap", wordWrap:"break-word", position:"absolute", visibility:"hidden", left:"-9999px", top:"0", width:ta.clientWidth+"px", boxSizing:"border-box"});
-      d.textContent = ta.value.slice(0, ta.selectionStart);
+      d.textContent = ta.value.slice(0, at ?? ta.selectionStart);
       const sp = document.createElement("span"); sp.textContent = "\u200b"; d.append(sp); document.body.append(d);
       const r = ta.getBoundingClientRect(); const xy = {x: r.left + sp.offsetLeft, y: r.top + sp.offsetTop + sp.offsetHeight};
       d.remove(); return xy;
@@ -886,7 +1011,31 @@ function renderDoc(p, compact){
           {label:"＋ Neue Datenbank hier anlegen", fn: async () => { const name = prompt("Name der neuen Datenbank:", "Aufgaben"); if(!name) return; const r = await api("POST","/api/page",{kind:"database", parent_id:p.kind==="row"?p.id:p.id, title:name}); await loadTree(); ins(`\n[${name}](#/p/${r.id})\n`,"",true); }})),
       B("🖼 Bild/Datei","Datei einfügen",()=>fileInp.click()),
       h("span",{class:"sp"}), h("button",{class:"done", title:"Esc", onmousedown:e=>e.preventDefault(), onclick:done},"Fertig"));
-    ta.oninput = () => { changed(); slashInput(); };
+    ta.oninput = () => { changed(); slashInput(); closeFmt(); };
+    const taFmt = (kind, arg) => {
+      const s = ta.selectionStart, e = ta.selectionEnd, v = ta.value, selText = v.slice(s, e);
+      if (kind==="type"){
+        const ls = v.lastIndexOf("\n", s-1)+1, m = v.slice(ls).match(PREFIX_RE);
+        ta.setRangeText(arg, ls+m[1].length, ls+m[0].length, "preserve");
+      } else if (kind==="clear") ta.setRangeText(stripFmt(selText), s, e, "select");
+      else if ((kind==="color" || kind==="bg") && !arg) ta.setRangeText((kind==="color"?stripColor:stripBg)(selText), s, e, "select");
+      else if (kind==="link"){ const u = prompt("Link-Adresse:", "https://"); if (!u || u==="https://") return; ta.setRangeText(`[${selText}](${u})`, s, e, "select"); }
+      else {
+        const [o, cl] = fmtWrap(kind, arg);
+        if (v.slice(s-o.length, s)===o && v.slice(e, e+cl.length)===cl){ ta.setRangeText(selText, s-o.length, e+cl.length, "select"); }
+        else { ta.setRangeText(o+selText+cl, s, e, "end"); ta.setSelectionRange(s+o.length, s+o.length+selText.length); }
+      }
+      ta.focus(); p.content = ta.value; grow(); saver();
+    };
+    const taSel = () => setTimeout(() => {
+      if (slash || !ta.isConnected) return;
+      if (ta.selectionStart === ta.selectionEnd) return closeFmt();
+      if (FMT) return;
+      const xy = caretXY(ta.selectionStart);
+      showFmt({left:xy.x, top:xy.y-24, bottom:xy.y+2}, taFmt);
+    }, 10);
+    ta.addEventListener("mouseup", taSel); ta.addEventListener("touchend", taSel);
+    ta.addEventListener("keyup", e => { if (e.shiftKey || ta.selectionStart !== ta.selectionEnd) taSel(); else closeFmt(); });
     ta.addEventListener("click", () => { if (slash && ta.selectionStart <= slash.start) closeSlash(); });
     ta.addEventListener("blur", () => setTimeout(()=>{ if (document.activeElement !== ta) closeSlash(); }, 150));
     ta.onkeydown = e => {
