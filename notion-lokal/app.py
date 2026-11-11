@@ -20,6 +20,9 @@ import io
 import json
 import mimetypes
 import os
+import platform
+import signal
+import time
 import re
 import shutil
 import sqlite3
@@ -71,6 +74,86 @@ CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 _write_lock = threading.Lock()
 
 
+# ---------------------------------------------------------------------------
+# Sperre für den Betrieb an mehreren Rechnern (Datenordner in Dropbox)
+# ---------------------------------------------------------------------------
+
+LOCK_PATH = os.path.join(DATA_DIR, "sperre.json")
+INSTANCE = {"id": uuid.uuid4().hex,
+            "host": os.environ.get("NOTION_LOKAL_RECHNERNAME") or platform.node() or "Unbekannter Rechner"}
+HEARTBEAT_S = 180      # so oft meldet sich die laufende App in der Sperrdatei
+STALE_S = 600          # danach gilt eine Sperre als verwaist (Rechner zugeklappt, abgestürzt)
+OWNS_LOCK = False
+CONFLICT_RE = re.compile(r"conflicted copy|in konflikt|konfliktkopie|conflict", re.I)
+
+
+def read_lock():
+    try:
+        with open(LOCK_PATH, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return None
+
+
+def take_lock():
+    global OWNS_LOCK
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(LOCK_PATH, "w", encoding="utf-8") as fh:
+        json.dump({**INSTANCE, "time": time.time()}, fh)
+    OWNS_LOCK = True
+
+
+def release_lock():
+    global OWNS_LOCK
+    cur = read_lock()
+    if OWNS_LOCK and cur and cur.get("id") == INSTANCE["id"]:
+        try:
+            os.remove(LOCK_PATH)
+        except OSError:
+            pass
+    OWNS_LOCK = False
+
+
+def foreign_lock():
+    """Sperre eines anderen Rechners (oder None). Aktualisiert OWNS_LOCK, falls übernommen wurde."""
+    global OWNS_LOCK
+    cur = read_lock()
+    if not cur or cur.get("id") == INSTANCE["id"]:
+        return None
+    OWNS_LOCK = False
+    age = max(0, int(time.time() - float(cur.get("time", 0))))
+    return {"host": cur.get("host", "?"), "age": age, "stale": age > STALE_S}
+
+
+def acquire_lock_on_start():
+    other = foreign_lock()
+    if other is None or other["stale"] or other["host"] == INSTANCE["host"]:
+        take_lock()
+        return None
+    return other
+
+
+def _heartbeat_loop():
+    if OWNS_LOCK and foreign_lock() is None:
+        take_lock()
+    t = threading.Timer(HEARTBEAT_S, _heartbeat_loop)
+    t.daemon = True
+    t.start()
+
+
+def conflict_files():
+    try:
+        return sorted(f for f in os.listdir(DATA_DIR) if CONFLICT_RE.search(f))
+    except OSError:
+        return []
+
+
+def lock_status():
+    other = foreign_lock()
+    return {"owns": OWNS_LOCK and other is None, "host": INSTANCE["host"], "other": other,
+            "conflicts": conflict_files()}
+
+
 def now():
     return dt.datetime.now().replace(microsecond=0).isoformat()
 
@@ -80,7 +163,8 @@ def connect():
     os.makedirs(FILES_DIR, exist_ok=True)
     con = sqlite3.connect(DB_PATH, timeout=30)
     con.row_factory = sqlite3.Row
-    con.execute("PRAGMA journal_mode=WAL")
+    # Eine einzige Datei ohne -wal/-shm: wichtig, wenn der Datenordner in Dropbox o. Ä. liegt
+    con.execute("PRAGMA journal_mode=DELETE")
     con.execute("PRAGMA foreign_keys=ON")
     con.executescript(SCHEMA_SQL)
     return con
@@ -834,6 +918,15 @@ class Handler(BaseHTTPRequestHandler):
         if origin and urllib.parse.urlparse(origin).netloc != self.headers.get("Host"):
             self._err(403, "Fremder Ursprung")
             return False
+        # Schreiben nur, solange dieser Rechner die Sperre hält
+        if not self.path.startswith("/api/lock"):
+            other = foreign_lock()
+            if other is not None or not OWNS_LOCK:
+                if other is None:
+                    take_lock()      # Sperrdatei fehlt (z. B. gelöscht) -> neu anlegen
+                else:
+                    self._json({"error": f"Notion Lokal ist auf „{other['host']}“ geöffnet", "lock": lock_status()}, 423)
+                    return False
         return True
 
     # --- Routing ---
@@ -858,6 +951,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_search((q.get("q") or [""])[0])
             if path == "/api/trash":
                 return self.api_trash()
+            if path == "/api/lock":
+                return self._json(lock_status())
             if path == "/api/meta":
                 con = connect()
                 return self._json({r["key"]: json.loads(r["value"]) for r in con.execute("SELECT * FROM meta")})
@@ -889,6 +984,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_upload((q.get("page") or ["allgemein"])[0], (q.get("name") or ["datei"])[0])
             if url.path == "/api/import":
                 return self.api_import()
+            if url.path == "/api/lock/takeover":
+                take_lock()
+                return self._json(lock_status())
             if url.path == "/api/batch":
                 return self.api_batch(self._jbody())
             if url.path.startswith("/api/duplicate/"):
@@ -1261,19 +1359,44 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def serve(open_browser=True):
+    url = f"http://{'127.0.0.1' if HOST == '0.0.0.0' else HOST}:{PORT}/"
+    try:
+        httpd = ThreadingHTTPServer((HOST, PORT), Handler)
+    except OSError:
+        print(f"Notion Lokal läuft auf diesem Rechner bereits: {url}")
+        if open_browser and not os.environ.get("NOTION_LOKAL_NO_BROWSER"):
+            webbrowser.open(url)
+        return
     connect().close()
-    _backup_loop()
-    httpd = ThreadingHTTPServer((HOST, PORT), Handler)
-    url = f"http://{HOST}:{PORT}/"
+    other = acquire_lock_on_start()
+    _heartbeat_loop()
+    if other is None:
+        _backup_loop()
     print(f"Notion Lokal läuft auf {url}")
     print(f"Daten liegen in: {DATA_DIR}")
-    print("Beenden mit Strg+C")
+    if other:
+        print(f"ACHTUNG: Die App ist noch auf „{other['host']}“ geöffnet (letzte Aktivität vor "
+              f"{other['age'] // 60} Min). Dort beenden und Dropbox fertig synchronisieren lassen.")
+    for f in conflict_files():
+        print("ACHTUNG: Konfliktkopie im Datenordner:", f)
+    print("Beenden mit Strg+C oder Fenster schließen")
+
+    def stop(*_):
+        raise KeyboardInterrupt
+    for sig in ("SIGTERM", "SIGHUP", "SIGBREAK"):
+        if hasattr(signal, sig):
+            try:
+                signal.signal(getattr(signal, sig), stop)
+            except (ValueError, OSError):
+                pass
     if open_browser and not os.environ.get("NOTION_LOKAL_NO_BROWSER"):
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nBeendet.")
+    finally:
+        release_lock()
 
 
 def main(argv):

@@ -49,6 +49,8 @@ Alles liegt im Ordner **`daten/`**:
 |---|---|
 | `daten/notion.sqlite3` | alle Seiten, Datenbanken und Einträge |
 | `daten/dateien/` | Bilder und Anhänge |
+| `daten/sicherungen/` | automatische tägliche Kopien der Datenbank |
+| `daten/sperre.json` | zeigt an, auf welchem Rechner die App gerade läuft |
 
 Die App legt außerdem **automatisch einmal täglich** eine Kopie der Datenbank in `daten/sicherungen/` ab und behält die letzten 14.
 
@@ -60,6 +62,24 @@ python3 app.py export ./export # alles als Markdown + CSV (lesbar mit jedem Edit
 ```
 
 Ein Export als ZIP geht auch über **„Export“** in der Seitenleiste.
+
+## An PC und Mac über Dropbox nutzen
+
+Liegt der Ordner `notion-lokal` in der Dropbox, kannst du an mehreren Rechnern mit denselben Daten arbeiten, aber immer nur **abwechselnd**:
+
+1. App am ersten Rechner beenden (Terminalfenster schließen).
+2. Warten, bis Dropbox an beiden Rechnern „Aktuell“ zeigt.
+3. App am zweiten Rechner starten.
+
+Die App sichert das ab:
+
+- **Sperre:** Ist die App noch an einem anderen Rechner offen, zeigt sie oben einen gelben Hinweis und speichert nichts, bis du dort beendet hast oder bewusst „Trotzdem hier weiterarbeiten“ wählst. Eine Sperre gilt nach 10 Minuten ohne Lebenszeichen als verwaist (z. B. Laptop zugeklappt).
+- **Eine Datei:** Die Datenbank ist eine einzige Datei (`daten/notion.sqlite3`), damit Dropbox keinen halben Stand überträgt.
+- **Konfliktwarnung:** Legt Dropbox eine „In Konflikt stehende Kopie“ im Ordner `daten/` an, weist die App darauf hin.
+
+Die Sperre erkennt den anderen Rechner erst, wenn Dropbox die Datei `daten/sperre.json` übertragen hat. Schritt 2 bleibt deshalb wichtig.
+
+**Mac:** Meldet der Doppelklick auf `Start (Mac).command` fehlende Zugriffsrechte, einmalig im Terminal `chmod +x ` eintippen, die Datei ins Terminalfenster ziehen und Enter drücken.
 
 ## Dein FlowBoard
 

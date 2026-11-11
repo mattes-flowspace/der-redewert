@@ -59,6 +59,8 @@ body.side-collapsed #side{display:none}
 #topbar button{padding:3px 8px;color:var(--muted);white-space:nowrap}
 #topbar button:hover{background:var(--hover)}
 #status{font-size:12px;white-space:nowrap}
+#lockbar{display:none;background:var(--t-yellow);padding:8px 16px;font-size:14px;text-align:center;position:sticky;top:0;z-index:6}
+#lockbar button{text-decoration:underline;padding:0 4px}
 #offline{display:none;background:var(--t-red);padding:6px 16px;font-size:14px;text-align:center}
 .page{max-width:900px;margin:0 auto;padding:24px 60px 140px}
 .page.wide{max-width:none}
@@ -264,6 +266,7 @@ textarea.qa{width:100%;border:0;outline:2px solid var(--accent);border-radius:6p
 </nav>
 <main id="main">
   <div id="offline">⚠️ Keine Verbindung zu Notion Lokal. Läuft das Programm noch? Änderungen werden gerade nicht gespeichert.</div>
+  <div id="lockbar"></div>
   <div id="topbar"><button id="menuBtn" title="Seitenleiste ein-/ausblenden">☰</button><span id="crumbs"></span><span class="sp"></span><span id="status"></span><button id="btnFav" title="Favorit">☆</button><button id="btnMore" title="Mehr">•••</button></div>
   <div id="view"></div>
 </main>
@@ -298,9 +301,30 @@ async function api(method, url, body, raw=false) {
   catch(e){ $("#offline").style.display = "block"; throw new Error("Keine Verbindung zum lokalen Server"); }
   $("#offline").style.display = "none";
   const j = await r.json().catch(()=>({}));
+  if (r.status === 423 && j.lock) showLock(j.lock);
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
 }
+
+// ---- Sperre zwischen mehreren Rechnern (Datenordner in Dropbox) -----------
+let LOCKED = false;
+function showLock(l){
+  const bar = $("#lockbar"); bar.innerHTML = "";
+  const wasLocked = LOCKED; LOCKED = !!l.other;
+  if (l.other){
+    const mins = Math.round(l.other.age/60);
+    bar.append(`🔒 Notion Lokal ist noch auf „${l.other.host}“ geöffnet (letzte Aktivität ${mins<1?"gerade eben":"vor "+mins+" Min"}). Änderungen hier werden nicht gespeichert. Beende die App dort und warte, bis Dropbox fertig synchronisiert hat. `,
+      h("button",{onclick:async()=>{ if (!l.other.stale && !confirm(`Wirklich hier weiterarbeiten? Wenn auf „${l.other.host}“ noch ungesicherte oder nicht synchronisierte Änderungen liegen, können sie verloren gehen.`)) return;
+        showLock(await api("POST","/api/lock/takeover")); await loadTree(); route(); }},"Trotzdem hier weiterarbeiten"));
+  } else if (l.conflicts && l.conflicts.length){
+    bar.append(`⚠️ Dropbox hat eine Konfliktkopie angelegt (${l.conflicts.join(", ")}). Die App war vermutlich an zwei Rechnern gleichzeitig offen; ein Teil der Änderungen steckt in dieser Kopie. Du findest sie im Ordner „daten“.`);
+  }
+  bar.style.display = bar.childNodes.length ? "block" : "none";
+  if (wasLocked && !LOCKED && TREE.length){ loadTree().then(route); }
+}
+async function checkLock(){ try { showLock(await api("GET","/api/lock")); } catch(e){} }
+setInterval(()=>{ if (!document.hidden) checkLock(); }, 60000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) checkLock(); });
 function toast(msg, action, fn){
   const t=$("#toast"); t.innerHTML=""; t.append(msg);
   if (action) t.append(h("button",{onclick:()=>{ t.classList.remove("on"); fn(); }}, action));
@@ -1460,6 +1484,7 @@ try { if (localStorage.getItem("nl_side")==="0") document.body.classList.add("si
   applyTheme();
   await loadTree();
   route();
+  checkLock();
 })();
 </script>
 </body>
