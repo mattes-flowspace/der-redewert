@@ -1,5 +1,5 @@
 {
-  "version": "2026.11.11.2",
-  "notes": "Updates direkt in der App einspielen",
+  "version": "2026.11.11.3",
+  "notes": "/-Befehle im Editor, Spalten-Layout, Video/Audio, Inhaltsverzeichnis",
   "files": ["app.py", "static/index.html", "README.md", "version.json"]
 }

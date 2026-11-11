@@ -102,6 +102,21 @@ h1.title:empty:before{content:"Ohne Titel";color:var(--muted);opacity:.5}
 .doc details>summary:hover{background:var(--hover)}
 .doc details>.tgb{padding:2px 0 6px 20px}
 .embed{margin:14px 0 22px;cursor:default}
+.doc video{max-width:100%;border-radius:6px;display:block;margin:.6em 0;background:#000}
+.doc audio{width:100%;margin:.4em 0;display:block}
+.cols{display:flex;gap:28px;align-items:flex-start;margin:.4em 0}
+.colm{flex:1;min-width:0}
+.toc{margin:.5em 0;padding:6px 0;cursor:default}
+.toc a{display:block;text-decoration:none;color:var(--muted);padding:1px 4px;border-radius:4px;cursor:pointer}
+.toc a:hover{background:var(--hover);color:var(--text)}
+.doc summary .th1{font-size:28px;font-weight:700}.doc summary .th2{font-size:23px;font-weight:700}.doc summary .th3{font-size:19px;font-weight:700}
+.pop.slash{position:fixed;width:300px;max-height:340px;padding:4px}
+.pop.slash .grp{font-size:11px;letter-spacing:.04em;color:var(--muted);font-weight:600;padding:8px 8px 2px}
+.slash .item{padding:5px 8px;gap:10px;border-radius:4px}
+.slash .item .i{width:26px;height:26px;flex:none;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:4px;background:var(--bg);font-size:13px}
+.slash .item .d{font-size:12px;color:var(--muted)}
+.slash .item.sel{background:var(--hover)}
+@media (max-width:760px){ .cols{flex-direction:column;gap:0} }
 .embed-h{display:flex;align-items:center;gap:6px;font-weight:600;font-size:17px;margin-bottom:2px}
 .embed-h a{text-decoration:none;border-radius:4px;padding:0 4px;margin-left:-4px}
 .embed-h a:hover{background:var(--hover)}
@@ -373,11 +388,19 @@ function safeUrl(u){
   if (/^(javascript|vbscript|data):/i.test(u) && !/^data:image\//i.test(u)) return "#";
   return u;
 }
+const VIDEO_RE = /\.(mp4|m4v|mov|webm|ogv)(\?.*)?$/i, AUDIO_RE = /\.(mp3|wav|m4a|ogg|oga|flac|aac)(\?.*)?$/i;
+function mediaHtml(alt, url){
+  const u = esc(safeUrl(url));
+  if (VIDEO_RE.test(url)) return `<video controls preload="metadata" src="${u}"></video>`;
+  if (AUDIO_RE.test(url)) return `<audio controls preload="metadata" src="${u}"></audio>`;
+  return `<img alt="${alt}" src="${u}" loading="lazy">`;
+}
+const sumHtml = t => { const m = t.match(/^(#{1,3})\s+(.*)$/); return m ? `<span class="th${m[1].length}">${inline(m[2])}</span>` : inline(t); };
 function inline(s){
   const codes = [];
   s = s.replace(/`([^`]+)`/g, (_,c)=>{ codes.push(c); return `\u0000${codes.length-1}\u0000`; });
   s = esc(s);
-  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (_,a,u)=>`<img alt="${a}" src="${esc(safeUrl(u.replace(/&amp;/g,"&")))}" loading="lazy">`);
+  s = s.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (_,a,u)=>mediaHtml(a, u.replace(/&amp;/g,"&")));
   s = s.replace(/\[((?:[^\[\]]|\[[^\]]*\])*)\]\(([^)\s]+)(?:\s+&quot;[^&]*&quot;)?\)/g, (_,t,u)=>{
     u = u.replace(/&amp;/g,"&");
     if (u.startsWith("#/p/")) return `<a class="pagelink" href="${esc(u)}">${t}</a>`;
@@ -407,6 +430,12 @@ function md(src, off=0){
       if (n && n.kind==="database"){ out += `<div class="embed"${L(pl)} data-db="${m[2]}"></div>`; para=[]; return; }
       if (n){ out += `<a class="pagerow"${L(pl)} href="#/p/${m[2]}"><span>${esc(n.icon||defaultIcon(n.kind))}</span><span>${inline(m[1])}</span></a>`; para=[]; return; }
     }
+    if (para.length===1){
+      // Video-/Audiodatei allein in einer Zeile -> Player; [[inhalt]] -> Inhaltsverzeichnis
+      const f = para[0].match(/^\[([^\]]*)\]\(([^)\s]+)\)$/);
+      if (f && (VIDEO_RE.test(f[2]) || AUDIO_RE.test(f[2]))){ out += `<div${L(pl)}>${mediaHtml(esc(f[1]), f[2])}</div>`; para=[]; return; }
+      if (/^\[\[(inhalt|toc)\]\]$/i.test(para[0])){ out += `<div class="toc"${L(pl)}></div>`; para=[]; return; }
+    }
     out += `<p${L(pl)}>${para.map(inline).join("<br>")}</p>`; para=[];
   };
   while (i < lines.length){
@@ -415,6 +444,19 @@ function md(src, off=0){
       flush(); const s=i; const lang = l.trim().slice(3); const buf=[]; i++;
       while (i<lines.length && !/^\s*```\s*$/.test(lines[i])) buf.push(lines[i++]);
       i++; out += `<pre${L(s)}><code data-lang="${esc(lang)}">${esc(buf.join("\n"))}</code></pre>`; continue;
+    }
+    if (/^\s*<columns>\s*$/i.test(l)){
+      flush(); const s=i; let depth=1, cur=null; const cols=[]; i++;
+      while (i<lines.length){
+        const x = lines[i];
+        if (/^\s*<columns>\s*$/i.test(x)) depth++;
+        if (/^\s*<\/columns>\s*$/i.test(x) && --depth===0) break;
+        if (depth===1 && /^\s*<column>\s*$/i.test(x)){ cur={start:i+1, buf:[]}; cols.push(cur); }
+        else if (depth===1 && /^\s*<\/column>\s*$/i.test(x)) cur=null;
+        else if (cur) cur.buf.push(x);
+        i++;
+      }
+      i++; out += `<div class="cols"${L(s)}>${cols.map(c=>`<div class="colm">${md(c.buf.join("\n"), off+c.start)}</div>`).join("")}</div>`; continue;
     }
     if (/^\s*<aside>\s*$/i.test(l)){
       flush(); const s=i; const buf=[]; i++; let depth=1;
@@ -433,7 +475,7 @@ function md(src, off=0){
         i++;
       }
       i++;
-      out += `<details class="tg"${MDX.closed.has(sum)?"":" open"} data-s="${esc(sum)}"><summary${L(s)}>${inline(sum)}</summary><div class="tgb">${md(buf.join("\n"), off+bodyStart)}</div></details>`; continue;
+      out += `<details class="tg"${MDX.closed.has(sum)?"":" open"} data-s="${esc(sum)}"><summary${L(s)}>${sumHtml(sum)}</summary><div class="tgb">${md(buf.join("\n"), off+bodyStart)}</div></details>`; continue;
     }
     let m;
     if ((m = l.match(/^(#{1,6})\s+(.*)$/))){ flush(); const n=m[1].length; out += `<h${n}${L(i)}>${inline(m[2])}</h${n}>`; i++; continue; }
@@ -477,7 +519,7 @@ function md(src, off=0){
         else if (!ordered && first && !LIST_RE.test(first)){
           // Aufzählungspunkt mit eingerücktem Inhalt = Notion-Toggle
           closeList();
-          out += `<details class="tg"${MDX.closed.has(it.text)?"":" open"} data-s="${esc(it.text)}"><summary${L(it.line)}>${inline(it.text)}</summary><div class="tgb">${subHtml}</div></details>`;
+          out += `<details class="tg"${MDX.closed.has(it.text)?"":" open"} data-s="${esc(it.text)}"><summary${L(it.line)}>${sumHtml(it.text)}</summary><div class="tgb">${subHtml}</div></details>`;
         }
         else { openList(); out += `<li><span${L(it.line)}>${inline(it.text)}</span>${subHtml}</li>`; }
       }
@@ -680,6 +722,11 @@ function renderDoc(p, compact){
       META.closed[p.id] = [...set]; if (!set.size) delete META.closed[p.id]; saveMeta("closed");
     }, true);
     wrap.append(doc);
+    for (const toc of doc.querySelectorAll(".toc")){
+      const hs = [...doc.querySelectorAll("h1,h2,h3")];
+      if (!hs.length) toc.append(h("span",{class:"hint"},"Inhaltsverzeichnis: noch keine Überschriften"));
+      for (const hd of hs) toc.append(h("a",{style:`padding-left:${4+(+hd.tagName[1]-1)*16}px`, onclick:e=>{ e.stopPropagation(); hd.scrollIntoView({behavior:"smooth", block:"start"}); }}, hd.textContent));
+    }
     for (const el of doc.querySelectorAll(".embed[data-db]")) mountDatabase(el, el.dataset.db, p.id+":"+el.dataset.db, {embed:true});
     if (!compact) wrap.append(h("div",{class:"hint", style:"cursor:pointer;opacity:.7;padding:8px 0", onclick:()=>edit(1e9)},"＋ Text hinzufügen"));
   };
@@ -708,9 +755,124 @@ function renderDoc(p, compact){
       const s = ta.value.lastIndexOf("\n", ta.selectionStart-1)+1;
       ta.setRangeText(pre, s, s, "end"); ta.focus(); changed();
     };
-    const done = () => { saver.flush(); show(); };
+    const done = () => { closeSlash(); saver.flush(); show(); };
+
+    // ----- „/“-Befehle wie in Notion -----
+    let slash = null;
+    const closeSlash = () => { if (slash){ slash.el.remove(); slash = null; } };
+    const upload = accept => { fileInp.accept = accept || ""; fileInp.click(); };
+    const newDb = async view => {
+      const name = prompt("Name der neuen Datenbank:", view==="board" ? "Aufgaben" : "Tabelle"); if (!name) return;
+      const r = await api("POST","/api/page",{kind:"database", parent_id:p.id, title:name});
+      META.views[p.id+":"+r.id] = {view}; saveMeta("views");
+      await loadTree(); ins(`\n[${name}](#/p/${r.id})\n`,"",true);
+    };
+    const newSub = async () => {
+      const name = prompt("Titel der neuen Seite:", ""); if (name===null) return;
+      const r = await api("POST","/api/page",{kind:"page", parent_id:p.id, title:name});
+      await loadTree(); ins(`\n[${name||"Ohne Titel"}](#/p/${r.id})\n`,"",true);
+    };
+    const colsMd = n => "<columns>\n" + Array.from({length:n}, (_,k)=>`<column>\n\nSpalte ${k+1}\n\n</column>`).join("\n") + "\n</columns>\n";
+    const dateStr = add => { const d = new Date(); d.setDate(d.getDate()+add); return d.toLocaleDateString("de-DE",{day:"numeric",month:"long",year:"numeric"}); };
+    const CMDS = [
+      ["Grundlagen"],
+      ["T","Text","Einfacher Absatz","text absatz paragraph",()=>{}],
+      ["H1","Überschrift 1","Große Überschrift","heading h1 #",()=>linePrefix("# ")],
+      ["H2","Überschrift 2","Mittlere Überschrift","heading h2 ##",()=>linePrefix("## ")],
+      ["H3","Überschrift 3","Kleine Überschrift","heading h3 ###",()=>linePrefix("### ")],
+      ["•","Aufzählung","Einfache Liste","bullet liste list",()=>linePrefix("- ")],
+      ["1.","Nummerierte Liste","Liste mit Zahlen","numbered nummer liste list",()=>linePrefix("1. ")],
+      ["☑","To-do-Liste","Aufgaben zum Abhaken","todo checkbox aufgabe task",()=>linePrefix("- [ ] ")],
+      ["▸","Toggle","Aufklappbarer Bereich","toggle aufklappen details",()=>ins("<details><summary>","</summary>\n\nInhalt\n\n</details>\n",true)],
+      ["▸H","Toggle-Überschrift 1","Aufklappbare große Überschrift","toggle heading überschrift",()=>ins("<details><summary># ","</summary>\n\nInhalt\n\n</details>\n",true)],
+      ["▸H","Toggle-Überschrift 2","Aufklappbare mittlere Überschrift","toggle heading überschrift",()=>ins("<details><summary>## ","</summary>\n\nInhalt\n\n</details>\n",true)],
+      ["▸H","Toggle-Überschrift 3","Aufklappbare kleine Überschrift","toggle heading überschrift",()=>ins("<details><summary>### ","</summary>\n\nInhalt\n\n</details>\n",true)],
+      ["📄","Seite","Neue Unterseite anlegen","page seite unterseite neu",newSub],
+      ["↗","Link zu Seite","Vorhandene Seite verlinken","link page seite verweis",()=>pickPage("Seite verlinken …", n=>ins(`[${n.title||"Ohne Titel"}](#/p/${n.id})`), ()=>true)],
+      ["💡","Hinweis","Hervorgehobener Kasten","callout hinweis kasten info",()=>ins("<aside>\n💡 ","\n</aside>\n",true)],
+      ["❝","Zitat","Zitat hervorheben","quote zitat",()=>linePrefix("> ")],
+      ["▦","Tabelle","Einfache Tabelle","table tabelle",()=>ins("| Spalte 1 | Spalte 2 | Spalte 3 |\n| --- | --- | --- |\n|  |  |  |\n|  |  |  |\n","",true)],
+      ["—","Trennlinie","Abschnitte optisch trennen","divider linie trenner hr",()=>ins("\n---\n","",true)],
+      ["</>","Code","Codeblock","code",()=>ins("```\n","\n```\n",true)],
+      ["Medien"],
+      ["🖼","Bild","Bild hochladen","image bild foto",()=>upload("image/*")],
+      ["🎬","Video","Video hochladen und abspielen","video film mp4",()=>upload("video/*")],
+      ["🎵","Audio","Audiodatei hochladen","audio musik ton mp3",()=>upload("audio/*")],
+      ["📎","Datei","Beliebige Datei anhängen","file datei anhang pdf",()=>upload("")],
+      ["🔖","Web-Lesezeichen","Link auf eine Webseite","bookmark link url web lesezeichen",()=>{ const u = prompt("Adresse der Webseite:", "https://"); if (u && u!=="https://") ins(`[${u.replace(/^https?:\/\/(www\.)?/,"").replace(/\/$/,"")}](${u})`); }],
+      ["Datenbank"],
+      ["▥","Board","Neues Kanban-Board anlegen","board kanban database datenbank",()=>newDb("board")],
+      ["▦","Tabellen-Datenbank","Neue Datenbank als Tabelle","table database datenbank tabelle",()=>newDb("table")],
+      ["🗃️","Vorhandene Datenbank","Bestehende Datenbank einbetten","linked database datenbank einbetten view",()=>pickPage("Datenbank einbetten …", n=>ins(`\n[${n.title||"Ohne Titel"}](#/p/${n.id})\n`,"",true), n=>n.kind==="database")],
+      ["Layout"],
+      ["▯▯","2 Spalten","Inhalte nebeneinander","columns spalten layout",()=>ins(colsMd(2),"",true)],
+      ["▯▯▯","3 Spalten","Inhalte nebeneinander","columns spalten layout",()=>ins(colsMd(3),"",true)],
+      ["▯▯▯▯","4 Spalten","Inhalte nebeneinander","columns spalten layout",()=>ins(colsMd(4),"",true)],
+      ["☰","Inhaltsverzeichnis","Liste aller Überschriften","toc table of contents inhalt",()=>ins("[[inhalt]]\n","",true)],
+      ["Im Text"],
+      ["📅","Heute","Heutiges Datum einfügen","date today datum heute",()=>ins(dateStr(0))],
+      ["📅","Morgen","Datum von morgen einfügen","date tomorrow datum morgen",()=>ins(dateStr(1))],
+      ["𝗕","Fett","Text fett setzen","bold fett",()=>ins("**","**")],
+      ["𝘐","Kursiv","Text kursiv setzen","italic kursiv",()=>ins("*","*")],
+      ["S","Durchgestrichen","Text durchstreichen","strike durchgestrichen",()=>ins("~~","~~")],
+      ["`","Code im Text","Kurzer Code im Satz","inline code",()=>ins("`","`")],
+    ];
+    const caretXY = () => {
+      const d = document.createElement("div"), cs = getComputedStyle(ta);
+      for (const k of ["fontFamily","fontSize","lineHeight","padding","letterSpacing","tabSize"]) d.style[k] = cs[k];
+      Object.assign(d.style, {whiteSpace:"pre-wrap", wordWrap:"break-word", position:"absolute", visibility:"hidden", left:"-9999px", top:"0", width:ta.clientWidth+"px", boxSizing:"border-box"});
+      d.textContent = ta.value.slice(0, ta.selectionStart);
+      const sp = document.createElement("span"); sp.textContent = "\u200b"; d.append(sp); document.body.append(d);
+      const r = ta.getBoundingClientRect(); const xy = {x: r.left + sp.offsetLeft, y: r.top + sp.offsetTop + sp.offsetHeight};
+      d.remove(); return xy;
+    };
+    const drawSlash = () => {
+      const q = ta.value.slice(slash.start+1, ta.selectionStart).toLowerCase().trim();
+      const el = slash.el; el.innerHTML = ""; slash.items = [];
+      let grp = null;
+      for (const c of CMDS){
+        if (c.length===1){ grp = c[0]; continue; }
+        if (q && !(c[1]+" "+c[3]).toLowerCase().includes(q)) continue;
+        if (grp){ el.append(h("div",{class:"grp"}, grp.toUpperCase())); grp = null; }
+        const idx = slash.items.length;
+        const it = h("button",{class:"item"+(idx===slash.sel?" sel":""), onmousedown:e=>e.preventDefault(), onclick:()=>runSlash(idx)},
+          h("span",{class:"i"}, c[0]), h("span",{}, h("div",{}, c[1]), h("div",{class:"d"}, c[2])));
+        slash.items.push({c, it}); el.append(it);
+      }
+      if (!slash.items.length){ if (q.length > 12 || /\s/.test(q)) return closeSlash(); el.append(h("div",{class:"hint", style:"padding:8px"},"Kein passender Befehl")); }
+      if (slash.sel >= slash.items.length) slash.sel = Math.max(0, slash.items.length-1);
+      slash.items.forEach((x,k)=>x.it.classList.toggle("sel", k===slash.sel));
+      slash.items[slash.sel]?.it.scrollIntoView({block:"nearest"});
+    };
+    const openSlash = () => {
+      const el = h("div",{class:"pop slash"}); document.body.append(el);
+      slash = {start: ta.selectionStart-1, el, items:[], sel:0};
+      const {x,y} = caretXY();
+      el.style.left = Math.max(8, Math.min(x, innerWidth-312))+"px";
+      el.style.top = (y+348 > innerHeight ? Math.max(8, y-22-348) : y+4)+"px";
+      drawSlash();
+    };
+    const runSlash = idx => {
+      const item = slash.items[idx]; if (!item) return;
+      ta.setRangeText("", slash.start, ta.selectionStart, "end");
+      closeSlash(); changed(); ta.focus(); item.c[4]();
+    };
+    const slashInput = () => {
+      const pos = ta.selectionStart;
+      if (slash){ if (pos <= slash.start || ta.value[slash.start] !== "/" || ta.value.slice(slash.start, pos).includes("\n")) closeSlash(); else drawSlash(); return; }
+      if (ta.value[pos-1] === "/" && (pos===1 || /\s/.test(ta.value[pos-2]))) openSlash();
+    };
+    const slashKey = e => {
+      if (!slash) return false;
+      if (e.key==="ArrowDown"){ slash.sel = Math.min(slash.sel+1, slash.items.length-1); drawSlash(); }
+      else if (e.key==="ArrowUp"){ slash.sel = Math.max(slash.sel-1, 0); drawSlash(); }
+      else if (e.key==="Enter" || e.key==="Tab"){ if (!slash.items.length){ closeSlash(); return false; } runSlash(slash.sel); }
+      else if (e.key==="Escape"){ closeSlash(); }
+      else return false;
+      e.preventDefault(); e.stopPropagation(); return true;
+    };
     const fileInp = h("input",{type:"file", multiple:true, style:"display:none"});
-    fileInp.onchange = async () => { for (const f of fileInp.files){ const url=await uploadFile(p.id,f); ins((f.type.startsWith("image/")?"!":"")+`[${f.name}](${url})\n`, "", true); } };
+    fileInp.onchange = async () => { for (const f of fileInp.files){ const url=await uploadFile(p.id,f); ins((/^(image|video|audio)\//.test(f.type)?"!":"")+`[${f.name}](${url})\n`, "", true); } };
     const B = (label, title, fn) => h("button",{title, onmousedown:e=>e.preventDefault(), onclick:fn}, label);
     const bar = h("div",{class:"edbar"},
       B("H1","Überschrift 1",()=>linePrefix("# ")), B("H2","Überschrift 2",()=>linePrefix("## ")), B("H3","Überschrift 3",()=>linePrefix("### ")),
@@ -724,8 +886,11 @@ function renderDoc(p, compact){
           {label:"＋ Neue Datenbank hier anlegen", fn: async () => { const name = prompt("Name der neuen Datenbank:", "Aufgaben"); if(!name) return; const r = await api("POST","/api/page",{kind:"database", parent_id:p.kind==="row"?p.id:p.id, title:name}); await loadTree(); ins(`\n[${name}](#/p/${r.id})\n`,"",true); }})),
       B("🖼 Bild/Datei","Datei einfügen",()=>fileInp.click()),
       h("span",{class:"sp"}), h("button",{class:"done", title:"Esc", onmousedown:e=>e.preventDefault(), onclick:done},"Fertig"));
-    ta.oninput = changed;
+    ta.oninput = () => { changed(); slashInput(); };
+    ta.addEventListener("click", () => { if (slash && ta.selectionStart <= slash.start) closeSlash(); });
+    ta.addEventListener("blur", () => setTimeout(()=>{ if (document.activeElement !== ta) closeSlash(); }, 150));
     ta.onkeydown = e => {
+      if (slashKey(e)) return;
       const mod = e.ctrlKey||e.metaKey;
       if (e.key==="Escape" || (e.key==="Enter" && mod)){ e.preventDefault(); done(); return; }
       if (mod && e.key.toLowerCase()==="b"){ e.preventDefault(); ins("**","**"); }
@@ -758,7 +923,7 @@ function renderDoc(p, compact){
     ta.ondragover = e => e.preventDefault();
     ta.ondrop = async e => {
       const files=[...(e.dataTransfer?.files||[])]; if(!files.length) return; e.preventDefault();
-      for (const f of files){ const url=await uploadFile(p.id,f); ins((f.type.startsWith("image/")?"!":"")+`[${f.name}](${url})\n`,"",true); }
+      for (const f of files){ const url=await uploadFile(p.id,f); ins((/^(image|video|audio)\//.test(f.type)?"!":"")+`[${f.name}](${url})\n`,"",true); }
     };
     const box = h("div",{class:"edwrap"}, bar, ta, fileInp);
     // Bearbeiten beenden, sobald außerhalb geklickt wird
@@ -766,7 +931,7 @@ function renderDoc(p, compact){
       if (box.contains(e.target) || e.target.closest(".pop, .overlay, #toast")) return;
       document.removeEventListener("mousedown", outsideClick, true); done(); };
     setTimeout(()=>document.addEventListener("mousedown", outsideClick, true), 0);
-    wrap.append(box, h("div",{class:"hint"},"Markdown · Bilder per Einfügen oder Hineinziehen · Esc oder „Fertig“ zum Beenden · wird automatisch gespeichert"));
+    wrap.append(box, h("div",{class:"hint"},"Tippe / für Befehle · Bilder per Einfügen oder Hineinziehen · Esc oder „Fertig“ zum Beenden · wird automatisch gespeichert"));
     grow();
     const lines = ta.value.split("\n");
     const ln = Math.min(line, lines.length-1);

@@ -107,6 +107,7 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
 
 | Aktion | So geht's |
 |---|---|
+| Blöcke einfügen | im Editor `/` tippen: Überschriften, To-dos, Toggles, Spalten, Board, Tabelle, Bild, Video, Seitenlink … Mit Tippen filtern, Enter fügt ein |
 | Text bearbeiten | auf den Text klicken, der Cursor landet an der Stelle. „Fertig“, Esc oder ein Klick daneben beendet (speichert automatisch) |
 | Checkbox abhaken | direkt anklicken, ohne Bearbeiten-Modus |
 | Bild einfügen | im Editor einfügen (Strg+V), hineinziehen oder „🖼 Bild/Datei“ |

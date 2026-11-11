@@ -1176,7 +1176,9 @@ class Handler(BaseHTTPRequestHandler):
             return self._err(400, "Ungültiger Typ")
         pid, ts = new_id(), now()
         schema = b.get("schema") or ([{"name": "Name", "type": "title"},
-                                      {"name": "Status", "type": "select"},
+                                      {"name": "Status", "type": "select", "options": [
+                                          {"name": "Offen", "color": "gray"}, {"name": "In Arbeit", "color": "blue"},
+                                          {"name": "Erledigt", "color": "green"}]},
                                       {"name": "Datum", "type": "date"}] if kind == "database" else [])
         props = b.get("props") or {}
         title = b.get("title", "")
