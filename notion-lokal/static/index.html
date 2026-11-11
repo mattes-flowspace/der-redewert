@@ -2,24 +2,22 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Notion Lokal</title>
 <style>
 :root{
   --bg:#ffffff; --side:#f7f7f5; --text:#37352f; --muted:#787774; --line:#e9e9e7;
   --hover:rgba(55,53,47,.06); --accent:#2383e2; --code:#f1f1ef; --callout:#f1f1ef;
-  --danger:#d44c47; --card:#ffffff; --shadow:0 4px 16px rgba(15,15,15,.12);
+  --danger:#d44c47; --card:#ffffff; --shadow:0 4px 18px rgba(15,15,15,.14);
   --t-gray:#e3e2e0; --t-brown:#eee0da; --t-orange:#fadec9; --t-yellow:#fdecc8;
   --t-green:#dbeddb; --t-blue:#d3e5ef; --t-purple:#e8deee; --t-pink:#f5e0e9; --t-red:#ffe2dd;
 }
-@media (prefers-color-scheme: dark){
-  :root{
-    --bg:#191919; --side:#202020; --text:#e6e6e4; --muted:#9b9b9b; --line:#2f2f2f;
-    --hover:rgba(255,255,255,.06); --accent:#529cca; --code:#2a2a2a; --callout:#252525;
-    --card:#252525; --shadow:0 4px 16px rgba(0,0,0,.5);
-    --t-gray:#373737; --t-brown:#4a3c35; --t-orange:#5c3b23; --t-yellow:#564328;
-    --t-green:#243d30; --t-blue:#143a4e; --t-purple:#3c2d49; --t-pink:#4e2c3c; --t-red:#522e2a;
-  }
+:root[data-theme="dark"]{
+  --bg:#191919; --side:#202020; --text:#e6e6e4; --muted:#9b9b9b; --line:#2f2f2f;
+  --hover:rgba(255,255,255,.07); --accent:#529cca; --code:#2a2a2a; --callout:#252525;
+  --card:#262626; --shadow:0 4px 18px rgba(0,0,0,.55);
+  --t-gray:#3a3a3a; --t-brown:#4a3c35; --t-orange:#5c3b23; --t-yellow:#564328;
+  --t-green:#243d30; --t-blue:#143a4e; --t-purple:#3c2d49; --t-pink:#4e2c3c; --t-red:#522e2a;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -27,122 +25,192 @@ body{background:var(--bg);color:var(--text);font:15px/1.6 -apple-system,BlinkMac
 a{color:inherit}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;border-radius:4px}
 input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
 /* Seitenleiste */
-#side{width:260px;min-width:260px;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100%}
-#side header{padding:14px 14px 6px;font-weight:600;display:flex;align-items:center;gap:8px}
-#side header span{flex:1}
-.side-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:4px 14px;color:var(--muted);font-size:14px}
+#side{width:264px;min-width:264px;background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100%}
+body.side-collapsed #side{display:none}
+#side header{padding:12px 10px 6px 14px;font-weight:600;display:flex;align-items:center;gap:8px}
+#side header .home{flex:1;cursor:pointer}
+.side-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:4px 14px;color:var(--muted);font-size:14px;border-radius:0}
 .side-btn:hover{background:var(--hover)}
-#tree{flex:1;overflow:auto;padding:6px 6px 20px}
-.node{display:flex;align-items:center;gap:2px;padding:2px 4px;border-radius:4px;font-size:14px;cursor:pointer;user-select:none}
+.side-btn kbd{margin-left:auto;font:11px inherit;opacity:.8}
+#tree{flex:1;overflow:auto;padding:0 6px 20px}
+.node{display:flex;align-items:center;gap:2px;padding:3px 4px;border-radius:4px;font-size:14px;cursor:pointer;user-select:none}
 .node:hover{background:var(--hover)}
 .node.active{background:var(--hover);font-weight:600}
-.node .tw{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;flex:none}
+.node .tw{width:20px;height:20px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:10px;flex:none;border-radius:3px}
+.node .tw:hover{background:var(--hover)}
 .node .ic{width:20px;text-align:center;flex:none}
 .node .lb{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .node .add{visibility:hidden;color:var(--muted);width:20px}
 .node:hover .add{visibility:visible}
 .node.drop{outline:2px solid var(--accent)}
-.section-title{font-size:12px;color:var(--muted);padding:10px 8px 2px;font-weight:600}
+.section-title{font-size:11px;letter-spacing:.04em;color:var(--muted);padding:12px 8px 2px;font-weight:600}
+#side footer{border-top:1px solid var(--line);padding:4px 0}
 
 /* Hauptbereich */
-#main{flex:1;overflow:auto;height:100%}
-#topbar{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;gap:6px;padding:8px 16px;font-size:14px;color:var(--muted);z-index:5;min-height:44px}
-#topbar .crumb{cursor:pointer;padding:2px 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px}
+#main{flex:1;overflow:auto;height:100%;min-width:0}
+#topbar{position:sticky;top:0;background:var(--bg);display:flex;align-items:center;gap:4px;padding:6px 12px;font-size:14px;color:var(--muted);z-index:5;min-height:44px}
+#crumbs{display:flex;align-items:center;gap:2px;min-width:0;overflow:hidden}
+#topbar .crumb{cursor:pointer;padding:2px 5px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
 #topbar .crumb:hover{background:var(--hover)}
 #topbar .sp{flex:1}
-#topbar button{padding:3px 8px;color:var(--muted)}
+#topbar button{padding:3px 8px;color:var(--muted);white-space:nowrap}
 #topbar button:hover{background:var(--hover)}
-#menuBtn{display:none}
-.page{max-width:900px;margin:0 auto;padding:30px 60px 120px}
-.page.wide{max-width:none;padding:30px 60px 120px}
-.icon-big{font-size:58px;line-height:1;cursor:pointer;display:inline-block;border-radius:6px;padding:4px}
+#status{font-size:12px;white-space:nowrap}
+#offline{display:none;background:var(--t-red);padding:6px 16px;font-size:14px;text-align:center}
+.page{max-width:900px;margin:0 auto;padding:24px 60px 140px}
+.page.wide{max-width:none}
+.icon-big{font-size:56px;line-height:1;cursor:pointer;display:inline-block;border-radius:6px;padding:4px}
 .icon-big:hover{background:var(--hover)}
-.add-icon{color:var(--muted);font-size:14px;padding:2px 6px}
-.add-icon:hover{background:var(--hover)}
-h1.title{font-size:40px;line-height:1.2;margin:8px 0 16px;outline:none;font-weight:700;word-break:break-word}
+.add-icon{color:var(--muted);font-size:14px;padding:2px 6px;opacity:0;transition:opacity .15s}
+.page:hover .add-icon,.add-icon:focus{opacity:1}
+h1.title{font-size:38px;line-height:1.2;margin:6px 0 14px;outline:none;font-weight:700;word-break:break-word}
 h1.title:empty:before{content:"Ohne Titel";color:var(--muted);opacity:.5}
 
 /* Inhalt */
-.doc{min-height:200px;cursor:text}
-.doc:empty:before{content:"Hier klicken zum Schreiben …";color:var(--muted)}
-.doc h1{font-size:30px;margin:1.4em 0 .3em}.doc h2{font-size:24px;margin:1.3em 0 .3em}.doc h3{font-size:20px;margin:1.2em 0 .2em}
+.doc{min-height:120px}
+.doc.blank{color:var(--muted);cursor:text;padding:6px 0}
+.doc [data-l]{cursor:text}
+.doc h1{font-size:28px;margin:1.3em 0 .25em}.doc h2{font-size:23px;margin:1.2em 0 .25em}.doc h3{font-size:19px;margin:1.1em 0 .2em}
+.doc h1:first-child,.doc h2:first-child,.doc h3:first-child{margin-top:.2em}
 .doc p{margin:.35em 0}
-.doc img{max-width:100%;border-radius:4px;display:block;margin:.6em 0}
+.doc img{max-width:100%;border-radius:4px;display:block;margin:.6em 0;cursor:zoom-in}
 .doc code{background:var(--code);padding:.1em .35em;border-radius:4px;font-size:.88em;color:#eb5757}
 .doc pre{background:var(--code);padding:16px;border-radius:6px;overflow:auto;font-size:13.5px}
 .doc pre code{background:none;color:inherit;padding:0}
 .doc blockquote{border-left:3px solid currentColor;margin:.5em 0;padding:0 0 0 14px}
-.doc .callout{background:var(--callout);border-radius:6px;padding:14px 16px;margin:.6em 0}
+.doc .callout{background:var(--callout);border-radius:6px;padding:12px 16px;margin:.6em 0}
 .doc table{border-collapse:collapse;margin:.6em 0;font-size:14px}
 .doc th,.doc td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
 .doc th{background:var(--side)}
 .doc hr{border:0;border-top:1px solid var(--line);margin:1em 0}
-.doc ul,.doc ol{padding-left:1.6em;margin:.3em 0}
-.doc li.task{list-style:none;margin-left:-1.4em}
-.doc li.task input{margin-right:8px}
+.doc ul,.doc ol{padding-left:1.6em;margin:.25em 0}
+.doc li.task{list-style:none;margin-left:-1.5em;display:block}
+.doc li.task>input{margin:0 8px 0 0;width:16px;height:16px;vertical-align:-2px;cursor:pointer;accent-color:var(--accent)}
+.doc li.task.done>span{color:var(--muted);text-decoration:line-through}
 .doc a{color:var(--text);text-decoration:underline;text-decoration-color:var(--muted)}
 .doc a.pagelink{text-decoration:none;border-bottom:1px solid var(--line);font-weight:500}
 .doc a.pagelink:before{content:"↗ ";color:var(--muted)}
-.doc details{margin:.3em 0}
-textarea.editor{width:100%;min-height:400px;border:1px solid var(--line);border-radius:6px;background:var(--bg);padding:14px;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:vertical;outline:none}
-textarea.editor:focus{border-color:var(--accent)}
+.doc a.pagerow{display:flex;gap:8px;padding:3px 6px;margin:1px -6px;border-radius:4px;text-decoration:none;font-weight:500;cursor:pointer}
+.doc a.pagerow:hover{background:var(--hover)}
+.doc details{margin:.2em 0}
+.doc details>summary{cursor:pointer;padding:2px 4px;margin-left:-4px;border-radius:4px;font-weight:500}
+.doc details>summary:hover{background:var(--hover)}
+.doc details>.tgb{padding:2px 0 6px 20px}
+.embed{margin:14px 0 22px;cursor:default}
+.embed-h{display:flex;align-items:center;gap:6px;font-weight:600;font-size:17px;margin-bottom:2px}
+.embed-h a{text-decoration:none;border-radius:4px;padding:0 4px;margin-left:-4px}
+.embed-h a:hover{background:var(--hover)}
+
+/* Editor */
+.edwrap{border:1px solid var(--accent);border-radius:8px;background:var(--bg)}
+.edbar{display:flex;flex-wrap:wrap;gap:2px;padding:4px 6px;border-bottom:1px solid var(--line);background:var(--side);position:sticky;top:44px;z-index:3;border-radius:7px 7px 0 0}
+.edbar button{padding:2px 8px;font-size:13px;color:var(--text)}
+.edbar button:hover{background:var(--hover)}
+.edbar .sp{flex:1}
+.edbar .done{background:var(--accent);color:#fff}
+textarea.editor{display:block;width:100%;min-height:200px;border:0;background:transparent;padding:14px;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;resize:none;outline:none;overflow:hidden}
 .hint{font-size:12px;color:var(--muted);margin:6px 0}
 .children{margin-top:30px;border-top:1px solid var(--line);padding-top:10px}
 .children a{display:flex;gap:8px;padding:4px 6px;text-decoration:none;border-radius:4px}
 .children a:hover{background:var(--hover)}
 
 /* Eigenschaften */
-.props{margin:0 0 20px;border-bottom:1px solid var(--line);padding-bottom:14px}
+.props{margin:0 0 18px;border-bottom:1px solid var(--line);padding-bottom:12px}
 .prop{display:flex;align-items:flex-start;min-height:34px;font-size:14px}
-.prop .k{width:180px;flex:none;color:var(--muted);padding:6px 6px;display:flex;gap:6px;align-items:center}
-.prop .v{flex:1;padding:4px 6px;border-radius:4px;min-height:30px}
+.prop .k{width:170px;flex:none;color:var(--muted);padding:6px 6px;display:flex;gap:6px;align-items:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.prop .v{flex:1;padding:5px 6px;border-radius:4px;min-height:32px;cursor:pointer;min-width:0;word-break:break-word}
 .prop .v:hover{background:var(--hover)}
+.prop .v:empty:before,.prop .v.isempty:before{content:"Leer";color:var(--muted);opacity:.6}
 
 /* Datenbank */
-.dbbar{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line);margin-bottom:8px;flex-wrap:wrap}
-.tab{padding:6px 10px;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.dbbar{display:flex;align-items:center;gap:4px;border-bottom:1px solid var(--line);margin-bottom:6px;flex-wrap:wrap}
+.tab{padding:6px 10px;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;border-radius:4px 4px 0 0}
+.tab:hover{background:var(--hover)}
 .tab.on{color:var(--text);border-bottom-color:var(--text)}
 .dbbar .sp{flex:1}
-.dbbar input{border:1px solid var(--line);border-radius:4px;background:var(--bg);padding:3px 8px;font-size:13px;width:180px}
-.btn{padding:4px 10px;font-size:14px;border-radius:4px}
+.dbbar input.filter{border:1px solid var(--line);border-radius:4px;background:var(--bg);padding:3px 8px;font-size:13px;width:150px}
+.btn{padding:4px 10px;font-size:14px;border-radius:4px;white-space:nowrap}
 .btn:hover{background:var(--hover)}
 .btn.primary{background:var(--accent);color:#fff}
 .btn.primary:hover{filter:brightness(1.08)}
-.tablewrap{overflow:auto;border-top:1px solid var(--line)}
+.btn.on{color:var(--accent)}
+.tablewrap{overflow:auto}
 table.db{border-collapse:collapse;font-size:14px;min-width:100%}
-table.db th{font-weight:500;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
-table.db th:hover{background:var(--hover)}
-table.db td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;vertical-align:top;min-width:120px;max-width:380px}
+table.db th{font-weight:500;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;background:var(--bg)}
+table.db th:hover{background:var(--side)}
+table.db td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;vertical-align:top;min-width:110px;max-width:380px}
+table.db td.narrow,table.db th.narrow{min-width:44px;text-align:center}
+table.db td.narrow .cell{justify-content:center;display:flex;cursor:pointer}
 table.db td .cell{padding:6px 8px;min-height:34px;cursor:text;word-break:break-word}
 table.db td .cell:hover{background:var(--hover)}
+table.db td.tcell{min-width:220px}
 table.db td.tcell .cell{font-weight:500;display:flex;gap:6px;align-items:flex-start}
-table.db td.tcell .open{visibility:hidden;margin-left:auto;font-size:12px;border:1px solid var(--line);padding:0 6px;color:var(--muted);background:var(--bg)}
+table.db td.tcell .tt{flex:1;min-width:0}
+table.db td.tcell .open{visibility:hidden;font-size:11px;border:1px solid var(--line);padding:0 6px;color:var(--muted);background:var(--bg);flex:none}
 table.db tr:hover td.tcell .open{visibility:visible}
 table.db th:last-child,table.db td:last-child{border-right:0}
-.cell input[type=text],.cell input[type=date],.cell input[type=number],.cell textarea,.prop .v input,.prop .v textarea{width:100%;border:0;outline:2px solid var(--accent);border-radius:3px;background:var(--bg);padding:2px 4px;font-size:14px}
-.newrow{padding:6px 8px;color:var(--muted);font-size:14px;cursor:pointer}
+.cell input[type=text],.cell textarea,.prop .v input[type=text],.prop .v textarea{width:100%;border:0;outline:2px solid var(--accent);border-radius:3px;background:var(--bg);padding:2px 4px;font-size:14px;resize:vertical}
+input[type=checkbox].cb{width:16px;height:16px;margin:3px 0 0;accent-color:var(--accent);cursor:pointer}
+.newrow{padding:6px 8px;color:var(--muted);font-size:14px;cursor:pointer;border-radius:4px}
 .newrow:hover{background:var(--hover)}
-.tag{display:inline-block;padding:0 7px;border-radius:3px;font-size:13px;margin:1px 4px 1px 0;line-height:1.6;white-space:nowrap}
-.board{display:flex;gap:12px;overflow:auto;padding:8px 0 20px;align-items:flex-start}
-.col{width:260px;flex:none;border-radius:6px;padding:6px;min-height:80px}
-.col.drop{outline:2px dashed var(--accent)}
-.col h4{margin:2px 4px 8px;font-size:14px;font-weight:500;display:flex;gap:6px;align-items:center}
-.col h4 .n{color:var(--muted);font-weight:400}
-.cardx{background:var(--card);box-shadow:0 0 0 1px var(--line),0 2px 4px rgba(15,15,15,.06);border-radius:6px;padding:8px 10px;margin-bottom:8px;cursor:pointer;font-size:14px}
-.cardx:hover{filter:brightness(.97)}
-.cardx .t{font-weight:500;margin-bottom:4px}
-.cardx .m{font-size:12px;color:var(--muted)}
+.tag{display:inline-block;padding:0 7px;border-radius:3px;font-size:13px;margin:1px 4px 1px 0;line-height:1.6;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
+.date.today{color:var(--accent);font-weight:500}
+.date.past{color:var(--muted)}
+
+/* Board */
+.board{display:flex;gap:10px;overflow-x:auto;padding:6px 2px 16px;align-items:flex-start;scroll-snap-type:none}
+.col{width:268px;flex:none;border-radius:8px;padding:6px;display:flex;flex-direction:column;max-height:none}
+.col.over{outline:2px solid var(--accent);outline-offset:-2px}
+.col>h4{margin:2px 2px 6px 4px;font-size:14px;font-weight:500;display:flex;gap:6px;align-items:center;min-height:26px}
+.col>h4 .n{color:var(--muted);font-weight:400;font-size:13px}
+.col>h4 .sp{flex:1}
+.col>h4 button{color:var(--muted);width:24px;height:24px;padding:0;line-height:1}
+.col>h4 button:hover{background:var(--hover)}
+.cards{min-height:8px;display:flex;flex-direction:column;gap:6px}
+.cardx{background:var(--card);box-shadow:0 0 0 1px var(--line),0 1px 3px rgba(15,15,15,.07);border-radius:6px;padding:8px 10px;cursor:pointer;font-size:14px;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation;position:relative}
+.cardx:hover{box-shadow:0 0 0 1px var(--muted),0 1px 3px rgba(15,15,15,.07)}
+.cardx.dragging{opacity:.25}
+.cardx .t{font-weight:500;word-break:break-word}
+.cardx .m{font-size:12.5px;color:var(--muted);margin-top:3px;display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.cardx .m .tag{font-size:12px;margin:0}
+.cardx .k{opacity:.8}
+.ghost{position:fixed;z-index:80;pointer-events:none;transform:rotate(2.5deg);box-shadow:var(--shadow);opacity:.95}
+.ph{border:2px dashed var(--accent);border-radius:6px;opacity:.6}
+textarea.qa{width:100%;border:0;outline:2px solid var(--accent);border-radius:6px;background:var(--card);padding:8px 10px;font-size:14px;resize:none;margin-top:6px;display:block}
+.hiddencols{display:flex;flex-direction:column;gap:4px;flex:none;width:200px;padding-top:6px}
+.hiddencols .hc{display:flex;gap:6px;align-items:center;padding:3px 6px;border-radius:4px;cursor:pointer;font-size:13px;color:var(--muted)}
+.hiddencols .hc:hover{background:var(--hover)}
+.addgroup{flex:none;width:200px;color:var(--muted);padding:8px;border-radius:6px;cursor:pointer;font-size:14px}
+.addgroup:hover{background:var(--hover)}
+
+/* Seitenvorschau */
+#peek{position:fixed;top:0;right:0;bottom:0;width:min(640px,100vw);background:var(--bg);border-left:1px solid var(--line);box-shadow:var(--shadow);z-index:30;display:none;flex-direction:column}
+#peek.on{display:flex}
+#peek .ph-bar{display:flex;gap:4px;padding:8px 12px;align-items:center;color:var(--muted);font-size:14px;border-bottom:1px solid var(--line)}
+#peek .ph-bar button{padding:3px 8px}
+#peek .ph-bar button:hover{background:var(--hover)}
+#peek .ph-bar .sp{flex:1}
+#peek .peek-body{overflow:auto;padding:20px 36px 100px;flex:1}
+#peek h1.title{font-size:30px}
+#peek .edbar{top:0}
 
 /* Popover, Dialoge */
-.pop{position:fixed;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:6px;padding:6px;z-index:50;min-width:220px;font-size:14px}
-.pop .item{display:block;width:100%;text-align:left;padding:5px 8px}
+.pop{position:fixed;background:var(--card);box-shadow:var(--shadow);border:1px solid var(--line);border-radius:8px;padding:6px;z-index:90;min-width:230px;max-width:320px;max-height:70vh;overflow:auto;font-size:14px}
+.pop .item{display:flex;gap:6px;align-items:center;width:100%;text-align:left;padding:5px 8px}
 .pop .item:hover{background:var(--hover)}
 .pop .item.danger{color:var(--danger)}
 .pop label{display:block;font-size:12px;color:var(--muted);margin:6px 8px 2px}
-.pop input,.pop select{width:calc(100% - 16px);margin:0 8px 6px;padding:4px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
-.overlay{position:fixed;inset:0;background:rgba(15,15,15,.4);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:60}
+.pop label.chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--text);margin:0;padding:4px 8px;cursor:pointer;border-radius:4px}
+.pop label.chk:hover{background:var(--hover)}
+.pop input[type=text],.pop input[type=date],.pop input:not([type]),.pop select{width:calc(100% - 16px);margin:0 8px 6px;padding:5px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+.pop hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+.swatches{display:flex;gap:4px;padding:4px 8px 6px;flex-wrap:wrap}
+.swatches button{width:22px;height:22px;border-radius:4px;border:1px solid var(--line)}
+.swatches button.on{outline:2px solid var(--accent)}
+.overlay{position:fixed;inset:0;background:rgba(15,15,15,.45);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh;z-index:70}
 .dialog{background:var(--card);border-radius:10px;box-shadow:var(--shadow);width:min(620px,92vw);max-height:72vh;display:flex;flex-direction:column;overflow:hidden}
 .dialog input.q{border:0;border-bottom:1px solid var(--line);padding:14px 18px;font-size:17px;background:transparent;outline:none}
 .dialog .res{overflow:auto;padding:6px}
@@ -155,44 +223,59 @@ table.db th:last-child,table.db td:last-child{border-right:0}
 .drop-zone{border:2px dashed var(--line);border-radius:8px;padding:30px;text-align:center;color:var(--muted);margin:14px 0;cursor:pointer}
 .drop-zone.on{border-color:var(--accent);color:var(--accent)}
 .log{font:12px/1.5 ui-monospace,monospace;background:var(--code);border-radius:6px;padding:10px;white-space:pre-wrap;max-height:180px;overflow:auto}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#2f2f2f;color:#fff;padding:8px 16px;border-radius:6px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99}
-#toast.on{opacity:1}
-.empty{color:var(--muted);text-align:center;margin-top:20vh}
+#lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:95;display:none;align-items:center;justify-content:center;cursor:zoom-out}
+#lightbox img{max-width:94vw;max-height:94vh}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#2f2f2f;color:#fff;padding:8px 14px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:99;display:flex;gap:12px;align-items:center;max-width:92vw}
+#toast.on{opacity:1;pointer-events:auto}
+#toast button{color:#8ec5ff;font-weight:600;padding:0 4px}
+.empty{color:var(--muted);text-align:center;margin-top:18vh}
 .empty .big{font-size:48px}
 
 @media (max-width: 760px){
-  #side{position:fixed;left:-280px;z-index:40;transition:left .2s;box-shadow:var(--shadow)}
-  body.side-open #side{left:0}
-  #menuBtn{display:inline-block}
-  .page,.page.wide{padding:20px 16px 100px}
-  .prop .k{width:120px}
-  h1.title{font-size:30px}
+  #side{position:fixed;left:0;top:0;z-index:40;box-shadow:var(--shadow);width:84vw;min-width:0}
+  body:not(.side-open) #side{display:none}
+  body.side-open.side-collapsed #side{display:flex}
+  .page,.page.wide{padding:14px 14px 120px}
+  .prop .k{width:112px}
+  h1.title{font-size:28px}
+  #peek .peek-body{padding:14px 16px 100px}
+  .col{width:78vw}
+  .board{scroll-snap-type:x proximity}
+  .col{scroll-snap-align:start}
+  .dbbar input.filter{width:110px}
+  table.db td.tcell .open{visibility:visible}
+  .add-icon{opacity:1}
 }
 </style>
 </head>
 <body>
 <nav id="side">
-  <header><span>🗂️ Notion Lokal</span></header>
-  <button class="side-btn" id="btnSearch">🔍 Suchen <span style="margin-left:auto;font-size:11px">Strg K</span></button>
-  <button class="side-btn" id="btnImport">📥 Notion importieren</button>
-  <button class="side-btn" id="btnExport">📤 Export (Markdown/CSV)</button>
-  <button class="side-btn" id="btnTrash">🗑️ Papierkorb</button>
-  <div class="section-title">SEITEN</div>
+  <header><span class="home" id="homeBtn" title="Startseite">🗂️ Notion Lokal</span></header>
+  <button class="side-btn" id="btnSearch">🔍 Suchen <kbd>Strg K</kbd></button>
   <div id="tree"></div>
-  <button class="side-btn" id="btnNewPage" style="padding:8px 14px">＋ Neue Seite</button>
-  <button class="side-btn" id="btnNewDb" style="padding:0 14px 12px">＋ Neue Datenbank</button>
+  <footer>
+    <button class="side-btn" id="btnNewPage">＋ Neue Seite</button>
+    <button class="side-btn" id="btnNewDb">＋ Neue Datenbank</button>
+    <button class="side-btn" id="btnImport">📥 Notion importieren</button>
+    <button class="side-btn" id="btnExport">📤 Export (Markdown/CSV)</button>
+    <button class="side-btn" id="btnTrash">🗑️ Papierkorb</button>
+    <button class="side-btn" id="btnTheme">🌓 Darstellung: Automatisch</button>
+  </footer>
 </nav>
 <main id="main">
-  <div id="topbar"><button id="menuBtn">☰</button><span id="crumbs"></span><span class="sp"></span><span id="status"></span><button id="btnMore" title="Mehr">•••</button></div>
+  <div id="offline">⚠️ Keine Verbindung zu Notion Lokal. Läuft das Programm noch? Änderungen werden gerade nicht gespeichert.</div>
+  <div id="topbar"><button id="menuBtn" title="Seitenleiste ein-/ausblenden">☰</button><span id="crumbs"></span><span class="sp"></span><span id="status"></span><button id="btnFav" title="Favorit">☆</button><button id="btnMore" title="Mehr">•••</button></div>
   <div id="view"></div>
 </main>
+<aside id="peek"></aside>
+<div id="lightbox"><img alt=""></div>
 <div id="toast"></div>
 
 <script>
 "use strict";
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Hilfsfunktionen
-// ---------------------------------------------------------------------------
+// ===========================================================================
 const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const h = (tag, attrs={}, ...kids) => {
@@ -202,7 +285,7 @@ const h = (tag, attrs={}, ...kids) => {
     else if (k === "html") el.innerHTML = v;
     else if (v !== false && v != null) el.setAttribute(k, v === true ? "" : v);
   }
-  for (const k of kids.flat()) if (k != null) el.append(k.nodeType ? k : document.createTextNode(k));
+  for (const k of kids.flat(3)) if (k != null && k !== false) el.append(k.nodeType ? k : document.createTextNode(k));
   return el;
 };
 async function api(method, url, body, raw=false) {
@@ -210,22 +293,56 @@ async function api(method, url, body, raw=false) {
   if (body !== undefined) {
     if (raw) opt.body = body; else { opt.body = JSON.stringify(body); opt.headers["Content-Type"]="application/json"; }
   }
-  const r = await fetch(url, opt);
+  let r;
+  try { r = await fetch(url, opt); }
+  catch(e){ $("#offline").style.display = "block"; throw new Error("Keine Verbindung zum lokalen Server"); }
+  $("#offline").style.display = "none";
   const j = await r.json().catch(()=>({}));
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
 }
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"),2200); }
-function debounce(fn, ms){ let t; const d=(...a)=>{clearTimeout(t); t=setTimeout(()=>fn(...a),ms)}; d.flush=(...a)=>{clearTimeout(t); fn(...a)}; return d; }
-const defaultIcon = k => k==="database" ? "🗃️" : "📄";
+function toast(msg, action, fn){
+  const t=$("#toast"); t.innerHTML=""; t.append(msg);
+  if (action) t.append(h("button",{onclick:()=>{ t.classList.remove("on"); fn(); }}, action));
+  t.classList.add("on"); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove("on"), action?6000:2200);
+}
+function debounce(fn, ms){ let t, pending=false, last; const d=(...a)=>{ last=a; pending=true; clearTimeout(t); t=setTimeout(()=>{pending=false; fn(...a);},ms); }; d.flush=()=>{ if(pending){ clearTimeout(t); pending=false; fn(...(last||[])); } }; return d; }
+const defaultIcon = k => k==="database" ? "🗃️" : k==="row" ? "📄" : "📄";
 function setStatus(s){ $("#status").textContent = s; }
+const isOn = v => /^(yes|ja|true|1|x)$/i.test(String(v||"").trim());
 
 const TAGCOLORS = ["gray","brown","orange","yellow","green","blue","purple","pink","red"];
-function tagColor(v){ let n=0; for (const c of String(v)) n=(n*31+c.charCodeAt(0))>>>0; return `var(--t-${TAGCOLORS[n%TAGCOLORS.length]})`; }
+const COLORNAMES = {gray:"Grau",brown:"Braun",orange:"Orange",yellow:"Gelb",green:"Grün",blue:"Blau",purple:"Lila",pink:"Pink",red:"Rot"};
+function hashColor(v){ let n=0; for (const c of String(v)) n=(n*31+c.charCodeAt(0))>>>0; return TAGCOLORS[n%TAGCOLORS.length]; }
+function optColor(col, name){ const o=(col?.options||[]).find(o=>o.name===name); return `var(--t-${(o&&o.color)||hashColor(name)})`; }
+const tagEl = (col, name) => h("span",{class:"tag", style:`background:${optColor(col,name)}`}, name);
 
-// ---------------------------------------------------------------------------
+// ---- Datum ----------------------------------------------------------------
+function parseISO(s){ const m=String(s||"").trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/); return m ? {d:new Date(+m[1],m[2]-1,+m[3],+(m[4]||0),+(m[5]||0)), time:m[4]?`${m[4]}:${m[5]}`:"", iso:`${m[1]}-${m[2]}-${m[3]}`} : null; }
+function isoOf(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function dateSortKey(v){ const p=parseISO(String(v||"").split("→")[0]); if (p) return p.d.getTime(); const t=Date.parse(v); return isNaN(t)?0:t; }
+function fmtOne(s){
+  const p = parseISO(s); if (!p) return {text:String(s).trim(), cls:""};
+  const today = new Date(); today.setHours(0,0,0,0);
+  const day = new Date(p.d); day.setHours(0,0,0,0);
+  const diff = Math.round((day-today)/864e5);
+  let text = diff===0 ? "Heute" : diff===1 ? "Morgen" : diff===-1 ? "Gestern"
+    : p.d.toLocaleDateString("de-DE", {day:"numeric", month:"short", year: day.getFullYear()===today.getFullYear() ? undefined : "numeric"});
+  if (p.time) text += " " + p.time;
+  return {text, cls: diff===0 ? "today" : diff<0 ? "past" : ""};
+}
+function dateEl(v){
+  const parts = String(v||"").split("→").map(s=>s.trim()).filter(Boolean);
+  if (!parts.length) return null;
+  const f = parts.map(fmtOne);
+  return h("span",{class:"date "+f[f.length-1].cls}, f.map(x=>x.text).join(" → "));
+}
+
+// ===========================================================================
 // Markdown -> HTML (Notion-Export-kompatibel, ohne externe Bibliothek)
-// ---------------------------------------------------------------------------
+// ===========================================================================
+let NODE = {};            // id -> Baumknoten (für Einbettungen und Seitenlinks)
+let MDX = {closed:new Set()};
 function safeUrl(u){
   u = String(u||"").trim();
   if (/^(javascript|vbscript|data):/i.test(u) && !/^data:image\//i.test(u)) return "#";
@@ -240,239 +357,398 @@ function inline(s){
     u = u.replace(/&amp;/g,"&");
     if (u.startsWith("#/p/")) return `<a class="pagelink" href="${esc(u)}">${t}</a>`;
     const ext = !u.startsWith("#") && !u.startsWith("/");
-    return `<a href="${esc(safeUrl(u))}"${ext?' target="_blank" rel="noopener"':''}>${t}</a>`;
+    return `<a href="${esc(safeUrl(u))}"${ext?' target="_blank" rel="noopener"':' target="_blank"'}>${t}</a>`;
   });
   s = s.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g, (_,p,u)=>`${p}<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
   s = s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>").replace(/__([^_]+)__/g,"<strong>$1</strong>");
   s = s.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*(?!\*)/g,"$1<em>$2</em>").replace(/(^|[^_\w])_([^_\s][^_]*?)_(?!\w)/g,"$1<em>$2</em>");
   s = s.replace(/~~([^~]+)~~/g,"<del>$1</del>");
-  s = s.replace(/&lt;br\s*\/?&gt;/g,"<br>");
+  s = s.replace(/&lt;br\s*\/?&gt;/g,"<br>").replace(/&lt;(\/?)(u|mark|sub|sup)&gt;/g,"<$1$2>");
   s = s.replace(/\u0000(\d+)\u0000/g, (_,i)=>`<code>${esc(codes[+i])}</code>`);
   return s;
 }
-function md(src){
+const indentOf = l => l.match(/^(\s*)/)[1].replace(/\t/g,"    ").length;
+const LIST_RE = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+const EMBED_RE = /^\[((?:[^\[\]]|\[[^\]]*\])*)\]\(#\/p\/([0-9a-zA-Z_-]+)\)$/;
+
+function md(src, off=0){
   const lines = String(src||"").replace(/\r\n/g,"\n").split("\n");
-  let out = "", i = 0, para = [];
-  const flush = () => { if (para.length){ out += `<p>${para.map(inline).join("<br>")}</p>`; para=[]; } };
-  const indentOf = l => { const m=l.match(/^(\s*)/)[1]; return m.replace(/\t/g,"    ").length; };
-  const listRe = /^(\s*)([-*+]|\d+[.)])\s+(.*)$/;
+  let out = "", i = 0, para = [], pl = 0;
+  const L = n => ` data-l="${off+n}"`;
+  const flush = () => {
+    if (!para.length) return;
+    if (para.length===1){
+      const m = para[0].match(EMBED_RE), n = m && NODE[m[2]];
+      if (n && n.kind==="database"){ out += `<div class="embed"${L(pl)} data-db="${m[2]}"></div>`; para=[]; return; }
+      if (n){ out += `<a class="pagerow"${L(pl)} href="#/p/${m[2]}"><span>${esc(n.icon||defaultIcon(n.kind))}</span><span>${inline(m[1])}</span></a>`; para=[]; return; }
+    }
+    out += `<p${L(pl)}>${para.map(inline).join("<br>")}</p>`; para=[];
+  };
   while (i < lines.length){
     const l = lines[i];
     if (/^\s*```/.test(l)){
-      flush(); const lang = l.trim().slice(3); const buf=[]; i++;
+      flush(); const s=i; const lang = l.trim().slice(3); const buf=[]; i++;
       while (i<lines.length && !/^\s*```\s*$/.test(lines[i])) buf.push(lines[i++]);
-      i++; out += `<pre><code data-lang="${esc(lang)}">${esc(buf.join("\n"))}</code></pre>`; continue;
+      i++; out += `<pre${L(s)}><code data-lang="${esc(lang)}">${esc(buf.join("\n"))}</code></pre>`; continue;
     }
     if (/^\s*<aside>\s*$/i.test(l)){
-      flush(); const buf=[]; i++; let depth=1;
+      flush(); const s=i; const buf=[]; i++; let depth=1;
       while (i<lines.length){ if (/<aside>/i.test(lines[i])) depth++; if (/<\/aside>/i.test(lines[i]) && --depth===0) break; buf.push(lines[i++]); }
-      i++; out += `<div class="callout">${md(buf.join("\n"))}</div>`; continue;
+      i++; out += `<div class="callout"${L(s)}>${md(buf.join("\n"), off+s+1)}</div>`; continue;
     }
-    if (/^\s*<details>/i.test(l)){
-      flush(); const buf=[]; i++; let sum="";
+    if (/^\s*<details/i.test(l)){
+      flush(); const s=i; const buf=[]; let sum="", depth=1, bodyStart=i+1;
       const sm = l.match(/<summary>(.*?)<\/summary>/i); if (sm) sum=sm[1];
-      while (i<lines.length && !/<\/details>/i.test(lines[i])){ const m=lines[i].match(/<summary>(.*?)<\/summary>/i); if(m) sum=m[1]; else buf.push(lines[i]); i++; }
-      i++; out += `<details><summary>${inline(sum)}</summary>${md(buf.join("\n"))}</details>`; continue;
+      i++;
+      while (i<lines.length){
+        if (/<details/i.test(lines[i])) depth++;
+        if (/<\/details>/i.test(lines[i]) && --depth===0) break;
+        const m = depth===1 && !sum && lines[i].match(/^\s*<summary>(.*?)<\/summary>\s*$/i);
+        if (m){ sum=m[1]; buf.push(""); } else buf.push(lines[i]);
+        i++;
+      }
+      i++;
+      out += `<details class="tg"${MDX.closed.has(sum)?"":" open"} data-s="${esc(sum)}"><summary${L(s)}>${inline(sum)}</summary><div class="tgb">${md(buf.join("\n"), off+bodyStart)}</div></details>`; continue;
     }
     let m;
-    if ((m = l.match(/^(#{1,6})\s+(.*)$/))){ flush(); const n=Math.min(m[1].length+0,6); out += `<h${n}>${inline(m[2])}</h${n}>`; i++; continue; }
-    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)){ flush(); out+="<hr>"; i++; continue; }
+    if ((m = l.match(/^(#{1,6})\s+(.*)$/))){ flush(); const n=m[1].length; out += `<h${n}${L(i)}>${inline(m[2])}</h${n}>`; i++; continue; }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)){ flush(); out+=`<hr${L(i)}>`; i++; continue; }
     if (/^\s*>/.test(l)){
-      flush(); const buf=[]; while(i<lines.length && /^\s*>/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/,""));
-      out += `<blockquote>${md(buf.join("\n"))}</blockquote>`; continue;
+      flush(); const s=i; const buf=[]; while(i<lines.length && /^\s*>/.test(lines[i])) buf.push(lines[i++].replace(/^\s*>\s?/,""));
+      out += `<blockquote${L(s)}>${md(buf.join("\n"), off+s)}</blockquote>`; continue;
     }
     if (/^\s*\|.*\|\s*$/.test(l) && i+1<lines.length && /^\s*\|?\s*:?-{2,}/.test(lines[i+1])){
-      flush(); const cells = r => r.trim().replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
+      flush(); const s=i; const cells = r => r.trim().replace(/^\||\|$/g,"").split("|").map(c=>c.trim());
       const head = cells(l); i += 2; let rows="";
       while (i<lines.length && /^\s*\|/.test(lines[i])) rows += "<tr>"+cells(lines[i++]).map(c=>`<td>${inline(c)}</td>`).join("")+"</tr>";
-      out += `<table><thead><tr>${head.map(c=>`<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`; continue;
+      out += `<table${L(s)}><thead><tr>${head.map(c=>`<th>${inline(c)}</th>`).join("")}</tr></thead><tbody>${rows}</tbody></table>`; continue;
     }
-    if (listRe.test(l)){
+    if (LIST_RE.test(l)){
       flush();
-      // Liste inkl. eingerückter Folgezeilen einsammeln
       const items=[]; const base=indentOf(l);
       while (i<lines.length){
-        const cur = lines[i];
-        const lm = cur.match(listRe);
-        if (lm && indentOf(cur)===base){ items.push({marker:lm[2], text:lm[3], sub:[]}); i++; continue; }
-        if (cur.trim()==="" ){ // Leerzeile: Liste läuft weiter, wenn danach eingerückt oder gleiche Liste
-          const nx = lines[i+1]; if (nx!==undefined && (indentOf(nx)>base && nx.trim() || (listRe.test(nx) && indentOf(nx)===base))){ if(items.length) items[items.length-1].sub.push(""); i++; continue; }
+        const cur = lines[i], lm = cur.match(LIST_RE), ind = indentOf(cur);
+        if (lm && ind===base){ items.push({marker:lm[2], text:lm[3], sub:[], line:i}); i++; continue; }
+        if (!items.length) break;
+        if (cur.trim()===""){
+          let j=i+1; while (j<lines.length && lines[j].trim()==="") j++;
+          if (j<lines.length && (indentOf(lines[j])>base || (LIST_RE.test(lines[j]) && indentOf(lines[j])===base))){ items[items.length-1].sub.push(""); i++; continue; }
           break;
         }
-        if (indentOf(cur)>base && items.length){ items[items.length-1].sub.push(cur.slice(Math.min(indentOf(cur), base+4) > base ? base+ (indentOf(cur)-base>=4?4:indentOf(cur)-base) : base)); i++; continue; }
+        if (ind>base){ items[items.length-1].sub.push(cur.replace(/\t/g,"    ")); i++; continue; }
         break;
       }
       const ordered = /\d/.test(items[0].marker);
-      out += ordered ? "<ol>" : "<ul>";
+      let open = false;
+      const openList = () => { if(!open){ out += ordered?"<ol>":"<ul>"; open=true; } };
+      const closeList = () => { if(open){ out += ordered?"</ol>":"</ul>"; open=false; } };
       for (const it of items){
+        const first = it.sub.find(s=>s.trim());
+        const ci = first ? indentOf(first) : 0;
+        const subSrc = it.sub.map(s=>s.slice(Math.min(indentOf(s), ci))).join("\n");
+        const subHtml = first ? md(subSrc, off+it.line+1) : "";
         const tm = it.text.match(/^\[([ xX])\]\s*(.*)$/);
-        const subHtml = it.sub.some(s=>s.trim()) ? md(it.sub.join("\n")) : "";
-        if (tm) out += `<li class="task"><input type="checkbox" disabled${tm[1]!==" "?" checked":""}>${inline(tm[2])}${subHtml}</li>`;
-        else out += `<li>${inline(it.text)}${subHtml}</li>`;
+        if (tm){ openList(); const done = tm[1]!==" "; out += `<li class="task${done?" done":""}"><input type="checkbox" data-task="${off+it.line}"${done?" checked":""}><span${L(it.line)}>${inline(tm[2])}</span>${subHtml}</li>`; }
+        else if (!ordered && first && !LIST_RE.test(first)){
+          // Aufzählungspunkt mit eingerücktem Inhalt = Notion-Toggle
+          closeList();
+          out += `<details class="tg"${MDX.closed.has(it.text)?"":" open"} data-s="${esc(it.text)}"><summary${L(it.line)}>${inline(it.text)}</summary><div class="tgb">${subHtml}</div></details>`;
+        }
+        else { openList(); out += `<li><span${L(it.line)}>${inline(it.text)}</span>${subHtml}</li>`; }
       }
-      out += ordered ? "</ol>" : "</ul>";
+      closeList();
       continue;
     }
     if (l.trim()===""){ flush(); i++; continue; }
+    if (!para.length) pl = i;
     para.push(l.trim()); i++;
   }
   flush();
   return out;
 }
 
-// ---------------------------------------------------------------------------
-// Zustand & Routing
-// ---------------------------------------------------------------------------
-let TREE = [], CURRENT = null, EXPANDED = new Set(JSON.parse(localStorage.getItem("nl_expanded")||"[]"));
-const saveExpanded = () => { try{ localStorage.setItem("nl_expanded", JSON.stringify([...EXPANDED])); }catch{} };
+// ===========================================================================
+// Zustand, Einstellungen & Routing
+// ===========================================================================
+let TREE = [], CURRENT = null, PEEK = null;
+let META = {favorites:[], home:null, theme:"auto", wide:{}, views:{}, closed:{}, expanded:[]};
+let LIVE = [];   // aktive Datenbank-Ansichten (für Aktualisierung nach Änderungen)
+const metaSavers = {};
+function saveMeta(key){ (metaSavers[key] ||= debounce(()=>api("PUT","/api/meta/"+encodeURIComponent(key), META[key]).catch(e=>toast(e.message)), 400))(); }
+const EXPANDED = { has:id=>META.expanded.includes(id), add:id=>{ if(!META.expanded.includes(id)){ META.expanded.push(id); saveMeta("expanded"); } }, del:id=>{ META.expanded=META.expanded.filter(x=>x!==id); saveMeta("expanded"); } };
 
-async function loadTree(){ TREE = await api("GET","/api/tree"); renderTree(); }
+function applyTheme(){
+  const t = META.theme || "auto";
+  const dark = t==="dark" || (t==="auto" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  $("#btnTheme").textContent = "🌓 Darstellung: " + ({auto:"Automatisch", light:"Hell", dark:"Dunkel"})[t];
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", applyTheme);
+
+async function loadTree(){
+  TREE = await api("GET","/api/tree");
+  NODE = Object.fromEntries(TREE.map(n=>[n.id,n]));
+  renderTree();
+}
 
 function renderTree(){
   const byParent = {};
-  const ids = new Set(TREE.map(n=>n.id));
-  for (const n of TREE){ const p = ids.has(n.parent_id) ? n.parent_id : null; (byParent[p] ||= []).push(n); }
-  // Seiten unter Datenbankzeilen sind nicht im Baum -> Elternkette über Zeilen ausblenden
+  for (const n of TREE){ const p = NODE[n.parent_id] ? n.parent_id : (n.parent_id ? "__hidden" : null); (byParent[p] ||= []).push(n); }
   const tree = $("#tree"); tree.innerHTML = "";
-  const roots = (byParent[null]||[]).filter(n => !n.parent_id);
-  const walk = (list, depth, el) => {
-    for (const n of list){
-      const kids = byParent[n.id] || [];
-      const open = EXPANDED.has(n.id);
-      const row = h("div",{class:"node"+(CURRENT&&CURRENT.id===n.id?" active":""), style:`padding-left:${4+depth*14}px`, draggable:"true"},
-        h("span",{class:"tw", onclick:e=>{e.stopPropagation(); open?EXPANDED.delete(n.id):EXPANDED.add(n.id); saveExpanded(); renderTree();}}, kids.length ? (open?"▼":"▶") : "•"),
-        h("span",{class:"ic"}, n.icon || defaultIcon(n.kind)),
-        h("span",{class:"lb"}, n.title || "Ohne Titel"),
-        n.kind==="page" ? h("button",{class:"add", title:"Unterseite", onclick:e=>{e.stopPropagation(); newPage(n.id);}},"＋") : null);
-      row.onclick = () => go(n.id);
+  const nodeRow = (n, depth, kids, inFav) => {
+    const open = !inFav && EXPANDED.has(n.id);
+    const row = h("div",{class:"node"+(CURRENT&&CURRENT.id===n.id?" active":""), style:`padding-left:${4+depth*14}px`, draggable: inFav?null:"true", title:n.title},
+      h("span",{class:"tw", onclick:e=>{ if(inFav||!kids.length) return; e.stopPropagation(); open?EXPANDED.del(n.id):EXPANDED.add(n.id); renderTree(); }}, inFav ? "★" : kids.length ? (open?"▼":"▶") : "•"),
+      h("span",{class:"ic"}, n.icon || defaultIcon(n.kind)),
+      h("span",{class:"lb"}, n.title || "Ohne Titel"),
+      !inFav && n.kind==="page" ? h("button",{class:"add", title:"Unterseite anlegen", onclick:e=>{e.stopPropagation(); newPage(n.id);}},"＋") : null);
+    row.onclick = () => go(n.id);
+    if (!inFav){
       row.ondragstart = e => { e.dataTransfer.setData("text/nl-page", n.id); };
       row.ondragover = e => { if (n.kind!=="page") return; e.preventDefault(); row.classList.add("drop"); };
       row.ondragleave = () => row.classList.remove("drop");
-      row.ondrop = async e => { row.classList.remove("drop"); const id=e.dataTransfer.getData("text/nl-page"); if(!id||id===n.id) return; e.preventDefault();
-        try{ await api("PUT",`/api/page/${id}`,{parent_id:n.id}); EXPANDED.add(n.id); saveExpanded(); await loadTree(); toast("Verschoben"); }catch(err){ toast(err.message); } };
-      el.append(row);
-      if (open && kids.length) walk(kids, depth+1, el);
+      row.ondrop = async e => { row.classList.remove("drop"); const id=e.dataTransfer.getData("text/nl-page"); if(!id||id===n.id) return; e.preventDefault(); e.stopPropagation();
+        try{ await api("PUT",`/api/page/${id}`,{parent_id:n.id}); EXPANDED.add(n.id); await loadTree(); toast("Verschoben"); }catch(err){ toast(err.message); } };
+    }
+    return row;
+  };
+  const favs = (META.favorites||[]).map(id=>NODE[id]).filter(Boolean);
+  if (favs.length){
+    tree.append(h("div",{class:"section-title"},"FAVORITEN"));
+    for (const n of favs) tree.append(nodeRow(n, 0, [], true));
+  }
+  tree.append(h("div",{class:"section-title"},"SEITEN"));
+  const walk = (list, depth) => {
+    for (const n of list){
+      const kids = byParent[n.id] || [];
+      tree.append(nodeRow(n, depth, kids, false));
+      if (EXPANDED.has(n.id) && kids.length) walk(kids, depth+1);
     }
   };
-  walk(roots, 0, tree);
+  const roots = byParent[null] || [];
+  walk(roots, 0);
   if (!roots.length) tree.append(h("div",{class:"hint", style:"padding:8px"},"Noch keine Seiten. Importiere deinen Notion-Export oder lege eine neue Seite an."));
-  // Drop auf leeren Bereich = oberste Ebene
   tree.ondragover = e => e.preventDefault();
-  tree.ondrop = async e => { if (e.target!==tree) return; const id=e.dataTransfer.getData("text/nl-page"); if(!id) return;
-    await api("PUT",`/api/page/${id}`,{parent_id:null}); await loadTree(); };
+  tree.ondrop = async e => { const id=e.dataTransfer.getData("text/nl-page"); if(!id) return;
+    try{ await api("PUT",`/api/page/${id}`,{parent_id:null}); await loadTree(); toast("Auf oberste Ebene verschoben"); }catch(err){ toast(err.message); } };
 }
 
-function go(id){ location.hash = "#/p/"+id; document.body.classList.remove("side-open"); }
+function go(id){ closePeek(); if (location.hash === "#/p/"+id) openPage(id); else location.hash = "#/p/"+id; document.body.classList.remove("side-open"); }
 
 async function route(){
   const m = location.hash.match(/^#\/p\/([0-9a-zA-Z_-]+)/);
   if (m) return openPage(m[1]);
-  CURRENT = null; renderTree(); renderHome();
+  if (META.home && NODE[META.home] && location.hash !== "#/alle"){ history.replaceState(null,"","#/p/"+META.home); return openPage(META.home); }
+  CURRENT = null; LIVE = []; renderTree(); renderHome();
 }
 window.addEventListener("hashchange", route);
 
 function renderHome(){
-  $("#crumbs").innerHTML = "";
+  $("#crumbs").innerHTML = ""; $("#btnFav").style.display="none"; $("#btnMore").style.display="none";
   const v = $("#view"); v.innerHTML = "";
   const roots = TREE.filter(n=>!n.parent_id);
   v.append(h("div",{class:"page"},
-    roots.length ? [h("h1",{class:"title"},"Willkommen 👋"), h("p",{class:"hint"},"Deine Seiten liegen jetzt lokal auf deinem Rechner."),
+    roots.length ? [h("h1",{class:"title"},"Alle Seiten"), h("p",{class:"hint"},"Tipp: Öffne dein FlowBoard und wähle oben rechts „•••“ → „Als Startseite festlegen“."),
       h("div",{class:"children", style:"border:0"}, roots.map(n=>h("a",{href:"#/p/"+n.id}, h("span",{}, n.icon||defaultIcon(n.kind)), n.title||"Ohne Titel")))]
     : h("div",{class:"empty"}, h("div",{class:"big"},"🗂️"), h("h2",{},"Noch leer"),
         h("p",{},"Importiere deinen Notion-Export, um loszulegen."),
         h("button",{class:"btn primary", onclick:openImport},"Notion-Export importieren"))));
 }
 
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Seitenansicht
-// ---------------------------------------------------------------------------
-let saveTimer = null;
+// ===========================================================================
+const PENDING = new Set();   // offene Speichervorgänge der Editoren
+function flushAll(){ for (const f of PENDING) f.flush(); }
+
 async function openPage(id){
-  if (saveTimer) saveTimer.flush();
+  flushAll(); PENDING.clear();
   let p;
   try { p = await api("GET", `/api/page/${id}`); }
-  catch(e){ $("#view").innerHTML = `<div class="page empty"><div class="big">🤷</div><h2>Seite nicht gefunden</h2></div>`; return; }
-  CURRENT = p;
-  // Elternknoten im Baum aufklappen
-  for (const c of p.breadcrumbs) EXPANDED.add(c.id); saveExpanded();
-  renderTree();
-  renderCrumbs(p);
+  catch(e){ $("#view").innerHTML = `<div class="page empty"><div class="big">🤷</div><h2>Seite nicht gefunden</h2><p><a href="#/alle">Zur Übersicht</a></p></div>`; return; }
+  CURRENT = p; LIVE = [];
+  for (const c of p.breadcrumbs) if (NODE[c.id]) EXPANDED.add(c.id);
+  renderTree(); renderCrumbs(p);
+  $("#btnFav").style.display=""; $("#btnMore").style.display="";
+  $("#btnFav").textContent = META.favorites.includes(p.id) ? "★" : "☆";
+  document.title = (p.title || "Ohne Titel") + " – Notion Lokal";
   const v = $("#view"); v.innerHTML = "";
   if (p.deleted) v.append(h("div",{style:"background:var(--t-red);padding:8px 16px;font-size:14px;text-align:center"},"Diese Seite liegt im Papierkorb. ",
     h("button",{class:"btn", style:"text-decoration:underline", onclick:async()=>{await api("POST",`/api/restore/${p.id}`); await loadTree(); openPage(p.id);}},"Wiederherstellen")));
-  const page = h("div",{class:"page"+(p.kind==="database"?" wide":"")});
+  const wide = isWide(p);
+  const page = h("div",{class:"page"+(wide?" wide":"")});
   v.append(page);
-
-  // Icon + Titel
-  const iconEl = p.icon ? h("div",{class:"icon-big", title:"Icon ändern", onclick:()=>pickIcon(p)}, p.icon)
-                        : h("button",{class:"add-icon", onclick:()=>pickIcon(p)},"☺ Icon hinzufügen");
-  page.append(iconEl);
-  const titleEl = h("h1",{class:"title", contenteditable:"plaintext-only", spellcheck:"false"}, p.title);
-  if (titleEl.contentEditable !== "plaintext-only") titleEl.contentEditable = "true";
-  titleEl.onkeydown = e => { if (e.key==="Enter"){ e.preventDefault(); titleEl.blur(); } };
-  titleEl.oninput = debounce(async ()=>{ p.title = titleEl.textContent.trim(); await save(p.id,{title:p.title}); const n=TREE.find(x=>x.id===p.id); if(n){n.title=p.title; renderTree();} renderCrumbs(p); }, 500);
-  page.append(titleEl);
-
-  if (p.kind==="row") page.append(renderProps(p));
-  if (p.kind==="database"){
-    page.append(renderDoc(p, true));
-    page.append(renderDatabase(p));
-  } else {
-    page.append(renderDoc(p, false));
-  }
-  if (p.children && p.children.length){
-    page.append(h("div",{class:"children"}, h("div",{class:"section-title", style:"padding-left:6px"},"UNTERSEITEN"),
-      p.children.map(c=>h("a",{href:"#/p/"+c.id}, h("span",{}, c.icon||defaultIcon(c.kind)), c.title||"Ohne Titel"))));
+  renderPageInto(page, p, false);
+  if (p.children && p.children.length && p.kind!=="database"){
+    const linked = new Set([...p.content.matchAll(/#\/p\/([0-9a-zA-Z_-]+)/g)].map(m=>m[1]));
+    const rest = p.children.filter(c=>!linked.has(c.id));
+    if (rest.length) page.append(h("div",{class:"children"}, h("div",{class:"section-title", style:"padding-left:6px"},"UNTERSEITEN"),
+      rest.map(c=>h("a",{href:"#/p/"+c.id}, h("span",{}, c.icon||defaultIcon(c.kind)), c.title||"Ohne Titel"))));
   }
   $("#main").scrollTop = 0;
+}
+
+// Datenbanken und Seiten mit eingebetteten Boards (Dashboards) nutzen standardmäßig die volle Breite
+function isWide(p){ return META.wide[p.id] ?? (p.kind==="database" || [...(p.content||"").matchAll(/^\s*\[[^\n]*\]\(#\/p\/([0-9a-zA-Z_-]+)\)\s*$/gm)].some(m=>NODE[m[1]]?.kind==="database")); }
+
+function renderPageInto(page, p, inPeek){
+  const afterChange = () => { if (p.kind==="row") notifyDb(p.parent_id); };
+  const iconEl = p.icon ? h("div",{class:"icon-big", title:"Icon ändern", onclick:e=>pickIcon(p, e.currentTarget, inPeek)}, p.icon)
+                        : h("button",{class:"add-icon", onclick:e=>pickIcon(p, e.currentTarget, inPeek)},"☺ Icon hinzufügen");
+  page.append(h("div",{}, iconEl));
+  const titleEl = h("h1",{class:"title", spellcheck:"false"}, p.title);
+  try { titleEl.contentEditable = "plaintext-only"; } catch { titleEl.contentEditable = "true"; }
+  if (titleEl.contentEditable !== "plaintext-only") titleEl.contentEditable = "true";
+  titleEl.onkeydown = e => { if (e.key==="Enter"){ e.preventDefault(); titleEl.blur(); } };
+  titleEl.onpaste = e => { e.preventDefault(); document.execCommand("insertText", false, (e.clipboardData.getData("text/plain")||"").replace(/\s+/g," ")); };
+  const saveTitle = debounce(async ()=>{ p.title = titleEl.textContent.trim(); await save(p.id,{title:p.title}); const n=NODE[p.id]; if(n){n.title=p.title; renderTree();} if(!inPeek) renderCrumbs(p); afterChange(); }, 500);
+  PENDING.add(saveTitle);
+  titleEl.oninput = saveTitle; titleEl.onblur = () => saveTitle.flush();
+  page.append(titleEl);
+  if (p.kind==="row") page.append(renderProps(p, afterChange));
+  page.append(renderDoc(p, p.kind==="database"));
+  if (p.kind==="database"){ const host = h("div"); page.append(host); mountDatabase(host, p.id, p.id, {preloaded:p}); }
 }
 
 function renderCrumbs(p){
   const c = $("#crumbs"); c.innerHTML = "";
   for (const b of [...p.breadcrumbs, p]){
-    if (c.childNodes.length) c.append(h("span",{}," / "));
+    if (c.childNodes.length) c.append(h("span",{},"/"));
     c.append(h("span",{class:"crumb", onclick:()=>go(b.id)}, (b.icon||defaultIcon(b.kind))+" "+(b.title||"Ohne Titel")));
   }
 }
 
 async function save(id, data){
   setStatus("Speichert …");
-  try { await api("PUT", `/api/page/${id}`, data); setStatus("Gespeichert"); setTimeout(()=>{ if($("#status").textContent==="Gespeichert") setStatus(""); },1200); }
-  catch(e){ setStatus("Fehler beim Speichern!"); toast(e.message); }
+  try { await api("PUT", `/api/page/${id}`, data); setStatus("✓ Gespeichert"); setTimeout(()=>{ if($("#status").textContent==="✓ Gespeichert") setStatus(""); },1500); return true; }
+  catch(e){ setStatus("⚠️ Nicht gespeichert"); toast(e.message); return false; }
 }
 
+// ---- Inhalt: Anzeige + Markdown-Editor -------------------------------------
 function renderDoc(p, compact){
   const wrap = h("div");
+  const saver = debounce(()=>save(p.id,{content:p.content}), 700);
+  PENDING.add(saver);
+
   const show = () => {
     wrap.innerHTML = "";
-    const doc = h("div",{class:"doc", html: md(p.content)});
-    if (compact && !p.content.trim()){ doc.style.minHeight="0"; doc.innerHTML=""; doc.append(h("div",{class:"hint", style:"cursor:pointer"},"＋ Beschreibung hinzufügen")); }
-    doc.onclick = e => { if (e.target.closest("a, input, summary")) return; edit(); };
+    MDX = {closed:new Set(META.closed[p.id]||[])};
+    if (!p.content.trim()){
+      wrap.append(h("div",{class:"doc blank", style:compact?"min-height:0":"", onclick:()=>edit(0)}, compact ? "＋ Beschreibung hinzufügen" : "Hier klicken zum Schreiben …"));
+      return;
+    }
+    const doc = h("div",{class:"doc", style:compact?"min-height:0":"", html: md(p.content)});
+    doc.onclick = e => {
+      const t = e.target;
+      if (t.matches("input[data-task]")){ toggleTask(+t.dataset.task, t.checked); return; }
+      if (t.tagName==="IMG"){ const lb=$("#lightbox"); $("img",lb).src=t.src; lb.style.display="flex"; return; }
+      if (t.closest("a, .embed, button, input")) return;
+      if (getSelection().toString()) return;
+      const sum = t.closest("summary");
+      if (sum){ return; }
+      const blk = t.closest("[data-l]");
+      if (blk) edit(+blk.dataset.l);
+    };
+    doc.addEventListener("toggle", e => {
+      const d = e.target; if (!d.matches?.("details.tg")) return;
+      const set = new Set(META.closed[p.id]||[]); d.open ? set.delete(d.dataset.s) : set.add(d.dataset.s);
+      META.closed[p.id] = [...set]; if (!set.size) delete META.closed[p.id]; saveMeta("closed");
+    }, true);
     wrap.append(doc);
+    for (const el of doc.querySelectorAll(".embed[data-db]")) mountDatabase(el, el.dataset.db, p.id+":"+el.dataset.db, {embed:true});
+    if (!compact) wrap.append(h("div",{class:"hint", style:"cursor:pointer;opacity:.7;padding:8px 0", onclick:()=>edit(1e9)},"＋ Text hinzufügen"));
   };
-  const edit = () => {
+
+  const toggleTask = (line, on) => {
+    const lines = p.content.split("\n");
+    if (lines[line] === undefined) return;
+    lines[line] = lines[line].replace(/\[([ xX])\]/, on ? "[x]" : "[ ]");
+    p.content = lines.join("\n"); saver(); saver.flush(); show();
+  };
+
+  const edit = line => {
     wrap.innerHTML = "";
     const ta = h("textarea",{class:"editor", spellcheck:"true"}); ta.value = p.content;
-    const grow = () => { ta.style.height="auto"; ta.style.height = Math.max(compact?120:400, ta.scrollHeight+4)+"px"; };
-    saveTimer = debounce(()=>save(p.id,{content:p.content}), 700);
-    ta.oninput = () => { p.content = ta.value; grow(); saveTimer(); };
-    ta.onkeydown = e => {
-      if (e.key==="Escape" || (e.key==="Enter" && (e.ctrlKey||e.metaKey))){ e.preventDefault(); ta.blur(); }
-      if (e.key==="Tab"){ e.preventDefault(); const s=ta.selectionStart; ta.setRangeText("    ", s, ta.selectionEnd, "end"); ta.oninput(); }
+    const scroller = wrap.closest(".peek-body") || $("#main");
+    const grow = () => { const st = scroller.scrollTop; ta.style.height="auto"; ta.style.height = Math.max(compact?100:260, ta.scrollHeight+24)+"px"; scroller.scrollTop = st; };
+    const changed = () => { p.content = ta.value; grow(); saver(); };
+    const ins = (before, after="", block=false) => {
+      let s=ta.selectionStart, e=ta.selectionEnd; const sel=ta.value.slice(s,e);
+      if (block && s>0 && ta.value[s-1]!=="\n") before = "\n"+before;
+      ta.setRangeText(before+sel+after, s, e, "end");
+      if (!sel && after){ const pos = ta.selectionStart-after.length; ta.setSelectionRange(pos,pos); }
+      ta.focus(); changed();
     };
-    ta.onblur = () => { saveTimer.flush(); show(); };
+    const linePrefix = pre => {
+      const s = ta.value.lastIndexOf("\n", ta.selectionStart-1)+1;
+      ta.setRangeText(pre, s, s, "end"); ta.focus(); changed();
+    };
+    const done = () => { saver.flush(); show(); };
+    const fileInp = h("input",{type:"file", multiple:true, style:"display:none"});
+    fileInp.onchange = async () => { for (const f of fileInp.files){ const url=await uploadFile(p.id,f); ins((f.type.startsWith("image/")?"!":"")+`[${f.name}](${url})\n`, "", true); } };
+    const B = (label, title, fn) => h("button",{title, onmousedown:e=>e.preventDefault(), onclick:fn}, label);
+    const bar = h("div",{class:"edbar"},
+      B("H1","Überschrift 1",()=>linePrefix("# ")), B("H2","Überschrift 2",()=>linePrefix("## ")), B("H3","Überschrift 3",()=>linePrefix("### ")),
+      B("𝗕","Fett (Strg+B)",()=>ins("**","**")), B("𝘐","Kursiv (Strg+I)",()=>ins("*","*")),
+      B("• Liste","Aufzählung",()=>linePrefix("- ")), B("☑ To-do","Checkbox",()=>linePrefix("- [ ] ")),
+      B("▸ Toggle","Aufklappbarer Bereich",()=>ins("<details><summary>Titel</summary>\n\n","\n\n</details>\n",true)),
+      B("💡 Hinweis","Hervorgehobener Kasten",()=>ins("<aside>\n💡 ","\n</aside>\n",true)),
+      B("— Linie","Trennlinie",()=>ins("\n---\n","",true)),
+      B("🔗 Seite","Link zu einer Seite",()=>pickPage("Seite verlinken …", n=>ins(`[${n.title||"Ohne Titel"}](#/p/${n.id})`), ()=>true)),
+      B("🗃️ Datenbank","Datenbank/Board einbetten",()=>pickPage("Datenbank einbetten …", n=>ins(`\n[${n.title||"Ohne Titel"}](#/p/${n.id})\n`,"",true), n=>n.kind==="database",
+          {label:"＋ Neue Datenbank hier anlegen", fn: async () => { const name = prompt("Name der neuen Datenbank:", "Aufgaben"); if(!name) return; const r = await api("POST","/api/page",{kind:"database", parent_id:p.kind==="row"?p.id:p.id, title:name}); await loadTree(); ins(`\n[${name}](#/p/${r.id})\n`,"",true); }})),
+      B("🖼 Bild/Datei","Datei einfügen",()=>fileInp.click()),
+      h("span",{class:"sp"}), h("button",{class:"done", title:"Esc", onmousedown:e=>e.preventDefault(), onclick:done},"Fertig"));
+    ta.oninput = changed;
+    ta.onkeydown = e => {
+      const mod = e.ctrlKey||e.metaKey;
+      if (e.key==="Escape" || (e.key==="Enter" && mod)){ e.preventDefault(); done(); return; }
+      if (mod && e.key.toLowerCase()==="b"){ e.preventDefault(); ins("**","**"); }
+      if (mod && e.key.toLowerCase()==="i"){ e.preventDefault(); ins("*","*"); }
+      if (e.key==="Tab"){
+        e.preventDefault();
+        const s = ta.value.lastIndexOf("\n", ta.selectionStart-1)+1;
+        if (e.shiftKey){ const m = ta.value.slice(s).match(/^( {1,4}|\t)/); if (m){ const pos=ta.selectionStart; ta.setRangeText("", s, s+m[0].length, "preserve"); ta.setSelectionRange(Math.max(s,pos-m[0].length), Math.max(s,pos-m[0].length)); } }
+        else { const pos=ta.selectionStart; ta.setRangeText("    ", s, s, "preserve"); ta.setSelectionRange(pos+4,pos+4); }
+        changed();
+      }
+      if (e.key==="Enter" && !e.shiftKey && !mod){
+        // Listen automatisch fortsetzen
+        const s = ta.value.lastIndexOf("\n", ta.selectionStart-1)+1;
+        const cur = ta.value.slice(s, ta.selectionStart);
+        const m = cur.match(/^(\s*)([-*+] \[[ xX]\] |[-*+] |(\d+)([.)]) )(.*)$/);
+        if (m && ta.selectionStart===ta.selectionEnd){
+          e.preventDefault();
+          if (!m[5].trim()){ ta.setRangeText("", s, ta.selectionStart, "end"); }
+          else { const next = m[3] ? `${+m[3]+1}${m[4]} ` : m[2].replace(/\[[xX]\]/,"[ ]"); ta.setRangeText("\n"+m[1]+next, ta.selectionStart, ta.selectionEnd, "end"); }
+          changed();
+        }
+      }
+    };
     ta.onpaste = async e => {
       const f = [...(e.clipboardData?.files||[])][0]; if (!f) return;
       e.preventDefault(); const url = await uploadFile(p.id, f);
-      ta.setRangeText(f.type.startsWith("image/") ? `![${f.name}](${url})` : `[${f.name}](${url})`, ta.selectionStart, ta.selectionEnd, "end"); ta.oninput();
+      ins(f.type.startsWith("image/") ? `![${f.name||"bild"}](${url})` : `[${f.name}](${url})`);
     };
+    ta.ondragover = e => e.preventDefault();
     ta.ondrop = async e => {
       const files=[...(e.dataTransfer?.files||[])]; if(!files.length) return; e.preventDefault();
-      for (const f of files){ const url=await uploadFile(p.id,f); ta.setRangeText((f.type.startsWith("image/")?"!":"")+`[${f.name}](${url})\n`, ta.selectionStart, ta.selectionEnd, "end"); }
-      ta.oninput();
+      for (const f of files){ const url=await uploadFile(p.id,f); ins((f.type.startsWith("image/")?"!":"")+`[${f.name}](${url})\n`,"",true); }
     };
-    wrap.append(ta, h("div",{class:"hint"},"Markdown · Bilder per Einfügen/Ziehen · Esc oder Strg+Enter zum Beenden · Links auf Seiten: [Titel](#/p/ID)"));
-    grow(); ta.focus();
+    const box = h("div",{class:"edwrap"}, bar, ta, fileInp);
+    // Bearbeiten beenden, sobald außerhalb geklickt wird
+    const outsideClick = e => { if (!box.isConnected){ document.removeEventListener("mousedown", outsideClick, true); return; }
+      if (box.contains(e.target) || e.target.closest(".pop, .overlay, #toast")) return;
+      document.removeEventListener("mousedown", outsideClick, true); done(); };
+    setTimeout(()=>document.addEventListener("mousedown", outsideClick, true), 0);
+    wrap.append(box, h("div",{class:"hint"},"Markdown · Bilder per Einfügen oder Hineinziehen · Esc oder „Fertig“ zum Beenden · wird automatisch gespeichert"));
+    grow();
+    const lines = ta.value.split("\n");
+    const ln = Math.min(line, lines.length-1);
+    let pos = 0; for (let k=0;k<=ln;k++) pos += lines[k].length + (k<ln?1:0);
+    ta.focus({preventScroll:true}); ta.setSelectionRange(pos,pos);
+    requestAnimationFrame(()=>{ const y = ta.getBoundingClientRect().top + 14 + ln*22.4; const sr = scroller.getBoundingClientRect();
+      if (y < sr.top+90 || y > sr.bottom-60) scroller.scrollTop += y - (sr.top + sr.height*0.4); });
   };
   show();
   return wrap;
@@ -480,50 +756,51 @@ function renderDoc(p, compact){
 
 async function uploadFile(pid, f){
   setStatus("Lädt hoch …");
-  const r = await api("POST", `/api/upload?page=${encodeURIComponent(pid)}&name=${encodeURIComponent(f.name||"bild.png")}`, f, true);
-  setStatus(""); return r.url;
+  try { const r = await api("POST", `/api/upload?page=${encodeURIComponent(pid)}&name=${encodeURIComponent(f.name||"bild.png")}`, f, true); setStatus(""); return r.url; }
+  catch(e){ setStatus(""); toast(e.message); throw e; }
 }
 
-const EMOJIS = "📄 📝 📚 📁 🗂️ 🗃️ 📌 ⭐ ✅ 💡 🎯 🚀 🎨 🎬 🧊 🖼️ 📷 🎞️ 🧠 💬 📅 🗓️ 💼 💰 🏠 ❤️ 🔥 🌱 ⚙️ 🔧 🧪 📈 👥 🤝 ✈️ 🍳 🎵 🎮 🧘 🏃".split(" ");
-function pickIcon(p){
-  const pop = popover(event.target);
+const EMOJIS = "📄 📝 📚 📁 🗂️ 🗃️ 📌 ⭐ ✅ 💡 🎯 🚀 🎨 🎬 🧊 🖼️ 📷 🎞️ 🧠 💬 📅 🗓️ 💼 💰 🏠 ❤️ 🔥 🌱 🌺 ⚙️ 🔧 🧪 📈 👥 🤝 ✈️ 🍳 🎵 🎮 🧘 🏃 💪 ⏲️ 🦄 👾 🙌".split(" ");
+function pickIcon(p, anchor, inPeek){
+  const pop = popover(anchor);
   const grid = h("div",{style:"display:grid;grid-template-columns:repeat(8,1fr);gap:2px;padding:4px"});
-  for (const e of EMOJIS) grid.append(h("button",{class:"item", style:"font-size:20px;text-align:center;padding:4px", onclick:()=>set(e)}, e));
-  const inp = h("input",{placeholder:"Eigenes Emoji/Zeichen …"});
+  for (const e of EMOJIS) grid.append(h("button",{style:"font-size:20px;text-align:center;padding:3px", onclick:()=>set(e)}, e));
+  const inp = h("input",{placeholder:"Eigenes Emoji …", maxlength:"8"});
   inp.onkeydown = e => { if (e.key==="Enter") set(inp.value.trim()); };
   pop.append(grid, inp, h("button",{class:"item danger", onclick:()=>set("")},"Icon entfernen"));
-  async function set(icon){ closePop(); p.icon = icon; await save(p.id,{icon}); await loadTree(); openPage(p.id); }
+  async function set(icon){ closePop(); p.icon = icon; await save(p.id,{icon}); await loadTree(); if (p.kind==="row") notifyDb(p.parent_id); inPeek ? openPeek(p.id) : openPage(p.id); }
 }
 
-// ---------------------------------------------------------------------------
-// Eigenschaften (Datenbankzeile)
-// ---------------------------------------------------------------------------
-function renderProps(p){
+// ===========================================================================
+// Eigenschaften & Zellen
+// ===========================================================================
+const TYPES = {title:"Titel", text:"Text", number:"Zahl", select:"Auswahl", multi_select:"Mehrfachauswahl", date:"Datum", checkbox:"Checkbox", url:"URL", email:"E-Mail", relation:"Verknüpfung", files:"Dateien"};
+function typeIcon(t){ return ({title:"Aa", text:"≡", number:"#", select:"◉", multi_select:"☰", date:"📅", checkbox:"☑", url:"🔗", email:"@", relation:"↗", files:"📎"})[t]||"≡"; }
+
+function renderProps(p, afterChange){
   const box = h("div",{class:"props"});
+  const db = {id:p.parent_id, schema:p.db_schema, rows:[]};
   for (const col of p.db_schema){
     if (col.type==="title") continue;
     const v = h("div",{class:"v"});
-    renderCellValue(v, col, p.props[col.name] ?? "");
+    const draw = () => { renderCellValue(v, col, p.props[col.name] ?? ""); v.classList.toggle("isempty", !v.childNodes.length); };
+    draw();
     v.onclick = e => { if (e.target.closest("a")) return; editCell(v, col, p.props[col.name] ?? "", async val => {
-      p.props[col.name] = val; await save(p.id,{props:p.props}); renderCellValue(v, col, val); }, p.parent_id); };
-    box.append(h("div",{class:"prop"}, h("div",{class:"k"}, typeIcon(col.type), col.name), v));
+      p.props[col.name] = val; draw(); await save(p.id,{props:p.props}); afterChange(); }, db, draw); };
+    box.append(h("div",{class:"prop"}, h("div",{class:"k", title:col.name}, h("span",{}, typeIcon(col.type)), col.name), v));
   }
   return box;
 }
-const TYPES = {title:"Titel", text:"Text", number:"Zahl", select:"Auswahl", multi_select:"Mehrfachauswahl", date:"Datum", checkbox:"Checkbox", url:"URL", email:"E-Mail", relation:"Verknüpfung", files:"Dateien"};
-function typeIcon(t){ return ({title:"Aa", text:"≡", number:"#", select:"◉", multi_select:"☰", date:"📅", checkbox:"☑", url:"🔗", email:"@", relation:"↗", files:"📎"})[t]||"≡"; }
 
 function renderCellValue(el, col, val){
   el.innerHTML = "";
   val = val ?? "";
   switch (col.type){
-    case "checkbox": {
-      const on = /^(yes|ja|true|1|x)$/i.test(val);
-      el.append(h("input",{type:"checkbox", checked:on, style:"pointer-events:none"})); break;
-    }
-    case "select": if (val) el.append(h("span",{class:"tag", style:`background:${tagColor(val)}`}, val)); break;
-    case "multi_select": for (const t of String(val).split(",").map(s=>s.trim()).filter(Boolean)) el.append(h("span",{class:"tag", style:`background:${tagColor(t)}`}, t)); break;
-    case "url": if (val) el.append(h("a",{href:safeUrl(val), target:"_blank", rel:"noopener"}, val)); break;
+    case "checkbox": el.append(h("input",{type:"checkbox", class:"cb", checked:isOn(val), tabindex:"-1", style:"pointer-events:none"})); break;
+    case "select": if (val) el.append(tagEl(col, val)); break;
+    case "multi_select": for (const t of String(val).split(",").map(s=>s.trim()).filter(Boolean)) el.append(tagEl(col, t)); break;
+    case "date": { const d = dateEl(val); if (d) el.append(d); break; }
+    case "url": if (val) el.append(h("a",{href:safeUrl(val), target:"_blank", rel:"noopener"}, val.replace(/^https?:\/\/(www\.)?/,""))); break;
     case "email": if (val) el.append(h("a",{href:"mailto:"+val}, val)); break;
     default:
       if (/\]\(/.test(val)) el.innerHTML = inline(val);
@@ -531,235 +808,504 @@ function renderCellValue(el, col, val){
   }
 }
 
-function editCell(el, col, val, commit, dbId){
-  if (el.querySelector("input,textarea,select")) return;
-  if (col.type==="checkbox"){ const on=/^(yes|ja|true|1|x)$/i.test(val); commit(on?"No":"Yes"); return; }
-  if (col.type==="select" || col.type==="multi_select") return editTags(el, col, val, commit, dbId);
+function editCell(el, col, val, commit, db, redraw){
+  if (el.querySelector("input:not(.cb),textarea")) return;
+  if (col.type==="checkbox"){ commit(isOn(val)?"No":"Yes"); return; }
+  if (col.type==="select" || col.type==="multi_select") return editTags(el, col, val, commit, db);
+  if (col.type==="date") return editDate(el, val, commit);
   el.innerHTML = "";
   const multi = col.type==="text" || col.type==="relation" || col.type==="files";
-  const inp = multi ? h("textarea",{rows:Math.min(8, Math.max(1, String(val).split("\n").length))}) : h("input",{type: col.type==="number"?"text":"text"});
+  const inp = multi ? h("textarea",{rows:Math.min(8, Math.max(1, String(val).split("\n").length))}) : h("input",{type:"text", inputmode: col.type==="number"?"decimal":null});
   inp.value = val;
   let done = false;
-  const finish = ok => { if (done) return; done = true; const nv = inp.value; if (ok && nv!==val) commit(nv); else renderCellValue(el, col, val); };
-  inp.onkeydown = e => { if (e.key==="Escape"){ e.preventDefault(); finish(false); } if (e.key==="Enter" && !e.shiftKey){ e.preventDefault(); finish(true); } };
+  const finish = ok => { if (done) return; done = true; const nv = inp.value.trim(); if (ok && nv!==val) commit(nv); else if (redraw) redraw(); else renderCellValue(el, col, val); };
+  inp.onkeydown = e => { e.stopPropagation(); if (e.key==="Escape"){ e.preventDefault(); finish(false); } if (e.key==="Enter" && !e.shiftKey){ e.preventDefault(); finish(true); } };
   inp.onblur = () => finish(true);
+  inp.onclick = e => e.stopPropagation();
   el.append(inp); inp.focus(); inp.select?.();
-  if (col.type==="date") el.append(h("div",{class:"hint"},"z. B. 10.11.2026 oder 2026-11-10"));
 }
 
-function optionsFor(col, dbId){
-  const opts = new Set(col.options || []);
-  const rows = (CURRENT && CURRENT.kind==="database" && CURRENT.id===dbId) ? CURRENT.rows : (DBCACHE[dbId]||[]);
-  for (const r of rows){ const v = r.props?.[col.name]; if (v) for (const t of (col.type==="multi_select"? v.split(","):[v])) if (t.trim()) opts.add(t.trim()); }
-  return [...opts].sort((a,b)=>a.localeCompare(b,"de"));
-}
-const DBCACHE = {};
-function editTags(el, col, val, commit, dbId){
-  const multi = col.type==="multi_select";
-  let cur = String(val||"").split(multi?",":"\u0001").map(s=>s.trim()).filter(Boolean);
+function editDate(el, val, commit){
+  const parts = String(val||"").split("→").map(s=>s.trim());
+  const a = parseISO(parts[0]), b = parseISO(parts[1]);
   const pop = popover(el);
-  const inp = h("input",{placeholder: multi ? "Option suchen oder neu anlegen …" : "Option wählen oder neu …"});
+  const s = h("input",{type:"date", value:a?a.iso:""}), e = h("input",{type:"date", value:b?b.iso:""});
+  const apply = (close) => { const v = s.value ? (e.value && e.value>=s.value ? `${s.value} → ${e.value}` : s.value) : ""; commit(v); if (close) closePop(); };
+  s.onchange = () => apply(false); e.onchange = () => apply(false);
+  const quick = (label, days) => h("button",{class:"item", onclick:()=>{ const d=new Date(); d.setDate(d.getDate()+days); s.value=isoOf(d); e.value=""; apply(true); }}, label);
+  pop.append(h("label",{},"Datum"), s, h("label",{},"Ende (optional)"), e,
+    (!a && val) ? h("div",{class:"hint", style:"padding:0 8px"}, "Bisher: "+val) : null,
+    h("hr"), quick("Heute",0), quick("Morgen",1), quick("In einer Woche",7),
+    h("button",{class:"item danger", onclick:()=>{ commit(""); closePop(); }},"Leeren"));
+  s.focus();
+}
+
+function colOptions(db, col){
+  col.options ||= [];
+  const names = new Set(col.options.map(o=>o.name));
+  for (const r of db.rows||[]){ const v = r.props?.[col.name]; if (!v) continue;
+    for (const t of (col.type==="multi_select" ? v.split(",") : [v])){ const n=t.trim(); if (n && !names.has(n)){ col.options.push({name:n}); names.add(n); } } }
+  return col.options;
+}
+
+function editTags(el, col, val, commit, db){
+  const multi = col.type==="multi_select";
+  let cur = multi ? String(val||"").split(",").map(s=>s.trim()).filter(Boolean) : (val ? [val] : []);
+  const pop = popover(el);
+  const inp = h("input",{placeholder: "Suchen oder neue Option anlegen …"});
   const list = h("div");
   const draw = () => {
     list.innerHTML = "";
     const q = inp.value.trim().toLowerCase();
-    if (cur.length) list.append(h("div",{style:"padding:2px 8px 6px"}, cur.map(t=>h("span",{class:"tag", style:`background:${tagColor(t)};cursor:pointer`, title:"Entfernen", onclick:()=>{cur=cur.filter(x=>x!==t); apply();}}, t+" ×"))));
-    const opts = optionsFor(col, dbId).filter(o=>!q || o.toLowerCase().includes(q));
-    for (const o of opts) list.append(h("button",{class:"item", onclick:()=>toggle(o)}, h("span",{class:"tag", style:`background:${tagColor(o)}`}, o), cur.includes(o)?" ✓":""));
-    if (q && !opts.some(o=>o.toLowerCase()===q)) list.append(h("button",{class:"item", onclick:()=>toggle(inp.value.trim())}, "Neu: ", h("span",{class:"tag", style:`background:${tagColor(inp.value.trim())}`}, inp.value.trim())));
-    if (!multi && cur.length) list.append(h("button",{class:"item danger", onclick:()=>{cur=[]; apply(); closePop();}},"Leeren"));
+    if (multi && cur.length) list.append(h("div",{style:"padding:2px 8px 6px"}, cur.map(t=>{ const s=tagEl(col,t); s.textContent=t+" ×"; s.style.cursor="pointer"; s.title="Entfernen"; s.onclick=()=>{cur=cur.filter(x=>x!==t); apply();}; return s; })));
+    const opts = colOptions(db, col).map(o=>o.name).filter(o=>!q || o.toLowerCase().includes(q));
+    for (const o of opts) list.append(h("button",{class:"item", onclick:()=>toggle(o)}, tagEl(col,o), cur.includes(o)?" ✓":""));
+    if (q && !opts.some(o=>o.toLowerCase()===q)) list.append(h("button",{class:"item", onclick:()=>toggle(inp.value.trim())}, "Neu anlegen: ", tagEl(col, inp.value.trim())));
+    if (!multi && cur.length) list.append(h("hr"), h("button",{class:"item danger", onclick:()=>{cur=[]; apply(); closePop();}},"Leeren"));
   };
-  const toggle = o => { if (multi) cur = cur.includes(o) ? cur.filter(x=>x!==o) : [...cur, o]; else { cur = [o]; } inp.value=""; apply(); if(!multi) closePop(); };
-  const apply = () => { const nv = cur.join(", "); val = nv; commit(nv); draw(); };
+  const toggle = o => { o = o.replace(/,/g," ").trim(); if (!o) return;
+    if (!col.options.some(x=>x.name===o)){ col.options.push({name:o}); if (db.id) api("PUT",`/api/page/${db.id}`,{schema:db.schema}).catch(()=>{}); }
+    if (multi) cur = cur.includes(o) ? cur.filter(x=>x!==o) : [...cur, o]; else cur = [o];
+    inp.value=""; apply(); if(!multi) closePop(); else inp.focus(); };
+  const apply = () => { commit(cur.join(", ")); draw(); };
   inp.oninput = draw;
-  inp.onkeydown = e => { if (e.key==="Enter" && inp.value.trim()) toggle(inp.value.trim()); if (e.key==="Escape") closePop(); };
+  inp.onkeydown = e => { if (e.key==="Enter" && inp.value.trim()){ const q=inp.value.trim().toLowerCase(); const hit=colOptions(db,col).find(o=>o.name.toLowerCase().includes(q)); toggle(hit?hit.name:inp.value.trim()); } if (e.key==="Escape") closePop(); };
   pop.append(inp, list); draw(); inp.focus();
 }
 
-// ---------------------------------------------------------------------------
-// Datenbankansicht (Tabelle & Board)
-// ---------------------------------------------------------------------------
-function dbState(id){ try{ return JSON.parse(localStorage.getItem("nl_db_"+id)||"{}"); }catch{ return {}; } }
-function setDbState(id, s){ try{ localStorage.setItem("nl_db_"+id, JSON.stringify(s)); }catch{} }
+// ===========================================================================
+// Datenbank: Board & Tabelle
+// ===========================================================================
+function notifyDb(dbId){ for (const inst of LIVE) if (inst.p.id===dbId) inst.reload(); }
+let DRAG = null;   // laufender Karten-Drag
+document.addEventListener("touchmove", e => { if (DRAG) e.preventDefault(); }, {passive:false});
+document.addEventListener("contextmenu", e => { if (DRAG) e.preventDefault(); });
 
-function renderDatabase(p){
-  DBCACHE[p.id] = p.rows;
-  const st = Object.assign({view:"table", sort:null, dir:1, filter:"", group:null}, dbState(p.id));
-  const wrap = h("div");
+async function mountDatabase(host, dbId, viewKey, opt={}){
+  let p = opt.preloaded;
+  if (!p){
+    host.append(h("div",{class:"hint"},"Lädt …"));
+    try { p = await api("GET", `/api/page/${dbId}`); }
+    catch(e){ host.innerHTML=""; host.append(h("div",{class:"hint"},"⚠️ Eingebettete Datenbank nicht gefunden.")); return; }
+  }
+  host.innerHTML = "";
+  const hasSelect = p.schema.some(c=>c.type==="select");
+  const st = Object.assign({view: hasSelect?"board":"table", sort:null, dir:1, filter:"", group:null, hidden:[], cardProps:null}, META.views[viewKey]||{});
+  const persist = () => { const {view,sort,dir,filter,group,hidden,cardProps} = st; META.views[viewKey] = {view,sort,dir,filter,group,hidden,cardProps}; saveMeta("views"); };
+  const saveSchema = () => save(p.id,{schema:p.schema});
+  const tcol = () => p.schema.find(c=>c.type==="title")?.name || "Name";
+  let qaGroup = null, editRowId = null;
+
   const body = h("div");
-  const filterInp = h("input",{placeholder:"🔍 Filtern …", value:st.filter});
-  filterInp.oninput = debounce(()=>{ st.filter = filterInp.value; setDbState(p.id, st); draw(); }, 200);
-  const tabs = h("div",{style:"display:flex"});
+  const filterInp = h("input",{class:"filter", placeholder:"🔍 Filtern …", value:st.filter});
+  filterInp.oninput = debounce(()=>{ st.filter = filterInp.value; persist(); draw(); }, 200);
+  const tabs = h("span",{style:"display:flex"});
   const bar = h("div",{class:"dbbar"}, tabs, h("span",{class:"sp"}), filterInp,
-    h("button",{class:"btn", onclick:e=>addColumn(p, e.target)},"＋ Spalte"),
-    h("button",{class:"btn primary", onclick:()=>addRow(p)},"Neu"));
-  wrap.append(bar, body);
+    h("button",{class:"btn", title:"Ansicht anpassen", onclick:e=>viewMenu(e.currentTarget)},"⚙ Ansicht"),
+    h("button",{class:"btn primary", onclick:()=>quickNew()},"＋ Neu"));
+  if (opt.embed) host.append(h("div",{class:"embed-h"}, h("a",{href:"#/p/"+p.id, title:"Als ganze Seite öffnen"}, (p.icon||"🗃️")+" "+(p.title||"Ohne Titel"))));
+  host.append(bar, body);
 
-  const visibleRows = () => {
-    let rows = p.rows.slice();
+  const inst = { p, reload: debounce(async () => {
+    try { const np = await api("GET", `/api/page/${dbId}`); p.rows = np.rows; p.schema = np.schema; p.title = np.title; draw(); } catch(e){}
+  }, 300) };
+  LIVE.push(inst);
+
+  const sortedRows = () => {
+    let rows = p.rows.slice().sort((a,b)=>(a.sort-b.sort) || String(a.title).localeCompare(String(b.title),"de"));
     const q = st.filter.trim().toLowerCase();
     if (q) rows = rows.filter(r => (r.title+" "+Object.values(r.props).join(" ")).toLowerCase().includes(q));
     if (st.sort){
       const col = p.schema.find(c=>c.name===st.sort);
-      const key = r => { const v = col?.type==="title" ? r.title : (r.props[st.sort]||""); if (col?.type==="number") return parseFloat(String(v).replace(",","."))||0; if (col?.type==="date") return parseDate(v); return String(v).toLowerCase(); };
-      rows.sort((a,b)=>{ const x=key(a), y=key(b); return (x<y?-1:x>y?1:0)*st.dir; });
+      if (col){
+        const key = r => { const v = col.type==="title" ? r.title : (r.props[st.sort]||""); if (col.type==="number") return parseFloat(String(v).replace(/\./g,"").replace(",","."))||0; if (col.type==="date") return dateSortKey(v); if (col.type==="checkbox") return isOn(v)?1:0; return String(v).toLowerCase(); };
+        rows.sort((a,b)=>{ const x=key(a), y=key(b); return (x<y?-1:x>y?1:0)*st.dir; });
+      }
     }
     return rows;
   };
 
   const draw = () => {
     tabs.innerHTML = "";
-    for (const [k,lb] of [["table","▦ Tabelle"],["board","▥ Board"]]) tabs.append(h("button",{class:"tab"+(st.view===k?" on":""), onclick:()=>{st.view=k; setDbState(p.id,st); draw();}}, lb));
+    for (const [k,lb] of [["board","▥ Board"],["table","▦ Tabelle"]]) tabs.append(h("button",{class:"tab"+(st.view===k?" on":""), onclick:()=>{st.view=k; persist(); draw();}}, lb));
+    const sl = body.querySelector(".board")?.scrollLeft, tl = body.querySelector(".tablewrap")?.scrollLeft;
     body.innerHTML = "";
-    if (st.view==="board") body.append(drawBoard()); else body.append(drawTable());
+    body.append(st.view==="board" ? drawBoard() : drawTable());
+    if (sl && body.querySelector(".board")) body.querySelector(".board").scrollLeft = sl;
+    if (tl && body.querySelector(".tablewrap")) body.querySelector(".tablewrap").scrollLeft = tl;
+    body.querySelector("textarea.qa")?.focus();
   };
 
+  const createRow = async (title, props={}) => {
+    const full = {...props, [tcol()]: title};
+    const r = await api("POST","/api/page",{kind:"row", parent_id:p.id, title, props:full});
+    const maxSort = Math.max(0, ...p.rows.map(x=>x.sort||0)) + 1;
+    const row = {id:r.id, title, props:full, icon:"", sort:maxSort, has_content:false};
+    p.rows.push(row);
+    return row;
+  };
+  const quickNew = async () => {
+    if (st.view==="board"){ const gc = groupCol(); const first = gc && visibleGroups(gc)[0]; qaGroup = first ? first.key : ""; draw(); return; }
+    const row = await createRow(""); editRowId = row.id; draw();
+  };
+  const removeRow = async r => {
+    await api("DELETE",`/api/page/${r.id}`); p.rows = p.rows.filter(x=>x.id!==r.id); draw();
+    toast("„"+(r.title||"Ohne Titel")+"“ gelöscht", "Rückgängig", async()=>{ await api("POST",`/api/restore/${r.id}`); inst.reload(); });
+  };
+  const rowMenu = (r, e) => {
+    const pop = popover(null, e.clientX, e.clientY);
+    pop.append(
+      h("button",{class:"item", onclick:()=>{closePop(); openPeek(r.id);}},"◧ In Seitenleiste öffnen"),
+      h("button",{class:"item", onclick:()=>{closePop(); go(r.id);}},"⤢ Als ganze Seite öffnen"),
+      h("button",{class:"item", onclick:async()=>{ closePop(); await api("POST",`/api/duplicate/${r.id}`); inst.reload(); }},"⧉ Duplizieren"),
+      h("hr"),
+      h("button",{class:"item danger", onclick:()=>{ closePop(); removeRow(r); }},"🗑 Löschen"));
+  };
+
+  // ---------------- Tabelle ----------------
   const drawTable = () => {
+    const rows = sortedRows();
     const tw = h("div",{class:"tablewrap"});
     const t = h("table",{class:"db"});
     const tr = h("tr");
     p.schema.forEach((col, ci) => {
-      tr.append(h("th",{onclick:e=>colMenu(p, ci, e.currentTarget, st, draw)}, h("span",{style:"opacity:.7;margin-right:6px"}, typeIcon(col.type)), col.name, st.sort===col.name ? (st.dir>0?" ↑":" ↓") : ""));
+      tr.append(h("th",{class:col.type==="checkbox"?"narrow":"", title:col.name, onclick:e=>colMenu(ci, e.currentTarget)}, col.type==="checkbox" ? col.name : [h("span",{style:"opacity:.6;margin-right:6px"}, typeIcon(col.type)), col.name], st.sort===col.name ? (st.dir>0?" ↑":" ↓") : ""));
     });
+    tr.append(h("th",{title:"Spalte hinzufügen", style:"width:36px;text-align:center", onclick:e=>addColumn(e.currentTarget)},"＋"));
     t.append(h("thead",{},tr));
     const tb = h("tbody");
-    for (const r of visibleRows()){
+    for (const r of rows){
       const row = h("tr");
       for (const col of p.schema){
         const cell = h("div",{class:"cell"});
         if (col.type==="title"){
-          cell.append(h("span",{}, r.icon||""), h("span",{class:"tt"}, r.title || ""), h("button",{class:"open", onclick:e=>{e.stopPropagation(); go(r.id);}},"ÖFFNEN"));
-          cell.onclick = e => { if (e.target.closest("button")) return; editCell(cell, {type:"text"}, r.title, async val => { r.title = val; r.props[col.name]=val; await save(r.id,{title:val}); draw(); }); };
+          const drawT = () => { cell.innerHTML=""; cell.append(...(r.icon?[h("span",{},r.icon)]:[]), h("span",{class:"tt"}, r.title || h("span",{style:"color:var(--muted);font-weight:400"},"Ohne Titel")), h("button",{class:"open", onclick:e=>{e.stopPropagation(); openPeek(r.id);}},"ÖFFNEN")); };
+          drawT();
+          cell.onclick = e => { if (e.target.closest("button")) return; const tt=$(".tt",cell); if(!tt) return; editCell(tt, {type:"title"}, r.title, async val => { r.title = val; r.props[col.name]=val; drawT(); await save(r.id,{title:val}); }, p, drawT); };
+          if (editRowId===r.id) setTimeout(()=>{ editRowId=null; cell.click(); },0);
           row.append(h("td",{class:"tcell"}, cell));
         } else {
-          renderCellValue(cell, col, r.props[col.name]);
-          cell.onclick = e => { if (e.target.closest("a")) return; editCell(cell, col, r.props[col.name]||"", async val => { r.props[col.name]=val; renderCellValue(cell, col, val); await save(r.id,{props:r.props}); }, p.id); };
-          row.append(h("td",{}, cell));
+          const redraw = () => renderCellValue(cell, col, r.props[col.name]);
+          redraw();
+          cell.onclick = e => { if (e.target.closest("a")) return; editCell(cell, col, r.props[col.name]||"", async val => { r.props[col.name]=val; redraw(); await save(r.id,{props:r.props}); }, p, redraw); };
+          row.append(h("td",{class:col.type==="checkbox"?"narrow":""}, cell));
         }
       }
-      row.oncontextmenu = e => { e.preventDefault(); rowMenu(p, r, e, draw); };
+      row.append(h("td",{style:"min-width:36px;text-align:center"}, h("button",{style:"color:var(--muted);padding:6px 8px", title:"Mehr", onclick:e=>{ const b=e.currentTarget.getBoundingClientRect(); rowMenu(r,{clientX:b.left-200,clientY:b.bottom}); }},"⋯")));
+      row.oncontextmenu = e => { if (e.target.closest("input,textarea")) return; e.preventDefault(); rowMenu(r, e); };
       tb.append(row);
     }
     t.append(tb);
-    tw.append(t, h("div",{class:"newrow", onclick:()=>addRow(p)},"＋ Neu"),
-      h("div",{class:"hint", style:"padding:4px 8px"}, `${visibleRows().length} von ${p.rows.length} Einträgen · Rechtsklick auf eine Zeile für mehr`));
-    return tw;
+    tw.append(t);
+    return h("div",{}, tw, h("div",{class:"newrow", onclick:quickNew},"＋ Neu"),
+      h("div",{class:"hint", style:"padding:2px 8px"}, rows.length===p.rows.length ? `${rows.length} Einträge` : `${rows.length} von ${p.rows.length} Einträgen`));
   };
 
+  // ---------------- Board ----------------
+  const groupable = () => p.schema.filter(c=>c.type==="select" || c.type==="multi_select" || c.type==="checkbox");
+  const groupCol = () => { const g = groupable(); if (!g.length) return null; return g.find(c=>c.name===st.group) || g.find(c=>/status|phase|stage/i.test(c.name)) || g.find(c=>c.type==="select") || g[0]; };
+  const allGroups = col => col.type==="checkbox" ? [{key:"Yes", label:"✓ Ja"},{key:"No", label:"Nein"}]
+      : [{key:"", label:"Ohne "+col.name}, ...colOptions(p, col).map(o=>({key:o.name, label:o.name}))];
+  const visibleGroups = col => allGroups(col).filter(g=>!st.hidden.includes(g.key));
+  const inGroup = (r, col, g) => { const v=(r.props[col.name]||"").trim();
+    if (col.type==="checkbox") return (isOn(v)?"Yes":"No")===g;
+    if (col.type==="multi_select") return g==="" ? !v : v.split(",").map(s=>s.trim()).includes(g);
+    return v===g; };
+  const defaultCardProps = col => p.schema.filter(c=>c.name!==col.name && ["select","multi_select","date"].includes(c.type)).map(c=>c.name);
+
   const drawBoard = () => {
-    const groupable = p.schema.filter(c=>c.type==="select" || c.type==="multi_select" || c.type==="checkbox");
-    if (!groupable.length) return h("div",{class:"hint", style:"padding:20px"},"Für das Board wird eine Spalte vom Typ „Auswahl“ benötigt. Klicke auf eine Spaltenüberschrift, um den Typ zu ändern.");
-    if (!st.group || !groupable.some(c=>c.name===st.group)) st.group = groupable[0].name;
-    const col = p.schema.find(c=>c.name===st.group);
-    const sel = h("select",{style:"margin:6px 0;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg)"}, groupable.map(c=>h("option",{value:c.name, selected:c.name===st.group}, "Gruppiert nach: "+c.name)));
-    sel.onchange = () => { st.group = sel.value; setDbState(p.id, st); draw(); };
-    const rows = visibleRows();
-    const groups = col.type==="checkbox" ? ["Yes","No"] : ["", ...optionsFor(col, p.id)];
+    const col = groupCol();
+    if (!col) return h("div",{class:"hint", style:"padding:20px"},"Für das Board wird eine Spalte vom Typ „Auswahl“ benötigt (z. B. Status). ",
+      h("button",{class:"btn", style:"text-decoration:underline", onclick:async()=>{ p.schema.push({name:"Status", type:"select", options:[{name:"Offen",color:"gray"},{name:"In Arbeit",color:"blue"},{name:"Erledigt",color:"green"}]}); await saveSchema(); draw(); }},"Status-Spalte anlegen"));
+    const rows = sortedRows();
+    const shown = st.cardProps || defaultCardProps(col);
     const board = h("div",{class:"board"});
-    for (const g of groups){
-      const items = rows.filter(r => { const v=(r.props[col.name]||"").trim();
-        if (col.type==="checkbox") return (/^(yes|ja|true|1|x)$/i.test(v)?"Yes":"No")===g;
-        if (col.type==="multi_select") return g==="" ? !v : v.split(",").map(s=>s.trim()).includes(g);
-        return v===g; });
-      if (g==="" && !items.length) continue;
-      const c = h("div",{class:"col", style:`background:${g?`color-mix(in srgb, ${tagColor(g)} 35%, transparent)`:"var(--hover)"}`},
-        h("h4",{}, g ? h("span",{class:"tag", style:`background:${tagColor(g)}`}, col.type==="checkbox" ? (g==="Yes"?"✓ Ja":"Nein") : g) : h("span",{},"Ohne "+col.name), h("span",{class:"n"}, items.length)));
-      for (const r of items){
-        const others = p.schema.filter(x=>x.type!=="title" && x.name!==col.name && r.props[x.name]).slice(0,3);
-        const card = h("div",{class:"cardx", draggable:"true", onclick:()=>go(r.id)},
-          h("div",{class:"t"}, (r.icon?r.icon+" ":"")+(r.title||"Ohne Titel")),
-          others.map(x=>{ const m=h("div",{class:"m"}); renderCellValue(m, x, r.props[x.name]); return m; }));
-        card.ondragstart = e => e.dataTransfer.setData("text/nl-row", r.id);
-        c.append(card);
+    const hiddenBox = h("div",{class:"hiddencols"});
+    for (const g of allGroups(col)){
+      const items = rows.filter(r=>inGroup(r, col, g.key));
+      if (g.key==="" && !items.length && qaGroup!=="") continue;
+      if (st.hidden.includes(g.key)){
+        hiddenBox.append(h("div",{class:"hc", title:"Einblenden", onclick:()=>{ st.hidden = st.hidden.filter(x=>x!==g.key); persist(); draw(); }}, g.key ? tagEl(col,g.key) : g.label, h("span",{}, items.length)));
+        continue;
       }
-      c.append(h("div",{class:"newrow", onclick:()=>addRow(p, g ? {[col.name]: g} : {})},"＋ Neu"));
-      c.ondragover = e => { e.preventDefault(); c.classList.add("drop"); };
-      c.ondragleave = () => c.classList.remove("drop");
-      c.ondrop = async e => { c.classList.remove("drop"); const id=e.dataTransfer.getData("text/nl-row"); const r=p.rows.find(x=>x.id===id); if(!r) return;
-        let v = g; if (col.type==="multi_select"){ const prev=(r.props[col.name]||"").split(",").map(s=>s.trim()).filter(Boolean); v = g ? [...new Set([...prev.filter(x=>!groups.includes(x)), g])].join(", ") : ""; }
-        r.props[col.name] = v; await save(r.id,{props:r.props}); draw(); };
+      const c = h("div",{class:"col", "data-g":g.key, style:`background:${g.key && col.type!=="checkbox" ? `color-mix(in srgb, ${optColor(col,g.key)} 38%, transparent)` : "var(--hover)"}`});
+      c.append(h("h4",{}, g.key && col.type!=="checkbox" ? tagEl(col,g.key) : h("span",{style:"color:var(--muted)"}, g.label), h("span",{class:"n"}, items.length), h("span",{class:"sp"}),
+        h("button",{title:"Spalte bearbeiten", onclick:e=>groupMenu(col, g, e.currentTarget)},"⋯"),
+        h("button",{title:"Karte hinzufügen", onclick:()=>{ qaGroup=g.key; draw(); }},"＋")));
+      const cards = h("div",{class:"cards"});
+      for (const r of items) cards.append(cardEl(r, col, shown));
+      c.append(cards);
+      if (qaGroup===g.key){
+        const ta = h("textarea",{class:"qa", rows:2, placeholder:"Titel eingeben · Enter legt an · Esc schließt"});
+        const create = async keep => { const t = ta.value.trim(); if (!t){ if(!keep){ qaGroup=null; draw(); } return; } ta.value="";
+          const props = {}; if (g.key) props[col.name] = g.key; else if (col.type==="checkbox") props[col.name]="No";
+          let row; try { row = await createRow(t, props); } catch(e){ toast(e.message); ta.value = t; return; }
+          if (keep && ta.isConnected){ cards.append(cardEl(row, col, shown)); const n = $("h4 .n", c); n.textContent = +n.textContent+1; ta.focus(); ta.scrollIntoView({block:"nearest"}); }
+          else { qaGroup=null; draw(); } };
+        ta.onkeydown = e => { if (e.key==="Enter" && !e.shiftKey){ e.preventDefault(); create(true); } if (e.key==="Escape"){ e.preventDefault(); qaGroup=null; draw(); } };
+        ta.onblur = () => { if (qaGroup===g.key) create(false); };
+        c.append(ta);
+      } else c.append(h("div",{class:"newrow", onclick:()=>{ qaGroup=g.key; draw(); }},"＋ Neu"));
       board.append(c);
     }
-    return h("div",{}, sel, board);
+    if (col.type!=="checkbox") board.append(h("div",{class:"addgroup", onclick:async()=>{ const n=(prompt("Name der neuen Spalte:")||"").replace(/,/g," ").trim(); if(!n) return; if(!col.options.some(o=>o.name===n)){ col.options.push({name:n}); await saveSchema(); } draw(); }},"＋ Spalte"));
+    if (hiddenBox.childNodes.length){ hiddenBox.prepend(h("div",{class:"hint", style:"margin:0 6px"},"Ausgeblendet")); board.append(hiddenBox); }
+    return board;
+  };
+
+  const cardEl = (r, col, shown) => {
+    const card = h("div",{class:"cardx", "data-id":r.id});
+    card.append(h("div",{class:"t"}, (r.icon?r.icon+" ":"")+(r.title||"Ohne Titel")));
+    for (const name of shown){
+      const x = p.schema.find(c=>c.name===name); if (!x || x.type==="title") continue;
+      const v = r.props[name];
+      if (x.type==="checkbox"){
+        const cb = h("input",{type:"checkbox", class:"cb", checked:isOn(v), style:"margin:0"});
+        cb.onclick = async e => { e.stopPropagation(); r.props[name] = cb.checked?"Yes":"No"; await save(r.id,{props:r.props}); };
+        card.append(h("label",{class:"m", onclick:e=>e.stopPropagation()}, cb, h("span",{}, name)));
+        continue;
+      }
+      if (!v) continue;
+      const m = h("div",{class:"m"}); renderCellValue(m, x, v);
+      if (x.type==="date") m.prepend(h("span",{class:"k"},"📅"));
+      else if (!["select","multi_select"].includes(x.type)) m.prepend(h("span",{class:"k"}, name+":"));
+      card.append(m);
+    }
+    if (r.has_content) card.append(h("div",{class:"m", title:"Hat Inhalt"},"≡"));
+    card.onclick = () => { if (card._dragged){ card._dragged=false; return; } openPeek(r.id); };
+    card.oncontextmenu = e => { e.preventDefault(); if (!DRAG) rowMenu(r, e); };
+    enableDrag(card, r, col);
+    return card;
+  };
+
+  // Drag & Drop mit Maus und Touch (langes Drücken)
+  const enableDrag = (card, r, col) => {
+    card.addEventListener("pointerdown", e => {
+      if (e.button!==0 || e.target.closest("input,button,a,textarea,label")) return;
+      const touch = e.pointerType!=="mouse", pid = e.pointerId, sx = e.clientX, sy = e.clientY;
+      let active = false, ghost, ph, timer, scrollTimer, lx = sx, ly = sy, ox, oy;
+      const board = card.closest(".board");
+      const start = () => {
+        active = true; DRAG = card; closePop();
+        const b = card.getBoundingClientRect(); ox = sx-b.left; oy = sy-b.top;
+        ghost = card.cloneNode(true); ghost.classList.add("ghost"); ghost.style.width = b.width+"px";
+        document.body.append(ghost);
+        ph = h("div",{class:"ph", style:`height:${b.height}px`});
+        card.classList.add("dragging"); card.after(ph);
+        document.body.style.userSelect = "none";
+        scrollTimer = setInterval(()=>{ const br = board.getBoundingClientRect();
+          if (lx > br.right-50) board.scrollLeft += 14; else if (lx < br.left+50) board.scrollLeft -= 14;
+          const m = card.closest(".peek-body") || $("#main"), mr = m.getBoundingClientRect();
+          if (ly > mr.bottom-50) m.scrollTop += 12; else if (ly < mr.top+70) m.scrollTop -= 12;
+          place(); }, 30);
+        move();
+      };
+      const place = () => {
+        // Spalte anhand der horizontalen Position bestimmen – so zählt auch der leere Bereich unter kurzen Spalten
+        const br = board.getBoundingClientRect();
+        const c = (ly > br.top-80 && ly < br.bottom+200) ? [...board.querySelectorAll(".col")].find(x => { const b=x.getBoundingClientRect(); return lx>=b.left-5 && lx<=b.right+5; }) : null;
+        board.querySelectorAll(".col.over").forEach(x=>x.classList.remove("over"));
+        if (!c) return;
+        c.classList.add("over");
+        const list = $(".cards", c);
+        const others = [...list.querySelectorAll(".cardx:not(.dragging)")];
+        const before = others.find(o => { const b=o.getBoundingClientRect(); return ly < b.top + b.height/2; });
+        if (before) list.insertBefore(ph, before); else list.append(ph);
+      };
+      const move = () => { ghost.style.left = (lx-ox)+"px"; ghost.style.top = (ly-oy)+"px"; place(); };
+      const onMove = ev => {
+        if (ev.pointerId!==pid) return;
+        lx = ev.clientX; ly = ev.clientY;
+        if (!active){
+          const d = Math.hypot(lx-sx, ly-sy);
+          if (touch){ if (d>10) cleanup(); return; }
+          if (d<6) return;
+          start();
+        }
+        ev.preventDefault(); move();
+      };
+      const cleanup = () => {
+        clearTimeout(timer); clearInterval(scrollTimer);
+        document.removeEventListener("pointermove", onMove); document.removeEventListener("pointerup", onUp); document.removeEventListener("pointercancel", onCancel);
+        document.body.style.userSelect = "";
+      };
+      const endVisual = () => { ghost?.remove(); card.classList.remove("dragging"); board.querySelectorAll(".col.over").forEach(x=>x.classList.remove("over")); DRAG = null; };
+      const onCancel = ev => { if (ev.pointerId!==pid) return; cleanup(); if (active){ ph.remove(); endVisual(); } };
+      const onUp = async ev => {
+        if (ev.pointerId!==pid) return;
+        cleanup();
+        if (!active) return;
+        card._dragged = true; setTimeout(()=>{ card._dragged=false; }, 50);
+        const c = ph.closest(".col");
+        const g = c?.dataset.g;
+        // Neue Reihenfolge der Zielspalte: Platzhalter steht für die gezogene Karte
+        const final = [];
+        for (const x of (c ? [...$(".cards",c).children] : [])){ if (x===ph) final.push(r.id); else if (x!==card && x.dataset.id) final.push(x.dataset.id); }
+        ph.remove(); endVisual();
+        if (!c) return;
+        const updates = {};
+        const prevVal = r.props[col.name] || "";
+        let nv;
+        if (col.type==="checkbox") nv = g;
+        else if (col.type==="multi_select"){
+          const from = card.closest(".col")?.dataset.g;
+          let toks = prevVal.split(",").map(s=>s.trim()).filter(Boolean).filter(t=>t!==from);
+          if (g && !toks.includes(g)) toks.push(g);
+          nv = g==="" ? "" : toks.join(", ");
+        } else nv = g;
+        if (nv !== prevVal){ r.props[col.name] = nv; updates[r.id] = {id:r.id, props:r.props}; }
+        if (!st.sort){
+          const byId = Object.fromEntries(p.rows.map(x=>[x.id,x]));
+          final.forEach((id,i) => { const row = byId[id]; if (row && row.sort!==i){ row.sort = i; (updates[id] ||= {id}).sort = i; } });
+        }
+        draw();
+        const list = Object.values(updates);
+        if (list.length){ setStatus("Speichert …"); try { await api("POST","/api/batch",{updates:list}); setStatus("✓ Gespeichert"); setTimeout(()=>setStatus(""),1200); } catch(err){ setStatus("⚠️ Nicht gespeichert"); toast(err.message); inst.reload(); } }
+      };
+      document.addEventListener("pointermove", onMove); document.addEventListener("pointerup", onUp); document.addEventListener("pointercancel", onCancel);
+      if (touch) timer = setTimeout(()=>{ start(); navigator.vibrate?.(12); }, 320);
+    });
+  };
+
+  // ---------------- Menüs ----------------
+  const groupMenu = (col, g, anchor) => {
+    const pop = popover(anchor);
+    const hide = h("button",{class:"item", onclick:()=>{ st.hidden=[...st.hidden, g.key]; persist(); closePop(); draw(); }},"🙈 Spalte ausblenden");
+    if (col.type==="checkbox" || g.key===""){ pop.append(hide); return; }
+    const o = col.options.find(x=>x.name===g.key); const idx = col.options.indexOf(o);
+    const name = h("input",{value:g.key});
+    const rename = async () => { const nn = name.value.replace(/,/g," ").trim(); if (!nn || nn===g.key) return closePop();
+      try { const res = await api("POST",`/api/db/${p.id}/op`,{op:"rename_option", column:col.name, from:g.key, to:nn});
+        st.hidden = st.hidden.map(x=>x===g.key?nn:x); persist(); closePop(); p.schema = res.schema; inst.reload(); } catch(e){ toast(e.message); } };
+    name.onkeydown = e => { if (e.key==="Enter") rename(); };
+    const sw = h("div",{class:"swatches"}, TAGCOLORS.map(c=>h("button",{title:COLORNAMES[c], class:(o.color||hashColor(o.name))===c?"on":"", style:`background:var(--t-${c})`, onclick:async()=>{ o.color=c; await saveSchema(); closePop(); draw(); }})));
+    const mv = async d => { const j = idx+d; if (j<0 || j>=col.options.length) return; [col.options[idx], col.options[j]] = [col.options[j], col.options[idx]]; await saveSchema(); closePop(); draw(); };
+    pop.append(h("label",{},"Name"), name, h("label",{},"Farbe"), sw, h("hr"),
+      idx>0 ? h("button",{class:"item", onclick:()=>mv(-1)},"← Nach links") : null,
+      idx<col.options.length-1 ? h("button",{class:"item", onclick:()=>mv(1)},"→ Nach rechts") : null,
+      hide, h("hr"),
+      h("button",{class:"item danger", onclick:async()=>{ const n = p.rows.filter(r=>inGroup(r,col,g.key)).length;
+        if (n && !confirm(`Spalte „${g.key}“ löschen? ${n} Karte(n) bleiben erhalten und landen unter „Ohne ${col.name}“.`)) return;
+        try { await api("POST",`/api/db/${p.id}/op`,{op:"delete_option", column:col.name, name:g.key}); closePop(); inst.reload(); } catch(e){ toast(e.message); } }},"🗑 Spalte löschen"));
+    name.focus(); name.select();
+  };
+
+  const viewMenu = anchor => {
+    const pop = popover(anchor);
+    const sortSel = h("select",{}, h("option",{value:""}, st.view==="board" ? "Manuell (Karten ziehen)" : "Manuell"), p.schema.map(c=>h("option",{value:c.name, selected:st.sort===c.name}, c.name)));
+    sortSel.onchange = () => { st.sort = sortSel.value || null; persist(); draw(); };
+    const dirSel = h("select",{}, h("option",{value:"1", selected:st.dir>0},"Aufsteigend"), h("option",{value:"-1", selected:st.dir<0},"Absteigend"));
+    dirSel.onchange = () => { st.dir = +dirSel.value; persist(); draw(); };
+    pop.append(h("label",{},"Sortieren nach"), sortSel, dirSel);
+    if (st.view==="board"){
+      const col = groupCol();
+      if (col){
+        const g = h("select",{}, groupable().map(c=>h("option",{value:c.name, selected:c.name===col.name}, c.name)));
+        g.onchange = () => { st.group = g.value; st.hidden = []; st.cardProps = null; persist(); closePop(); draw(); };
+        pop.append(h("label",{},"Gruppieren nach"), g, h("label",{},"Auf den Karten anzeigen"));
+        const shown = new Set(st.cardProps || defaultCardProps(col));
+        for (const c of p.schema.filter(c=>c.type!=="title" && c.name!==col.name)){
+          const cb = h("input",{type:"checkbox", checked:shown.has(c.name)});
+          cb.onchange = () => { cb.checked ? shown.add(c.name) : shown.delete(c.name); st.cardProps = p.schema.map(x=>x.name).filter(n=>shown.has(n)); persist(); draw(); };
+          pop.append(h("label",{class:"chk"}, cb, c.name));
+        }
+        pop.append(h("label",{},"Spalten"));
+        for (const gr of allGroups(col)){
+          const cb = h("input",{type:"checkbox", checked:!st.hidden.includes(gr.key)});
+          cb.onchange = () => { st.hidden = cb.checked ? st.hidden.filter(x=>x!==gr.key) : [...st.hidden, gr.key]; persist(); draw(); };
+          pop.append(h("label",{class:"chk"}, cb, gr.label));
+        }
+      }
+    }
+    pop.append(h("hr"), h("button",{class:"item", onclick:e=>{ addColumn(anchor); }},"＋ Eigenschaft hinzufügen"));
+  };
+
+  const addColumn = anchor => {
+    const pop = popover(anchor);
+    const name = h("input",{placeholder:"Name der Eigenschaft"});
+    const type = h("select",{}, Object.entries(TYPES).filter(([k])=>k!=="title").map(([k,v])=>h("option",{value:k},v)));
+    const ok = async () => { const n=name.value.trim(); if(!n) return; if (p.schema.some(c=>c.name===n)) return toast("Diesen Namen gibt es schon");
+      p.schema.push({name:n, type:type.value}); await saveSchema(); closePop(); draw(); };
+    name.onkeydown = e => { if (e.key==="Enter") ok(); };
+    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type, h("button",{class:"item", style:"color:var(--accent)", onclick:ok},"Hinzufügen"));
+    name.focus();
+  };
+
+  const colMenu = (ci, anchor) => {
+    const col = p.schema[ci];
+    const pop = popover(anchor);
+    const name = h("input",{value:col.name});
+    const type = h("select",{disabled: col.type==="title"}, Object.entries(TYPES).filter(([k])=>col.type==="title"||k!=="title").map(([k,v])=>h("option",{value:k, selected:k===col.type},v)));
+    const apply = async () => {
+      const nn = name.value.trim() || col.name;
+      try {
+        if (nn !== col.name){
+          const res = await api("POST",`/api/db/${p.id}/op`,{op:"rename_column", from:col.name, to:nn});
+          for (const r of p.rows) if (col.name in r.props){ r.props[nn] = r.props[col.name]; delete r.props[col.name]; }
+          if (st.sort===col.name) st.sort = nn; if (st.group===col.name) st.group = nn;
+          if (st.cardProps) st.cardProps = st.cardProps.map(x=>x===col.name?nn:x);
+          persist(); p.schema = res.schema;
+        }
+        const c2 = p.schema[ci];
+        if (c2.type !== type.value){ c2.type = type.value; if (["select","multi_select"].includes(c2.type)) colOptions(p, c2); await saveSchema(); }
+      } catch(e){ toast(e.message); }
+      closePop(); draw();
+    };
+    name.onkeydown = e => { if (e.key==="Enter") apply(); };
+    const mv = async d => { [p.schema[ci+d],p.schema[ci]]=[p.schema[ci],p.schema[ci+d]]; await saveSchema(); closePop(); draw(); };
+    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type,
+      h("button",{class:"item", style:"color:var(--accent)", onclick:apply},"Übernehmen"), h("hr"),
+      h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=1; persist(); closePop(); draw();}},"↑ Aufsteigend sortieren"),
+      h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=-1; persist(); closePop(); draw();}},"↓ Absteigend sortieren"),
+      st.sort ? h("button",{class:"item", onclick:()=>{st.sort=null; persist(); closePop(); draw();}},"Sortierung entfernen") : null,
+      ci>1 ? h("button",{class:"item", onclick:()=>mv(-1)},"← Nach links") : null,
+      ci>0 && ci<p.schema.length-1 ? h("button",{class:"item", onclick:()=>mv(1)},"→ Nach rechts") : null,
+      col.type!=="title" ? [h("hr"), h("button",{class:"item danger", onclick:async()=>{ if(!confirm(`Eigenschaft „${col.name}“ ausblenden? Die Werte bleiben in den Einträgen gespeichert und erscheinen wieder, wenn du eine Eigenschaft mit demselben Namen anlegst.`)) return; p.schema.splice(ci,1); await saveSchema(); closePop(); draw(); }},"Eigenschaft entfernen")] : null);
+    name.focus(); name.select();
   };
 
   draw();
-  return wrap;
 }
 
-function parseDate(v){
-  v = String(v||"").split("→")[0].trim(); if (!v) return 0;
-  let m;
-  if ((m = v.match(/^(\d{1,2})\.(\d{1,2})\.(\d{2,4})/))) return new Date(+(m[3].length===2?"20"+m[3]:m[3]), m[2]-1, +m[1]).getTime();
-  const t = Date.parse(v.replace(/(\d+)\. /,"$1 ")); return isNaN(t) ? 0 : t;
+// ===========================================================================
+// Seitenleiste rechts: Eintrag öffnen, ohne das Board zu verlassen
+// ===========================================================================
+async function openPeek(id){
+  flushAll();
+  let p;
+  try { p = await api("GET", `/api/page/${id}`); } catch(e){ toast(e.message); return; }
+  PEEK = p;
+  const el = $("#peek"); el.innerHTML = "";
+  const body = h("div",{class:"peek-body"});
+  el.append(h("div",{class:"ph-bar"},
+    h("button",{title:"Schließen (Esc)", onclick:closePeek},"» Schließen"),
+    h("button",{onclick:()=>{ closePeek(); location.hash="#/p/"+p.id; }},"⤢ Als Seite öffnen"),
+    h("span",{class:"sp"}),
+    h("button",{title:"Löschen", onclick:async()=>{ await api("DELETE",`/api/page/${p.id}`); closePeek(); notifyDb(p.parent_id);
+      toast("„"+(p.title||"Ohne Titel")+"“ gelöscht","Rückgängig", async()=>{ await api("POST",`/api/restore/${p.id}`); notifyDb(p.parent_id); }); }},"🗑")), body);
+  renderPageInto(body, p, true);
+  el.classList.add("on");
+  if (!p.title) setTimeout(()=>$("h1.title", body)?.focus(), 50);
 }
+function closePeek(){ if (!PEEK) return; flushAll(); const dbId = PEEK.parent_id; PEEK = null; $("#peek").classList.remove("on"); $("#peek").innerHTML=""; notifyDb(dbId); }
+document.addEventListener("mousedown", e => { if (PEEK && !e.target.closest("#peek, .pop, .overlay, #toast, .cardx, .open, #lightbox")) closePeek(); });
 
-async function addRow(p, props={}){
-  const tcol = p.schema.find(c=>c.type==="title")?.name || "Name";
-  const r = await api("POST","/api/page",{kind:"row", parent_id:p.id, title:"", props:{...props, [tcol]:""}});
-  go(r.id);
-}
-
-function addColumn(p, anchor){
-  const pop = popover(anchor);
-  const name = h("input",{placeholder:"Spaltenname"});
-  const type = h("select",{}, Object.entries(TYPES).filter(([k])=>k!=="title").map(([k,v])=>h("option",{value:k},v)));
-  const ok = async () => { const n=name.value.trim(); if(!n) return; if (p.schema.some(c=>c.name===n)) return toast("Name existiert schon");
-    p.schema.push({name:n, type:type.value}); await save(p.id,{schema:p.schema}); closePop(); openPage(p.id); };
-  name.onkeydown = e => { if (e.key==="Enter") ok(); };
-  pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type, h("button",{class:"item", style:"color:var(--accent)", onclick:ok},"Hinzufügen"));
-  name.focus();
-}
-
-function colMenu(p, ci, anchor, st, redraw){
-  const col = p.schema[ci];
-  const pop = popover(anchor);
-  const name = h("input",{value:col.name});
-  const type = h("select",{disabled: col.type==="title"}, Object.entries(TYPES).filter(([k])=>col.type==="title"||k!=="title").map(([k,v])=>h("option",{value:k, selected:k===col.type},v)));
-  const apply = async () => {
-    const nn = name.value.trim() || col.name;
-    if (nn !== col.name){
-      if (p.schema.some(c=>c.name===nn)) return toast("Name existiert schon");
-      // Werte in allen Zeilen umbenennen
-      for (const r of p.rows){ if (col.name in r.props){ r.props[nn] = r.props[col.name]; delete r.props[col.name]; await api("PUT",`/api/page/${r.id}`,{props:r.props}); } }
-      if (st.sort===col.name) st.sort = nn;
-      col.name = nn;
-    }
-    col.type = type.value;
-    await save(p.id,{schema:p.schema}); closePop(); redraw();
-  };
-  name.onkeydown = e => { if (e.key==="Enter") apply(); };
-  pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type,
-    h("button",{class:"item", style:"color:var(--accent)", onclick:apply},"Übernehmen"),
-    h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=1; setDbState(p.id,st); closePop(); redraw();}},"↑ Aufsteigend sortieren"),
-    h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=-1; setDbState(p.id,st); closePop(); redraw();}},"↓ Absteigend sortieren"),
-    st.sort ? h("button",{class:"item", onclick:()=>{st.sort=null; setDbState(p.id,st); closePop(); redraw();}},"Sortierung entfernen") : null,
-    ci>1 ? h("button",{class:"item", onclick:async()=>{ [p.schema[ci-1],p.schema[ci]]=[p.schema[ci],p.schema[ci-1]]; await save(p.id,{schema:p.schema}); closePop(); redraw(); }},"← Nach links") : null,
-    ci>0 && ci<p.schema.length-1 ? h("button",{class:"item", onclick:async()=>{ [p.schema[ci+1],p.schema[ci]]=[p.schema[ci],p.schema[ci+1]]; await save(p.id,{schema:p.schema}); closePop(); redraw(); }},"→ Nach rechts") : null,
-    col.type!=="title" ? h("button",{class:"item danger", onclick:async()=>{ if(!confirm(`Spalte „${col.name}“ löschen? Die Werte bleiben in den Einträgen gespeichert, werden aber nicht mehr angezeigt.`)) return; p.schema.splice(ci,1); await save(p.id,{schema:p.schema}); closePop(); redraw(); }},"Spalte löschen") : null);
-  name.focus(); name.select();
-}
-
-function rowMenu(p, r, e, redraw){
-  const pop = popover(null, e.clientX, e.clientY);
-  pop.append(
-    h("button",{class:"item", onclick:()=>{closePop(); go(r.id);}},"↗ Öffnen"),
-    h("button",{class:"item", onclick:async()=>{ closePop(); const n = await api("POST","/api/page",{kind:"row", parent_id:p.id, title:r.title+" (Kopie)", props:{...r.props}}); const full = await api("GET",`/api/page/${r.id}`); await api("PUT",`/api/page/${n.id}`,{content:full.content, title:r.title+" (Kopie)"}); openPage(p.id); }},"⧉ Duplizieren"),
-    h("button",{class:"item danger", onclick:async()=>{ closePop(); await api("DELETE",`/api/page/${r.id}`); p.rows = p.rows.filter(x=>x.id!==r.id); redraw(); toast("In den Papierkorb verschoben"); }},"🗑 Löschen"));
-}
-
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Popover / Dialoge
-// ---------------------------------------------------------------------------
+// ===========================================================================
 let POP = null;
 function popover(anchor, x, y){
   closePop();
   const pop = h("div",{class:"pop"});
   document.body.append(pop);
   const r = anchor ? anchor.getBoundingClientRect() : {left:x, bottom:y, top:y};
-  pop.style.left = Math.min(r.left, innerWidth-260)+"px";
-  pop.style.top = Math.min(r.bottom+4, innerHeight-320)+"px";
   POP = pop;
+  requestAnimationFrame(()=>{ if (POP!==pop) return;
+    const w = pop.offsetWidth, ht = pop.offsetHeight;
+    pop.style.left = Math.max(8, Math.min(r.left, innerWidth-w-8))+"px";
+    let top = r.bottom+4; if (top+ht > innerHeight-8) top = Math.max(8, (r.top||r.bottom)-ht-4);
+    pop.style.top = top+"px"; });
+  pop.style.left = Math.max(8, Math.min(r.left, innerWidth-330))+"px"; pop.style.top = (r.bottom+4)+"px";
   setTimeout(()=>document.addEventListener("mousedown", outside), 0);
   return pop;
 }
@@ -767,10 +1313,11 @@ function outside(e){ if (POP && !POP.contains(e.target)) closePop(); }
 function closePop(){ if (POP){ POP.remove(); POP=null; document.removeEventListener("mousedown", outside); } }
 
 function dialog(content){
-  const ov = h("div",{class:"overlay", onclick:e=>{ if(e.target===ov) ov.remove(); }}, h("div",{class:"dialog"}, content));
-  document.body.append(ov);
-  const onKey = e => { if (e.key==="Escape"){ ov.remove(); document.removeEventListener("keydown", onKey); } };
-  document.addEventListener("keydown", onKey);
+  const ov = h("div",{class:"overlay", onmousedown:e=>{ if(e.target===ov) close(); }}, h("div",{class:"dialog"}, content));
+  const onKey = e => { if (e.key==="Escape"){ e.stopPropagation(); close(); } };
+  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey, true); };
+  document.addEventListener("keydown", onKey, true);
+  document.body.append(ov); ov.close = close;
   return ov;
 }
 
@@ -779,29 +1326,45 @@ function openSearch(){
   const res = h("div",{class:"res"});
   let sel = 0, items = [];
   const ov = dialog([q, res]);
-  const draw = () => { res.innerHTML = ""; items.forEach((r,i)=>res.append(h("a",{class:"r"+(i===sel?" sel":""), onclick:()=>{ov.remove(); go(r.id);}},
+  const pick = r => { ov.close(); go(r.id); };
+  const draw = () => { res.innerHTML = ""; if (!items.length && q.value.trim()) res.append(h("div",{class:"hint", style:"padding:10px 12px"},"Nichts gefunden."));
+    items.forEach((r,i)=>res.append(h("a",{class:"r"+(i===sel?" sel":""), onclick:()=>pick(r)},
     (r.icon||defaultIcon(r.kind))+" "+(r.title||"Ohne Titel"), r.kind==="row"?h("span",{class:"hint"}," · Eintrag"):null, r.snippet?h("small",{},r.snippet):null))); };
-  q.oninput = debounce(async ()=>{ items = await api("GET","/api/search?q="+encodeURIComponent(q.value)); sel=0; draw(); }, 150);
+  const recent = () => { items = (META.favorites||[]).map(id=>NODE[id]).filter(Boolean); draw(); };
+  q.oninput = debounce(async ()=>{ if (!q.value.trim()) return recent(); try { items = await api("GET","/api/search?q="+encodeURIComponent(q.value)); } catch(e){ items=[]; } sel=0; draw(); }, 150);
   q.onkeydown = e => {
     if (e.key==="ArrowDown"){ sel=Math.min(sel+1, items.length-1); draw(); e.preventDefault(); }
     if (e.key==="ArrowUp"){ sel=Math.max(sel-1,0); draw(); e.preventDefault(); }
-    if (e.key==="Enter" && items[sel]){ ov.remove(); go(items[sel].id); }
+    if (e.key==="Enter" && items[sel]) pick(items[sel]);
   };
-  q.focus();
+  recent(); q.focus();
+}
+
+function pickPage(placeholder, onPick, filter, extra){
+  const q = h("input",{class:"q", placeholder});
+  const res = h("div",{class:"res"});
+  const ov = dialog([q,res]);
+  const draw = () => { res.innerHTML = "";
+    if (extra) res.append(h("a",{class:"r", style:"color:var(--accent)", onclick:()=>{ ov.close(); extra.fn(); }}, extra.label));
+    const s = q.value.toLowerCase();
+    const list = TREE.filter(n=>filter(n) && (n.title||"").toLowerCase().includes(s)).slice(0,60);
+    for (const n of list) res.append(h("a",{class:"r", onclick:()=>{ ov.close(); onPick(n); }}, (n.icon||defaultIcon(n.kind))+" "+(n.title||"Ohne Titel")));
+    if (!list.length && !extra) res.append(h("div",{class:"hint", style:"padding:10px 12px"},"Nichts gefunden.")); };
+  q.oninput = draw; draw(); q.focus();
 }
 
 function openImport(){
   const inp = h("input",{type:"file", accept:".zip", style:"display:none", multiple:true});
   const zone = h("div",{class:"drop-zone"},"Notion-Export (.zip) hierher ziehen oder klicken");
   const log = h("div",{class:"log", style:"display:none"});
-  const ov = dialog(h("div",{class:"body"},
+  dialog(h("div",{class:"body"},
     h("h2",{},"📥 Notion importieren"),
     h("ol",{},
-      h("li",{},"In Notion: ", h("b",{},"Einstellungen → Arbeitsbereich → Allgemein → Inhalte exportieren"), " (bzw. „Export all workspace content“)."),
-      h("li",{},"Format: ", h("b",{},"Markdown & CSV"), ", „Inklusive Unterseiten“ und „Ordner für Unterseiten erstellen“ aktivieren, Dateien & Bilder einschließen."),
+      h("li",{},"In Notion: ", h("b",{},"Einstellungen → Allgemein → Alle Inhalte des Arbeitsbereichs exportieren"), "."),
+      h("li",{},"Format: ", h("b",{},"Markdown & CSV"), ", alles einschließen, ", h("b",{},"Ordner für Unterseiten erstellen"), " aktivieren."),
       h("li",{},"Die heruntergeladene ZIP-Datei hier ablegen (nicht entpacken).")),
     zone, inp, log,
-    h("p",{class:"hint"},"Sehr große Exporte (mehrere GB) lieber über das Terminal importieren: ", h("code",{},"python3 app.py import Export.zip"), ". Ein erneuter Import desselben Exports aktualisiert vorhandene Seiten.")));
+    h("p",{class:"hint"},"Sehr große Exporte (mehrere GB) lieber über das Terminal importieren: ", h("code",{},"python3 app.py import Export.zip"), ". Ein erneuter Import aktualisiert vorhandene Seiten; Board-Spalten, Farben und Ansichten bleiben erhalten.")));
   zone.onclick = () => inp.click();
   zone.ondragover = e => { e.preventDefault(); zone.classList.add("on"); };
   zone.ondragleave = () => zone.classList.remove("on");
@@ -810,11 +1373,9 @@ function openImport(){
   async function run(files){
     log.style.display = "block";
     for (const f of files){
-      log.textContent += `Lade ${f.name} (${(f.size/1048576).toFixed(1)} MB) …\n`;
-      try {
-        const r = await api("POST","/api/import", f, true);
-        log.textContent += r.log.join("\n") + "\n";
-      } catch(e){ log.textContent += "Fehler: " + e.message + "\n"; }
+      log.textContent += `Lade ${f.name} (${(f.size/1048576).toFixed(1)} MB) … bitte warten\n`;
+      try { const r = await api("POST","/api/import", f, true); log.textContent += r.log.join("\n") + "\n"; }
+      catch(e){ log.textContent += "Fehler: " + e.message + "\n"; }
     }
     await loadTree(); route();
     log.textContent += "✓ Fertig.";
@@ -828,49 +1389,43 @@ async function openTrash(){
   const ov = dialog(body);
   for (const t of list){
     body.append(h("div",{style:"display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid var(--line)"},
-      h("a",{href:"#/p/"+t.id, style:"flex:1;text-decoration:none", onclick:()=>ov.remove()}, (t.icon||defaultIcon(t.kind))+" "+(t.title||"Ohne Titel")),
-      h("button",{class:"btn", onclick:async()=>{ await api("POST",`/api/restore/${t.id}`); ov.remove(); await loadTree(); toast("Wiederhergestellt"); openTrash(); }},"Wiederherstellen"),
-      h("button",{class:"btn", style:"color:var(--danger)", onclick:async()=>{ if(!confirm("Endgültig löschen? Das kann nicht rückgängig gemacht werden.")) return; await api("DELETE",`/api/page/${t.id}?endgueltig=1`); ov.remove(); openTrash(); }},"Endgültig löschen")));
+      h("a",{href:"#/p/"+t.id, style:"flex:1;text-decoration:none;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap", onclick:()=>ov.close()}, (t.icon||defaultIcon(t.kind))+" "+(t.title||"Ohne Titel")),
+      h("button",{class:"btn", onclick:async()=>{ await api("POST",`/api/restore/${t.id}`); ov.close(); await loadTree(); if (CURRENT) openPage(CURRENT.id); toast("Wiederhergestellt"); }},"Wiederherstellen"),
+      h("button",{class:"btn", style:"color:var(--danger)", onclick:async()=>{ if(!confirm("Endgültig löschen? Das kann nicht rückgängig gemacht werden.")) return; await api("DELETE",`/api/page/${t.id}?endgueltig=1`); ov.close(); openTrash(); }},"Endgültig löschen")));
   }
 }
 
 async function newPage(parent_id=null, kind="page"){
   const r = await api("POST","/api/page",{kind, parent_id, title:""});
-  if (parent_id){ EXPANDED.add(parent_id); saveExpanded(); }
+  if (parent_id) EXPANDED.add(parent_id);
   await loadTree(); go(r.id);
-  setTimeout(()=>$("h1.title")?.focus(), 150);
+  setTimeout(()=>$("#view h1.title")?.focus(), 200);
 }
 
 function moreMenu(e){
   if (!CURRENT) return;
   const p = CURRENT;
   const pop = popover(e.currentTarget);
-  pop.style.left = Math.min(e.currentTarget.getBoundingClientRect().left-180, innerWidth-260)+"px";
+  const wide = isWide(p);
   pop.append(
-    p.kind==="page" ? h("button",{class:"item", onclick:()=>{closePop(); newPage(p.id);}},"＋ Unterseite") : null,
-    p.kind==="page" ? h("button",{class:"item", onclick:()=>{closePop(); newPage(p.id,"database");}},"＋ Unter-Datenbank") : null,
-    p.kind!=="row" ? h("button",{class:"item", onclick:()=>{closePop(); movePage(p);}},"↪ Verschieben nach …") : null,
-    h("button",{class:"item", onclick:()=>{closePop(); navigator.clipboard?.writeText(`[${p.title}](#/p/${p.id})`); toast("Link kopiert – in eine Seite einfügen");}},"🔗 Link zu dieser Seite kopieren"),
-    h("div",{class:"hint", style:"padding:4px 8px"}, "Erstellt: "+p.created.replace("T"," ")+"\nGeändert: "+p.updated.replace("T"," ")),
-    h("button",{class:"item danger", onclick:async()=>{ closePop(); await api("DELETE",`/api/page/${p.id}`); await loadTree(); toast("In den Papierkorb verschoben"); if (p.parent_id) go(p.parent_id); else location.hash=""; }},"🗑 Löschen"));
+    p.kind!=="database" ? h("button",{class:"item", onclick:()=>{closePop(); newPage(p.id);}},"＋ Unterseite") : null,
+    p.kind!=="database" ? h("button",{class:"item", onclick:()=>{closePop(); newPage(p.id,"database");}},"＋ Unter-Datenbank") : null,
+    h("button",{class:"item", onclick:()=>{ closePop(); META.home = META.home===p.id ? null : p.id; saveMeta("home"); toast(META.home ? "Als Startseite festgelegt" : "Startseite entfernt"); }}, META.home===p.id ? "🏠 Nicht mehr Startseite" : "🏠 Als Startseite festlegen"),
+    h("button",{class:"item", onclick:()=>{ closePop(); META.wide[p.id] = !wide; saveMeta("wide"); openPage(p.id); }}, wide ? "↔ Normale Breite" : "↔ Volle Breite"),
+    p.kind!=="row" ? h("button",{class:"item", onclick:()=>{closePop(); pickPage("Verschieben nach …", async n=>{ try{ await api("PUT",`/api/page/${p.id}`,{parent_id:n.id}); await loadTree(); openPage(p.id); toast("Verschoben"); }catch(err){ toast(err.message); } }, n=>n.kind==="page" && n.id!==p.id,
+        {label:"⬆ Auf die oberste Ebene", fn: async()=>{ await api("PUT",`/api/page/${p.id}`,{parent_id:null}); await loadTree(); openPage(p.id); }});}},"↪ Verschieben nach …") : null,
+    h("button",{class:"item", onclick:async()=>{closePop(); const r = await api("POST",`/api/duplicate/${p.id}`); await loadTree(); go(r.id);}},"⧉ Duplizieren"),
+    h("button",{class:"item", onclick:()=>{closePop(); navigator.clipboard?.writeText(`[${p.title}](#/p/${p.id})`); toast("Link kopiert – im Editor einfügen");}},"🔗 Link zu dieser Seite kopieren"),
+    h("div",{class:"hint", style:"padding:4px 8px;white-space:pre-line"}, "Erstellt: "+p.created.replace("T"," ")+"\nGeändert: "+p.updated.replace("T"," ")),
+    h("hr"),
+    h("button",{class:"item danger", onclick:async()=>{ closePop(); await api("DELETE",`/api/page/${p.id}`); await loadTree();
+      toast("In den Papierkorb verschoben","Rückgängig", async()=>{ await api("POST",`/api/restore/${p.id}`); await loadTree(); go(p.id); });
+      if (p.parent_id) go(p.parent_id); else location.hash="#/alle"; }},"🗑 Löschen"));
 }
 
-function movePage(p){
-  const q = h("input",{class:"q", placeholder:"Ziel suchen … (leer = oberste Ebene)"});
-  const res = h("div",{class:"res"});
-  const ov = dialog([q,res]);
-  const draw = () => { res.innerHTML = "";
-    res.append(h("a",{class:"r", onclick:()=>mv(null)},"⬆ Oberste Ebene"));
-    const s = q.value.toLowerCase();
-    for (const n of TREE.filter(n=>n.kind==="page" && n.id!==p.id && (n.title||"").toLowerCase().includes(s)).slice(0,50))
-      res.append(h("a",{class:"r", onclick:()=>mv(n.id)}, (n.icon||defaultIcon(n.kind))+" "+(n.title||"Ohne Titel"))); };
-  const mv = async target => { try{ await api("PUT",`/api/page/${p.id}`,{parent_id:target}); ov.remove(); await loadTree(); openPage(p.id); toast("Verschoben"); }catch(e){ toast(e.message); } };
-  q.oninput = draw; draw(); q.focus();
-}
-
-// ---------------------------------------------------------------------------
+// ===========================================================================
 // Start
-// ---------------------------------------------------------------------------
+// ===========================================================================
 $("#btnSearch").onclick = openSearch;
 $("#btnImport").onclick = openImport;
 $("#btnExport").onclick = () => { location.href = "/api/export.zip"; };
@@ -878,10 +1433,34 @@ $("#btnTrash").onclick = openTrash;
 $("#btnNewPage").onclick = () => newPage(null);
 $("#btnNewDb").onclick = () => newPage(null, "database");
 $("#btnMore").onclick = moreMenu;
-$("#menuBtn").onclick = () => document.body.classList.toggle("side-open");
-document.addEventListener("keydown", e => { if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openSearch(); } });
-window.addEventListener("beforeunload", () => { if (saveTimer) saveTimer.flush(); });
-loadTree().then(route);
+$("#homeBtn").onclick = () => { closePeek(); if (META.home && NODE[META.home]) go(META.home); else location.hash = "#/alle"; };
+$("#btnTheme").onclick = () => { META.theme = ({auto:"light", light:"dark", dark:"auto"})[META.theme||"auto"]; saveMeta("theme"); applyTheme(); };
+$("#btnFav").onclick = () => { if (!CURRENT) return; const id = CURRENT.id; const on = META.favorites.includes(id);
+  META.favorites = on ? META.favorites.filter(x=>x!==id) : [...META.favorites, id]; saveMeta("favorites"); $("#btnFav").textContent = on ? "☆" : "★"; renderTree(); };
+$("#menuBtn").onclick = () => { if (innerWidth <= 760) document.body.classList.toggle("side-open"); else { document.body.classList.toggle("side-collapsed"); try{ localStorage.setItem("nl_side", document.body.classList.contains("side-collapsed")?"0":"1"); }catch{} } };
+$("#main").addEventListener("click", () => document.body.classList.remove("side-open"));
+$("#lightbox").onclick = () => { $("#lightbox").style.display = "none"; };
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openSearch(); return; }
+  if (e.key==="Escape"){
+    if ($("#lightbox").style.display==="flex"){ $("#lightbox").style.display="none"; return; }
+    if (POP){ closePop(); return; }
+    if (e.target.matches?.("textarea, input, [contenteditable]")) return;
+    if (PEEK && !$(".overlay")) closePeek();
+  }
+});
+window.addEventListener("beforeunload", flushAll);
+document.addEventListener("visibilitychange", () => { if (document.hidden) flushAll(); });
+try { if (localStorage.getItem("nl_side")==="0") document.body.classList.add("side-collapsed"); } catch {}
+
+(async () => {
+  try { Object.assign(META, await api("GET","/api/meta")); } catch(e){}
+  for (const k of ["favorites","expanded"]) if (!Array.isArray(META[k])) META[k] = [];
+  for (const k of ["wide","views","closed"]) if (!META[k] || typeof META[k]!=="object") META[k] = {};
+  applyTheme();
+  await loadTree();
+  route();
+})();
 </script>
 </body>
 </html>

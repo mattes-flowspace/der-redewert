@@ -50,6 +50,8 @@ Alles liegt im Ordner **`daten/`**:
 | `daten/notion.sqlite3` | alle Seiten, Datenbanken und Einträge |
 | `daten/dateien/` | Bilder und Anhänge |
 
+Die App legt außerdem **automatisch einmal täglich** eine Kopie der Datenbank in `daten/sicherungen/` ab und behält die letzten 14.
+
 Zum Sichern kopierst du einfach den Ordner `daten/`, z. B. auf eine externe Platte oder in einen Backup-Ordner. Alternativ:
 
 ```bash
@@ -59,18 +61,35 @@ python3 app.py export ./export # alles als Markdown + CSV (lesbar mit jedem Edit
 
 Ein Export als ZIP geht auch über **„Export“** in der Seitenleiste.
 
+## Dein FlowBoard
+
+Seiten können Datenbanken **einbetten**. Damit funktioniert ein Dashboard wie das FlowBoard auch lokal: To-do-Board, Daily Tracker und Ziele liegen auf einer Seite und lassen sich direkt dort bearbeiten.
+
+- **Als Startseite festlegen:** FlowBoard öffnen → „•••“ → „Als Startseite festlegen“. Die App startet dann immer dort. Mit ☆ kommt die Seite zusätzlich in die Favoriten.
+- **Karten verschieben:** mit der Maus ziehen, am Touchscreen kurz gedrückt halten und dann ziehen. Die Reihenfolge innerhalb einer Spalte bleibt gespeichert.
+- **Schnell erfassen:** „＋ Neu“ in einer Spalte, Titel tippen, Enter. Das Feld bleibt für die nächste Karte offen, Esc schließt es.
+- **Karte öffnen:** Ein Klick öffnet sie rechts in einer Seitenleiste, das Board bleibt sichtbar. Esc schließt.
+- **Spalten anpassen:** „⋯“ im Spaltenkopf zum Umbenennen, Einfärben, Verschieben, Ausblenden (z. B. „Completed“ oder „Hidden Ideas“) oder Löschen.
+- **Ansicht anpassen:** „⚙ Ansicht“ legt fest, wonach gruppiert und sortiert wird und welche Eigenschaften auf den Karten stehen.
+- **Toggles:** Aufklappbare Bereiche aus Notion bleiben aufklappbar. Ob sie offen oder zu sind, wird gespeichert.
+
+Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben der Board-Spalten** nicht. Bring sie über „⋯“ einmal in die gewünschte Reihenfolge, danach bleibt sie erhalten, auch bei einem erneuten Import. Spalten-Layouts (nebeneinander) exportiert Notion ebenfalls nicht, die Inhalte stehen dann untereinander.
+
 ## Bedienung
 
 | Aktion | So geht's |
 |---|---|
-| Text bearbeiten | in den Text klicken, Esc oder Strg+Enter zum Beenden (speichert automatisch) |
-| Bild einfügen | im Bearbeiten-Modus einfügen (Strg+V) oder Datei hineinziehen |
-| Link auf andere Seite | „•••“ → „Link zu dieser Seite kopieren“, dann einfügen |
-| Datenbank-Zelle ändern | in die Zelle klicken |
-| Spaltentyp/Name ändern, sortieren | auf die Spaltenüberschrift klicken |
-| Eintrag öffnen | „ÖFFNEN“ beim Hovern über den Namen oder Karte im Board anklicken |
+| Text bearbeiten | auf den Text klicken, der Cursor landet an der Stelle. „Fertig“, Esc oder ein Klick daneben beendet (speichert automatisch) |
+| Checkbox abhaken | direkt anklicken, ohne Bearbeiten-Modus |
+| Bild einfügen | im Editor einfügen (Strg+V), hineinziehen oder „🖼 Bild/Datei“ |
+| Datenbank/Board in eine Seite einbetten | im Editor „🗃️ Datenbank“ |
+| Link auf andere Seite | im Editor „🔗 Seite“ |
+| Datenbank-Zelle ändern | in die Zelle klicken (Datum mit Kalender, Auswahl mit Liste) |
+| Eigenschaft umbenennen, Typ ändern, sortieren | in der Tabelle auf die Spaltenüberschrift klicken |
+| Eintrag löschen/duplizieren | Rechtsklick auf Karte oder Zeile. Nach dem Löschen erscheint „Rückgängig“ |
 | Seite verschieben | in der Seitenleiste auf eine andere Seite ziehen oder „•••“ → „Verschieben nach“ |
 | Suchen | Strg/Cmd + K |
+| Hell/Dunkel | „Darstellung“ unten in der Seitenleiste |
 
 ## Was beim Import (noch) nicht übernommen wird
 
@@ -86,4 +105,5 @@ Diese Einschränkungen kommen vom Notion-Export selbst:
 
 - `app.py`: Python-Server (nur Standardbibliothek), SQLite-Datenbank, Import und Export
 - `static/index.html`: komplette Oberfläche ohne externe Bibliotheken, funktioniert offline
-- Einstellbar per Umgebungsvariablen: `NOTION_LOKAL_PORT`, `NOTION_LOKAL_DATEN` (anderer Datenordner, z. B. in der Dropbox)
+- Einstellbar per Umgebungsvariablen: `NOTION_LOKAL_PORT`, `NOTION_LOKAL_DATEN` (anderer Datenordner)
+- Zugriff vom Handy im eigenen WLAN: mit `NOTION_LOKAL_HOST=0.0.0.0` starten und am Handy `http://<IP-des-Rechners>:8765` öffnen. Achtung: Es gibt kein Passwort, also nur im eigenen Heimnetz verwenden.

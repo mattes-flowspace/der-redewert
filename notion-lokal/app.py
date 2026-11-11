@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS pages (
 );
 CREATE INDEX IF NOT EXISTS idx_pages_parent ON pages(parent_id);
 CREATE INDEX IF NOT EXISTS idx_pages_kind ON pages(kind);
+CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 """
 
 _write_lock = threading.Lock()
@@ -137,6 +138,7 @@ class NotionImporter:
         self.log = log
         self.root = None
         self.path_ids = {}      # normalisierter Pfad (ohne Endung) -> id
+        self.link_titles = {}   # Datenbank-ID -> Originaltitel aus dem Linktext
         self.stats = {"pages": 0, "databases": 0, "rows": 0, "files": 0}
 
     # ----- Vorbereitung ----------------------------------------------------
@@ -173,6 +175,11 @@ class NotionImporter:
             with _write_lock:
                 self._index(root)
                 self._import_dir(root, None)
+                # Dateinamen verlieren Sonderzeichen ("To Do`s" -> "To Do s"); der Linktext kennt das Original
+                for pid, label in self.link_titles.items():
+                    r = self.con.execute("SELECT title FROM pages WHERE id=? AND kind='database'", (pid,)).fetchone()
+                    if r and r["title"] != label and norm_title(r["title"]) == norm_title(label):
+                        self.con.execute("UPDATE pages SET title=? WHERE id=?", (label, pid))
                 self.con.commit()
             self.log("Import fertig: {pages} Seiten, {databases} Datenbanken, "
                      "{rows} Einträge, {files} Dateien".format(**self.stats))
@@ -334,7 +341,28 @@ class NotionImporter:
         for i, name in enumerate(header):
             values = [r[i] if i < len(r) else "" for r in rows]
             ctype = "title" if i == 0 else guess_type(name, values)
-            columns.append({"name": name, "type": ctype})
+            col = {"name": name, "type": ctype}
+            if ctype in ("select", "multi_select"):
+                col["options"] = ordered_options(values, ctype == "multi_select")
+            columns.append(col)
+
+        # Bei erneutem Import: lokal angepasste Typen, Reihenfolgen und Farben behalten
+        old = self.con.execute("SELECT schema FROM pages WHERE id=?", (db_id,)).fetchone()
+        if old:
+            old_cols = {c["name"]: c for c in json.loads(old["schema"] or "[]")}
+            for col in columns:
+                o = old_cols.get(col["name"])
+                if not o or col["type"] == "title":
+                    continue
+                col["type"] = o.get("type", col["type"])
+                if col["type"] in ("select", "multi_select"):
+                    opts = [dict(x) for x in o.get("options", [])]
+                    names = {x["name"] for x in opts}
+                    idx = header.index(col["name"])
+                    vals = [r[idx] if idx < len(r) else "" for r in rows]
+                    opts += [x for x in ordered_options(vals, col["type"] == "multi_select")
+                             if x["name"] not in names]
+                    col["options"] = opts
 
         # Datenbank-Seite (Beschreibung ggf. aus gleichnamiger .md)
         desc = ""
@@ -461,7 +489,10 @@ class NotionImporter:
             if " " in target:
                 target, title = target.split(" ", 1)
                 title = " " + title
-            return f"{bang}[{label}]({self._link_for(target, base_file, owner_id)}{title})"
+            link = self._link_for(target, base_file, owner_id)
+            if not bang and link.startswith("#/p/") and target.split("#")[0].lower().endswith(".csv"):
+                self.link_titles[link[4:]] = label.replace("\\", "")
+            return f"{bang}[{label}]({link}{title})"
         text = LINK_RE.sub(repl, text)
         # HTML-<img src="…"> (kommt in Notion-Exporten gelegentlich vor)
         def img(m):
@@ -472,6 +503,10 @@ class NotionImporter:
         value = (value or "").strip()
         if not value:
             return ""
+        if ctype == "date":
+            return norm_date(value)
+        if ctype == "checkbox":
+            return "Yes" if value in ("Yes", "Ja") else "No"
         if ".md)" in value:
             def rel(m):
                 p = self._resolve_target(m.group(2), base_file)
@@ -507,6 +542,79 @@ DATE_RE = re.compile(
     r"(jan|feb|mar|mär|apr|may|mai|jun|jul|aug|sep|oct|okt|nov|dec|dez)[a-zä]*\.? \d{1,2},? \d{4}|"
     r"\d{1,2}\.? (jan|feb|mär|mar|apr|mai|may|jun|jul|aug|sep|okt|oct|nov|dez|dec)[a-zä]*\.? \d{4})",
     re.I)
+
+
+MONTHS = {"jan": 1, "feb": 2, "mar": 3, "mär": 3, "apr": 4, "may": 5, "mai": 5, "jun": 6, "jul": 7,
+          "aug": 8, "sep": 9, "oct": 10, "okt": 10, "nov": 11, "dec": 12, "dez": 12}
+
+
+def _norm_one_date(v):
+    v = re.sub(r"\s*\([^)]*\)\s*$", "", v.strip())
+    y = mo = d = hh = mm = None
+    m = re.match(r"^([A-Za-zä]+)\.? (\d{1,2}), (\d{4})(?:,? (\d{1,2}):(\d{2})\s*([AaPp][Mm])?)?$", v)
+    if m and m.group(1)[:3].lower() in MONTHS:
+        mo, d, y = MONTHS[m.group(1)[:3].lower()], int(m.group(2)), int(m.group(3))
+        if m.group(4):
+            hh, mm = int(m.group(4)), int(m.group(5))
+            ap = (m.group(6) or "").lower()
+            if ap == "pm" and hh < 12:
+                hh += 12
+            if ap == "am" and hh == 12:
+                hh = 0
+    if y is None:
+        m = re.match(r"^(\d{1,2})\.? ([A-Za-zä]+)\.? (\d{4})(?:,? (\d{1,2}):(\d{2}))?$", v)
+        if m and m.group(2)[:3].lower() in MONTHS:
+            d, mo, y = int(m.group(1)), MONTHS[m.group(2)[:3].lower()], int(m.group(3))
+            if m.group(4):
+                hh, mm = int(m.group(4)), int(m.group(5))
+    if y is None:
+        m = re.match(r"^(\d{4})[/-](\d{1,2})[/-](\d{1,2})(?:[ T](\d{1,2}):(\d{2}))?", v)
+        if m:
+            y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            if m.group(4):
+                hh, mm = int(m.group(4)), int(m.group(5))
+    if y is None:
+        m = re.match(r"^(\d{1,2})([./])(\d{1,2})[./](\d{4})(?:,? (\d{1,2}):(\d{2}))?$", v)
+        if m:
+            a, b, y = int(m.group(1)), int(m.group(3)), int(m.group(4))
+            if m.group(2) == "." or a > 12:
+                d, mo = a, b
+            elif b > 12:
+                mo, d = a, b
+            else:
+                return None  # 03/04/2026 ist nicht eindeutig -> Originaltext behalten
+            if m.group(5):
+                hh, mm = int(m.group(5)), int(m.group(6))
+    if y is None:
+        return None
+    try:
+        dt.date(y, mo, d)
+    except ValueError:
+        return None
+    out = f"{y:04d}-{mo:02d}-{d:02d}"
+    if hh is not None:
+        out += f" {hh:02d}:{mm:02d}"
+    return out
+
+
+def norm_date(value):
+    """Notion-Datumsangaben ('November 10, 2026', '10. November 2026 → …') nach ISO wandeln."""
+    if not value or not value.strip():
+        return ""
+    parts = [_norm_one_date(x) for x in re.split(r"\s*(?:→|->)\s*", value.strip())]
+    if any(x is None for x in parts):
+        return value.strip()
+    return " → ".join(parts)
+
+
+def ordered_options(values, multi):
+    seen = []
+    for v in values:
+        for t in (v.split(",") if multi else [v]):
+            t = t.strip()
+            if t and t not in seen:
+                seen.append(t)
+    return [{"name": t} for t in seen]
 
 
 def guess_type(name, values):
@@ -629,6 +737,40 @@ def backup():
     return target
 
 
+def auto_backup(keep=14, min_age_hours=20):
+    """Legt höchstens einmal täglich eine Kopie der Datenbank in daten/sicherungen ab."""
+    try:
+        if not os.path.exists(DB_PATH):
+            return None
+        bdir = os.path.join(DATA_DIR, "sicherungen")
+        os.makedirs(bdir, exist_ok=True)
+        files = sorted(f for f in os.listdir(bdir) if f.endswith(".sqlite3"))
+        if files:
+            newest = os.path.getmtime(os.path.join(bdir, files[-1]))
+            if (dt.datetime.now().timestamp() - newest) < min_age_hours * 3600:
+                return None
+        target = os.path.join(bdir, "notion_" + dt.datetime.now().strftime("%Y-%m-%d_%H%M") + ".sqlite3")
+        src = connect()
+        dst = sqlite3.connect(target)
+        src.backup(dst)
+        dst.close()
+        src.close()
+        files.append(os.path.basename(target))
+        for f in files[:-keep]:
+            os.remove(os.path.join(bdir, f))
+        return target
+    except Exception as e:  # noqa: BLE001
+        print("Automatische Sicherung fehlgeschlagen:", e)
+        return None
+
+
+def _backup_loop():
+    auto_backup()
+    t = threading.Timer(6 * 3600, _backup_loop)
+    t.daemon = True
+    t.start()
+
+
 # ---------------------------------------------------------------------------
 # HTTP-Server + JSON-API
 # ---------------------------------------------------------------------------
@@ -674,8 +816,20 @@ class Handler(BaseHTTPRequestHandler):
         with open(path, "rb") as fh:
             shutil.copyfileobj(fh, self.wfile)
 
+    def _check_host(self):
+        # Schutz vor DNS-Rebinding: lokal nur unter localhost/127.0.0.1 antworten
+        if HOST not in ("127.0.0.1", "localhost", "::1"):
+            return True
+        host = (self.headers.get("Host") or "").rsplit(":", 1)[0].strip("[]")
+        if host in ("127.0.0.1", "localhost", "::1"):
+            return True
+        self._err(403, "Unbekannter Host")
+        return False
+
     def _check_origin(self):
         # Nur Anfragen von der eigenen Oberfläche zulassen (Schutz vor fremden Webseiten)
+        if not self._check_host():
+            return False
         origin = self.headers.get("Origin")
         if origin and urllib.parse.urlparse(origin).netloc != self.headers.get("Host"):
             self._err(403, "Fremder Ursprung")
@@ -684,6 +838,8 @@ class Handler(BaseHTTPRequestHandler):
 
     # --- Routing ---
     def do_GET(self):
+        if not self._check_host():
+            return
         url = urllib.parse.urlparse(self.path)
         path = urllib.parse.unquote(url.path)
         q = urllib.parse.parse_qs(url.query)
@@ -702,6 +858,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_search((q.get("q") or [""])[0])
             if path == "/api/trash":
                 return self.api_trash()
+            if path == "/api/meta":
+                con = connect()
+                return self._json({r["key"]: json.loads(r["value"]) for r in con.execute("SELECT * FROM meta")})
             if path == "/api/export.zip":
                 data = export_zip_bytes(connect())
                 self.send_response(200)
@@ -730,6 +889,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_upload((q.get("page") or ["allgemein"])[0], (q.get("name") or ["datei"])[0])
             if url.path == "/api/import":
                 return self.api_import()
+            if url.path == "/api/batch":
+                return self.api_batch(self._jbody())
+            if url.path.startswith("/api/duplicate/"):
+                return self.api_duplicate(url.path.split("/")[3])
+            if url.path.startswith("/api/db/"):
+                return self.api_db_op(url.path.split("/")[3], self._jbody())
             self._err(404, "Unbekannter Pfad")
         except Exception as e:  # noqa: BLE001
             self._err(500, str(e))
@@ -741,6 +906,14 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if url.path.startswith("/api/page/"):
                 return self.api_update(url.path.split("/")[3], self._jbody())
+            if url.path.startswith("/api/meta/"):
+                key = urllib.parse.unquote(url.path.split("/")[3])
+                with _write_lock:
+                    con = connect()
+                    con.execute("INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                                (key, json.dumps(self._jbody(), ensure_ascii=False)))
+                    con.commit()
+                return self._json({"ok": True})
             self._err(404, "Unbekannter Pfad")
         except Exception as e:  # noqa: BLE001
             self._err(500, str(e))
@@ -792,7 +965,7 @@ class Handler(BaseHTTPRequestHandler):
                 "SELECT * FROM pages WHERE parent_id=? AND kind='row' AND deleted=0 ORDER BY sort, title",
                 (pid,))]
             for x in page["rows"]:
-                x.pop("content", None)
+                x["has_content"] = bool((x.pop("content", "") or "").strip())
         if page["kind"] == "row":
             db = con.execute("SELECT schema,title FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
             page["db_schema"] = json.loads(db["schema"]) if db else []
@@ -823,7 +996,7 @@ class Handler(BaseHTTPRequestHandler):
             con.commit()
         self._json({"id": pid})
 
-    def api_update(self, pid, b):
+    def _apply_update(self, con, pid, b):
         fields, vals = [], []
         for k in ("title", "icon", "content", "parent_id", "sort"):
             if k in b:
@@ -836,36 +1009,148 @@ class Handler(BaseHTTPRequestHandler):
             fields.append("schema=?")
             vals.append(json.dumps(b["schema"], ensure_ascii=False))
         if not fields:
-            return self._json({"ok": True})
+            return None
         fields.append("updated=?")
         vals.append(now())
+        if b.get("parent_id"):
+            # Verhindern, dass eine Seite in sich selbst verschoben wird
+            cur = b["parent_id"]
+            while cur:
+                if cur == pid:
+                    return "Eine Seite kann nicht in sich selbst verschoben werden"
+                row = con.execute("SELECT parent_id FROM pages WHERE id=?", (cur,)).fetchone()
+                cur = row["parent_id"] if row else None
+        con.execute(f"UPDATE pages SET {', '.join(fields)} WHERE id=?", (*vals, pid))
+        # Titel einer Datenbankzeile mit Titelspalte synchron halten
+        r = con.execute("SELECT kind,parent_id,title,props FROM pages WHERE id=?", (pid,)).fetchone()
+        if r and r["kind"] == "row":
+            db = con.execute("SELECT schema FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
+            schema = json.loads(db["schema"]) if db else []
+            tcol = next((c["name"] for c in schema if c["type"] == "title"), None)
+            if tcol:
+                props = json.loads(r["props"])
+                if "title" in b:
+                    props[tcol] = b["title"]
+                    con.execute("UPDATE pages SET props=? WHERE id=?",
+                                (json.dumps(props, ensure_ascii=False), pid))
+                elif "props" in b and tcol in props:
+                    con.execute("UPDATE pages SET title=? WHERE id=?", (props[tcol], pid))
+        return None
+
+    def api_update(self, pid, b):
         with _write_lock:
             con = connect()
-            if "parent_id" in b and b["parent_id"]:
-                # Verhindern, dass eine Seite in sich selbst verschoben wird
-                cur = b["parent_id"]
-                while cur:
-                    if cur == pid:
-                        return self._err(400, "Eine Seite kann nicht in sich selbst verschoben werden")
-                    row = con.execute("SELECT parent_id FROM pages WHERE id=?", (cur,)).fetchone()
-                    cur = row["parent_id"] if row else None
-            con.execute(f"UPDATE pages SET {', '.join(fields)} WHERE id=?", (*vals, pid))
-            # Titel einer Datenbankzeile mit Titelspalte synchron halten
-            r = con.execute("SELECT kind,parent_id,title,props FROM pages WHERE id=?", (pid,)).fetchone()
-            if r and r["kind"] == "row":
-                db = con.execute("SELECT schema FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
-                schema = json.loads(db["schema"]) if db else []
-                tcol = next((c["name"] for c in schema if c["type"] == "title"), None)
-                if tcol:
-                    props = json.loads(r["props"])
-                    if "title" in b:
-                        props[tcol] = b["title"]
-                        con.execute("UPDATE pages SET props=? WHERE id=?",
-                                    (json.dumps(props, ensure_ascii=False), pid))
-                    elif "props" in b and tcol in props:
-                        con.execute("UPDATE pages SET title=? WHERE id=?", (props[tcol], pid))
+            err = self._apply_update(con, pid, b)
+            if err:
+                return self._err(400, err)
             con.commit()
         self._json({"ok": True})
+
+    def api_batch(self, b):
+        with _write_lock:
+            con = connect()
+            for u in b.get("updates", []):
+                err = self._apply_update(con, u["id"], u)
+                if err:
+                    con.rollback()
+                    return self._err(400, err)
+            con.commit()
+        self._json({"ok": True})
+
+    def api_duplicate(self, pid):
+        with _write_lock:
+            con = connect()
+            r = con.execute("SELECT * FROM pages WHERE id=?", (pid,)).fetchone()
+            if not r:
+                return self._err(404, "Seite nicht gefunden")
+            nid, ts = new_id(), now()
+            title = (r["title"] or "Ohne Titel") + " (Kopie)"
+            props = json.loads(r["props"] or "{}")
+            if r["kind"] == "row":
+                db = con.execute("SELECT schema FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
+                tcol = next((c["name"] for c in json.loads(db["schema"]) if c["type"] == "title"), None) if db else None
+                if tcol:
+                    props[tcol] = title
+            con.execute(
+                "INSERT INTO pages (id,parent_id,kind,title,icon,content,props,schema,sort,created,updated) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                (nid, r["parent_id"], r["kind"], title, r["icon"], r["content"],
+                 json.dumps(props, ensure_ascii=False), r["schema"], r["sort"] + 0.5, ts, ts))
+            con.commit()
+        self._json({"id": nid})
+
+    def api_db_op(self, db_id, b):
+        """Spalten/Optionen umbenennen oder löschen – inklusive aller Einträge, in einer Transaktion."""
+        op = b.get("op")
+        with _write_lock:
+            con = connect()
+            db = con.execute("SELECT schema FROM pages WHERE id=? AND kind='database'", (db_id,)).fetchone()
+            if not db:
+                return self._err(404, "Datenbank nicht gefunden")
+            schema = json.loads(db["schema"])
+            rows = con.execute("SELECT id,props FROM pages WHERE parent_id=? AND kind='row'", (db_id,)).fetchall()
+
+            def save_rows(fn):
+                for r in rows:
+                    props = json.loads(r["props"] or "{}")
+                    if fn(props):
+                        con.execute("UPDATE pages SET props=? WHERE id=?",
+                                    (json.dumps(props, ensure_ascii=False), r["id"]))
+
+            if op == "rename_column":
+                old, new = b["from"], b["to"].strip()
+                if not new or any(c["name"] == new for c in schema):
+                    return self._err(400, "Name ist leer oder existiert schon")
+                for c in schema:
+                    if c["name"] == old:
+                        c["name"] = new
+
+                def fn(props):
+                    if old in props:
+                        props[new] = props.pop(old)
+                        return True
+                save_rows(fn)
+            elif op in ("rename_option", "delete_option"):
+                col = next((c for c in schema if c["name"] == b["column"]), None)
+                if not col:
+                    return self._err(404, "Spalte nicht gefunden")
+                old = b.get("from") or b.get("name")
+                new = (b.get("to") or "").strip() if op == "rename_option" else None
+                if op == "rename_option" and (not new or "," in new):
+                    return self._err(400, "Ungültiger Name")
+                opts = col.get("options", [])
+                if op == "rename_option":
+                    if any(o["name"] == new for o in opts if o["name"] != old):
+                        opts = [o for o in opts if o["name"] != old]  # zusammenführen
+                    for o in opts:
+                        if o["name"] == old:
+                            o["name"] = new
+                else:
+                    opts = [o for o in opts if o["name"] != old]
+                col["options"] = opts
+                multi = col["type"] == "multi_select"
+
+                def fn(props):
+                    v = props.get(col["name"], "")
+                    if not v:
+                        return False
+                    toks = [t.strip() for t in v.split(",")] if multi else [v.strip()]
+                    if old not in toks:
+                        return False
+                    out = []
+                    for t in toks:
+                        t = new if t == old else t
+                        if t and t not in out:
+                            out.append(t)
+                    props[col["name"]] = ", ".join(out)
+                    return True
+                save_rows(fn)
+            else:
+                return self._err(400, "Unbekannte Operation")
+            con.execute("UPDATE pages SET schema=?, updated=? WHERE id=?",
+                        (json.dumps(schema, ensure_ascii=False), now(), db_id))
+            con.commit()
+        self._json({"ok": True, "schema": schema})
 
     def _descendants(self, con, pid):
         out, stack = [pid], [pid]
@@ -977,6 +1262,7 @@ class Handler(BaseHTTPRequestHandler):
 
 def serve(open_browser=True):
     connect().close()
+    _backup_loop()
     httpd = ThreadingHTTPServer((HOST, PORT), Handler)
     url = f"http://{HOST}:{PORT}/"
     print(f"Notion Lokal läuft auf {url}")
