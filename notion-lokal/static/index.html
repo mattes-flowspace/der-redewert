@@ -640,6 +640,19 @@ table.db td.calc .cv{color:var(--text);font-size:14px;letter-spacing:0;text-tran
 .pwbox h2{margin:0}
 .pwrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
 .btn.danger{color:var(--danger)}
+/* Verknüpfungen, Rollups, Formeln */
+.relchip{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top;margin:1px 6px 1px 0;padding:0 2px;color:var(--text);text-decoration:none;border-bottom:1px solid var(--line);line-height:1.6}
+.relchip:hover{border-bottom-color:var(--accent);color:var(--accent)}
+.ferr{color:var(--danger);font-size:12px}
+.pop.relpop{min-width:280px}
+.pop.colpop{min-width:280px;max-width:360px}
+.colx textarea.fexpr{width:100%;font-family:ui-monospace,Consolas,monospace;font-size:13px;resize:vertical}
+.colhint{padding:2px 8px;white-space:normal}
+.fchips{display:flex;flex-wrap:wrap;gap:4px;padding:4px 6px}
+.fchip{font-size:12px;padding:1px 7px;border:1px solid var(--line);border-radius:10px;color:var(--muted)}
+.fchip:hover{color:var(--accent);border-color:var(--accent)}
+.fhelp{padding:2px 8px;font-size:12px;color:var(--muted);line-height:1.55}
+.fhelp summary{cursor:pointer;margin-bottom:4px}
 </style>
 </head>
 <body>
@@ -795,10 +808,11 @@ const FILTER_OPS = {
   date:[["today","ist heute"],["past","liegt vor heute"],["future","liegt ab heute"],["this_week","diese Woche"],["this_month","diesen Monat"],["next7","in den nächsten 7 Tagen"],["empty","ist leer"],["not_empty","ist nicht leer"]],
 };
 const opsFor = t => FILTER_OPS[t] || FILTER_OPS.text;
-const cellRaw = (r, col) => col.type==="title" ? String(r.title||"") : String(r.props?.[col.name] ?? "");
+const cellRaw = (r, col, schema) => (isRel(col) || isCalc(col)) ? typedText(typed(r, col, schema||[]))
+  : col.type==="title" ? String(r.title||"") : String(r.props?.[col.name] ?? "");
 function matchFilter(r, f, schema){
   const col = schema.find(c=>c.name===f.prop); if (!col) return true;
-  const v = cellRaw(r, col).trim(), q = String(f.value ?? "").toLowerCase();
+  const v = cellRaw(r, col, schema).trim(), q = String(f.value ?? "").toLowerCase();
   const vals = Array.isArray(f.value) ? f.value : (f.value ? [f.value] : []);
   const have = col.type==="multi_select" ? v.split(",").map(s=>s.trim()).filter(Boolean) : [v];
   switch (f.op){
@@ -831,9 +845,9 @@ function matchFilter(r, f, schema){
 const CALCS_ALL = [["","Keine"],["count","Anzahl"],["filled","Ausgefüllt"],["empty","Leer"],["pct_filled","% ausgefüllt"]];
 const CALCS_NUM = [["sum","Summe"],["avg","Durchschnitt"],["min","Minimum"],["max","Maximum"]];
 const CALCS_CB = [["","Keine"],["count","Anzahl"],["checked","Angehakt"],["unchecked","Nicht angehakt"],["pct_checked","% angehakt"]];
-const calcsFor = col => col.type==="checkbox" ? CALCS_CB : col.type==="number" ? [...CALCS_ALL, ...CALCS_NUM] : CALCS_ALL;
-function calcValue(rows, col, key){
-  const vals = rows.map(r=>cellRaw(r, col).trim()), n = vals.length;
+const calcsFor = (col, schema, sample) => { const t = effType(col, schema||[], sample); return t==="checkbox" ? CALCS_CB : t==="number" ? [...CALCS_ALL, ...CALCS_NUM] : CALCS_ALL; };
+function calcValue(rows, col, key, schema){
+  const vals = rows.map(r=>cellRaw(r, col, schema).trim()), n = vals.length;
   const pct = x => n ? Math.round(x/n*100)+" %" : "–";
   const filled = vals.filter(Boolean).length, on = vals.filter(isOn).length;
   switch (key){
@@ -847,13 +861,388 @@ function calcValue(rows, col, key){
   }
   const nums = vals.map(parseNum).filter(x=>!isNaN(x));
   if (!nums.length) return "–";
-  const fmt = col.format || "number";
+  const fmt = col.format || (isCalc(col) && rows.length ? typed(rows[0], col, schema||[]).fmt : "") || "number";
   if (key==="sum") return fmtNum(nums.reduce((a,b)=>a+b,0), fmt);
   if (key==="avg") return fmtNum(nums.reduce((a,b)=>a+b,0)/nums.length, fmt);
   if (key==="min") return fmtNum(Math.min(...nums), fmt);
   if (key==="max") return fmtNum(Math.max(...nums), fmt);
   return "";
 }
+
+// ---- Verknüpfungen, Rollups, Formeln ------------------------------------------
+// Eine Verknüpfung (type "relation" mit db) speichert die IDs der verknüpften Einträge, durch Komma getrennt.
+// Mit "mirror" zeigt sie stattdessen, welche Einträge der anderen Datenbank auf diesen Eintrag verweisen.
+// Rollups und Formeln werden beim Anzeigen berechnet und nicht gespeichert.
+const DBC = {};   // geladene Datenbanken: id -> Seite mit schema und rows
+async function loadDb(id, force){
+  if (!id) return null;
+  if (!force && DBC[id]) return DBC[id];
+  try { const d = await api("GET", "/api/page/"+id); if (d.kind!=="database") return null; return DBC[id] = d; } catch(e){ return null; }
+}
+async function loadDeps(schema, depth=0, seen=new Set()){
+  for (const c of schema||[]) if (c.type==="relation" && c.db && !seen.has(c.db)){
+    seen.add(c.db); const d = await loadDb(c.db); if (d && depth < 2) await loadDeps(d.schema, depth+1, seen); }
+}
+// verknüpfte Datenbanken neu laden; gerade angezeigte Datenbanken werden direkt (mit ihrem aktuellen Stand) genutzt
+async function refreshDeps(schema){
+  for (const c of schema||[]) if (isRel(c)){
+    const live = LIVE.find(i=>i.p.id===c.db);
+    if (live) DBC[c.db] = live.p; else await loadDb(c.db, true);
+  }
+  await loadDeps(schema);
+}
+const isRel = c =>!!c && c.type==="relation" && !!c.db;
+const isCalc = c => !!c && (c.type==="rollup" || c.type==="formula");
+const relIds = v => String(v||"").split(",").map(s=>s.trim()).filter(Boolean);
+function rowsById(t){ if (t._byRows !== t.rows){ t._by = new Map(t.rows.map(x=>[x.id,x])); t._byRows = t.rows; } return t._by; }
+function linkedRows(r, col){
+  const t = DBC[col.db]; if (!t) return [];
+  if (col.mirror){ const oc = t.schema.find(c=>c.name===col.mirror && c.type==="relation"); if (!oc) return [];
+    return t.rows.filter(x=>relIds(x.props?.[oc.name]).includes(r.id)); }
+  const by = rowsById(t);
+  return relIds(r.props?.[col.name]).map(id=>by.get(id)).filter(Boolean);
+}
+
+// typisierter Wert einer Zelle: {t:"num"|"text"|"bool"|"date"|"err", v}
+function typed(r, col, schema, depth=0){
+  if (!col) return {t:"text", v:""};
+  if (depth > 8) return {t:"err", v:"Zirkelbezug"};
+  switch (col.type){
+    case "title": return {t:"text", v:String(r.title||"")};
+    case "number": { const n = parseNum(r.props?.[col.name]); return {t:"num", v:isNaN(n) ? null : n, fmt:col.format}; }
+    case "checkbox": return {t:"bool", v:isOn(r.props?.[col.name])};
+    case "date": { const rg = dateRange(r.props?.[col.name]); return {t:"date", v:rg ? rg.start : null, end:rg ? rg.end : null}; }
+    case "relation": if (col.db) return {t:"text", v:linkedRows(r, col).map(x=>x.title||"Ohne Titel").join(", ")}; break;
+    case "rollup": return rollupValue(r, col, schema, depth);
+    case "formula": return formulaValue(r, col, schema, depth);
+  }
+  return {t:"text", v:String(r.props?.[col.name] ?? "")};
+}
+const numStr = n => String(Math.round(n*1e6)/1e6).replace(".", ",");
+function typedText(tv){   // Rohtext für Filter, Sortierung und Berechnungen
+  if (tv.v == null || tv.t==="err") return "";
+  if (tv.t==="num") return numStr(tv.v);
+  if (tv.t==="bool") return tv.v ? "Yes" : "No";
+  if (tv.t==="date") return isoOf(tv.v) + (tv.end && +tv.end !== +tv.v ? " → "+isoOf(tv.end) : "");
+  return String(tv.v);
+}
+// als was sich eine Spalte beim Filtern, Sortieren und Berechnen verhält
+function effType(col, schema, sample){
+  if (isRel(col)) return "text";
+  if (!isCalc(col)) return col.type;
+  if (col.type==="rollup"){
+    if (["earliest","latest"].includes(col.calc)) return "date";
+    return (!col.calc || col.calc==="show") ? "text" : "number";
+  }
+  const tv = sample ? typed(sample, col, schema) : null;
+  return tv ? ({num:"number", bool:"checkbox", date:"date"})[tv.t] || "text" : "text";
+}
+
+const ROLLUPS = [["show","Werte anzeigen"],["count","Anzahl Verknüpfungen"],["filled","Anzahl ausgefüllt"],["sum","Summe"],["avg","Durchschnitt"],["min","Minimum"],["max","Maximum"],["pct_checked","% angehakt"],["pct_filled","% ausgefüllt"],["earliest","Frühestes Datum"],["latest","Spätestes Datum"]];
+function rollupValue(r, col, schema, depth){
+  const rc = schema.find(c=>c.name===col.rel && isRel(c));
+  if (!rc) return {t:"err", v:"Verknüpfung fehlt"};
+  const t = DBC[rc.db]; if (!t) return {t:"text", v:""};
+  const rows = linkedRows(r, rc), calc = col.calc || "show";
+  if (calc==="count") return {t:"num", v:rows.length};
+  const tc = t.schema.find(c=>c.name===col.prop) || t.schema.find(c=>c.type==="title");
+  if (!tc) return {t:"err", v:"Eigenschaft fehlt"};
+  const vals = rows.map(x=>typed(x, tc, t.schema, depth+1));
+  const err = vals.find(v=>v.t==="err"); if (err) return err;
+  const filled = vals.filter(v=>v.v != null && v.v !== "" && v.v !== false).length;
+  const pct = x => ({t:"num", v:vals.length ? Math.round(x/vals.length*100) : null, fmt:"percent"});
+  if (calc==="filled") return {t:"num", v:filled};
+  if (calc==="pct_filled") return pct(filled);
+  if (calc==="pct_checked") return pct(vals.filter(v=>v.t==="bool" ? v.v : isOn(v.v)).length);
+  if (["sum","avg","min","max"].includes(calc)){
+    const nums = vals.map(v=>v.t==="num" ? v.v : v.t==="text" ? parseNum(v.v) : NaN).filter(n=>n != null && !isNaN(n));
+    const fmt = tc.format;
+    if (!nums.length) return {t:"num", v:calc==="sum" ? 0 : null, fmt};
+    const sum = nums.reduce((a,b)=>a+b, 0);
+    return {t:"num", fmt, v: calc==="sum" ? sum : calc==="avg" ? sum/nums.length : calc==="min" ? Math.min(...nums) : Math.max(...nums)};
+  }
+  if (calc==="earliest" || calc==="latest"){
+    const ds = vals.filter(v=>v.t==="date" && v.v).map(v=>+(calc==="latest" ? (v.end||v.v) : v.v));
+    return {t:"date", v:ds.length ? new Date(calc==="latest" ? Math.max(...ds) : Math.min(...ds)) : null, end:null};
+  }
+  if (tc.type==="select" || tc.type==="multi_select"){
+    const names = [...new Set(vals.flatMap(v=>String(v.v||"").split(",").map(s=>s.trim()).filter(Boolean)))];
+    return {t:"text", v:names.join(", "), tags:{col:tc, names}};
+  }
+  return {t:"text", v:vals.map(v=>displayText(v, tc)).filter(Boolean).join(", ")};
+}
+function displayText(tv, col){
+  if (tv.v == null) return "";
+  if (tv.t==="num") return fmtNum(tv.v, (col && col.format) || tv.fmt || "number");
+  if (tv.t==="bool") return tv.v ? "✓" : "";
+  if (tv.t==="date") return dateEl(typedText(tv))?.textContent || "";
+  return String(tv.v);
+}
+
+// ---- Formeln: kleiner eigener Parser, kein eval --------------------------------
+function fTokenize(s){
+  const out = [], n = s.length; let i = 0;
+  while (i < n){
+    const c = s[i];
+    if (/\s/.test(c)){ i++; continue; }
+    if (/[0-9]/.test(c) || (c==="." && /[0-9]/.test(s[i+1]||""))){ let j = i; while (j<n && /[0-9.]/.test(s[j])) j++; out.push({k:"num", v:parseFloat(s.slice(i,j))}); i = j; continue; }
+    if ('"\'„“”'.includes(c)){
+      const typo = "„“”".includes(c), end = ch => typo ? '“”"'.includes(ch) : ch===c;
+      let j = i+1, str = "";
+      while (j<n && !end(s[j])){ if (s[j]==="\\" && j+1<n){ str += s[j+1]; j += 2; } else str += s[j++]; }
+      if (j >= n) throw new Error("Anführungszeichen nicht geschlossen");
+      out.push({k:"str", v:str}); i = j+1; continue;
+    }
+    if (c==="{"){ const j = s.indexOf("}", i); if (j<0) throw new Error("„}“ fehlt"); out.push({k:"prop", v:s.slice(i+1,j).trim()}); i = j+1; continue; }
+    if (/[A-Za-zÄÖÜäöüß_]/.test(c)){ let j = i; while (j<n && /[A-Za-zÄÖÜäöüß_0-9]/.test(s[j])) j++; out.push({k:"id", v:s.slice(i,j)}); i = j; continue; }
+    const two = s.slice(i, i+2);
+    if (["==","!=","<=",">=","&&","||"].includes(two)){ out.push({k:"op", v:two}); i += 2; continue; }
+    if ("+-*/%()<>,;!=".includes(c)){ out.push({k:"op", v:c}); i++; continue; }
+    throw new Error("Unerwartetes Zeichen „"+c+"“");
+  }
+  return out;
+}
+function fParse(src){
+  const tk = fTokenize(src); let p = 0;
+  const isOp = v => tk[p] && tk[p].k==="op" && tk[p].v===v;
+  const isId = (...vs) => tk[p] && tk[p].k==="id" && vs.includes(tk[p].v.toLowerCase());
+  const eat = v => { if (!isOp(v)) throw new Error("„"+v+"“ erwartet"); p++; };
+  const or = () => { let a = and(); while (isOp("||") || isId("or","oder")){ p++; a = {n:"or", a, b:and()}; } return a; };
+  const and = () => { let a = not(); while (isOp("&&") || isId("and","und")){ p++; a = {n:"and", a, b:not()}; } return a; };
+  const not = () => { if (isOp("!") || isId("not","nicht")){ p++; return {n:"not", a:not()}; } return cmp(); };
+  const cmp = () => { let a = add(); while (tk[p] && tk[p].k==="op" && ["==","=","!=","<",">","<=",">="].includes(tk[p].v)){ const o = tk[p++].v; a = {n:"cmp", o:o==="=" ? "==" : o, a, b:add()}; } return a; };
+  const add = () => { let a = mul(); while (isOp("+") || isOp("-")){ const o = tk[p++].v; a = {n:"bin", o, a, b:mul()}; } return a; };
+  const mul = () => { let a = un(); while (isOp("*") || isOp("/") || isOp("%")){ const o = tk[p++].v; a = {n:"bin", o, a, b:un()}; } return a; };
+  const un = () => { if (isOp("-")){ p++; return {n:"neg", a:un()}; } if (isOp("+")){ p++; return un(); } return prim(); };
+  const prim = () => {
+    const t = tk[p]; if (!t) throw new Error("Formel ist unvollständig");
+    if (t.k==="num"){ p++; return {n:"val", v:t.v}; }
+    if (t.k==="str"){ p++; return {n:"val", v:t.v}; }
+    if (t.k==="prop"){ p++; return {n:"prop", v:t.v}; }
+    if (isOp("(")){ p++; const e = or(); eat(")"); return e; }
+    if (t.k==="id"){
+      p++; const name = t.v.toLowerCase();
+      if (isOp("(")){
+        p++; const args = [];
+        if (!isOp(")")){ args.push(or()); while (isOp(",") || isOp(";")){ p++; args.push(or()); } }
+        eat(")");
+        if (name==="prop"){ if (args.length!==1 || typeof args[0].v!=="string") throw new Error("prop(\"Name\") braucht den Namen in Anführungszeichen"); return {n:"prop", v:args[0].v}; }
+        return {n:"call", f:name, args};
+      }
+      if (name==="true" || name==="wahr") return {n:"val", v:true};
+      if (name==="false" || name==="falsch") return {n:"val", v:false};
+      throw new Error("Unbekannter Name „"+t.v+"“. Eigenschaften schreibst du als {Name}.");
+    }
+    throw new Error("Unerwartetes „"+t.v+"“");
+  };
+  const e = or();
+  if (p < tk.length) throw new Error("Unerwartetes „"+tk[p].v+"“");
+  return e;
+}
+const fTruthy = v => v instanceof Date ? true : typeof v==="string" ? v!=="" : !!v;
+const fNum = v => typeof v==="number" ? v : typeof v==="boolean" ? (v?1:0) : (v==null || v==="") ? 0 : v instanceof Date ? NaN : parseNum(v);
+const fStr = v => v==null ? "" : v instanceof Date ? v.toLocaleDateString("de-DE",{day:"2-digit", month:"2-digit", year:"numeric"}) : typeof v==="number" ? fmtNum(v,"number") : typeof v==="boolean" ? (v?"Ja":"Nein") : String(v);
+const fDate = v => { if (v instanceof Date) return v; if (v==null || v==="") return null; const rg = dateRange(v); if (rg) return rg.start; throw new Error("Kein Datum: "+fStr(v)); };
+const fUnit = u => { u = String(u ?? "tage").toLowerCase();
+  if (/^(d|days?|tage?)$/.test(u)) return "d"; if (/^(w|weeks?|wochen?)$/.test(u)) return "w";
+  if (/^(m|months?|monate?)$/.test(u)) return "m"; if (/^(y|years?|jahre?)$/.test(u)) return "y";
+  throw new Error("Unbekannte Einheit „"+u+"“ (tage, wochen, monate, jahre)"); };
+function fDiff(a, b, u){   // a − b in der Einheit u
+  a = fDate(a); b = fDate(b); if (!a || !b) return null;
+  const days = Math.round((dayStart(a)-dayStart(b))/864e5); u = fUnit(u);
+  if (u==="d") return days;
+  if (u==="w") return Math.trunc(days/7);
+  let m = (a.getFullYear()-b.getFullYear())*12 + a.getMonth()-b.getMonth();
+  if (m > 0 && a.getDate() < b.getDate()) m--; else if (m < 0 && a.getDate() > b.getDate()) m++;
+  return u==="m" ? m : Math.trunc(m/12);
+}
+function fAdd(d, n, u){
+  d = fDate(d); if (!d) return null; n = fNum(n); u = fUnit(u);
+  if (u==="d") return plusDays(d, n); if (u==="w") return plusDays(d, n*7);
+  return u==="m" ? new Date(d.getFullYear(), d.getMonth()+n, d.getDate()) : new Date(d.getFullYear()+n, d.getMonth(), d.getDate());
+}
+const fRound = (x, n, fn) => { const f = Math.pow(10, fNum(n)); return fn(fNum(x)*f)/f; };
+const FN = {
+  round:(x,n=0)=>fRound(x,n,Math.round), floor:(x,n=0)=>fRound(x,n,Math.floor), ceil:(x,n=0)=>fRound(x,n,Math.ceil),
+  abs:x=>Math.abs(fNum(x)), sqrt:x=>Math.sqrt(fNum(x)), pow:(x,y)=>Math.pow(fNum(x), fNum(y)),
+  min:(...a)=>Math.min(...a.map(fNum)), max:(...a)=>Math.max(...a.map(fNum)), sum:(...a)=>a.reduce((s,x)=>s+fNum(x), 0),
+  concat:(...a)=>a.map(fStr).join(""), length:x=>fStr(x).length, lower:x=>fStr(x).toLowerCase(), upper:x=>fStr(x).toUpperCase(),
+  contains:(a,b)=>fStr(a).toLowerCase().includes(fStr(b).toLowerCase()), replace:(a,b,c)=>fStr(a).split(fStr(b)).join(fStr(c)), trim:x=>fStr(x).trim(),
+  empty:x=>x==null || x==="" || x===false, tonumber:x=>{ const n = fNum(x); return isNaN(n) ? null : n; }, text:x=>fStr(x),
+  now:()=>new Date(), today:()=>dayStart(new Date()),
+  datebetween:(a,b,u)=>fDiff(a,b,u), tage:(von,bis)=>fDiff(bis,von,"d"), dateadd:(d,n,u)=>fAdd(d,n,u),
+  year:d=>fDate(d)?.getFullYear() ?? null, month:d=>{ const x = fDate(d); return x ? x.getMonth()+1 : null; }, day:d=>fDate(d)?.getDate() ?? null,
+  weekday:d=>{ const x = fDate(d); return x ? (x.getDay()+6)%7+1 : null; }, end:d=>d instanceof Date ? (d.end || d) : fDate(d),
+};
+// deutsche Namen für dieselben Funktionen
+Object.entries({runden:"round", abrunden:"floor", aufrunden:"ceil", betrag:"abs", wurzel:"sqrt", potenz:"pow", summe:"sum",
+  verketten:"concat", länge:"length", laenge:"length", klein:"lower", gross:"upper", groß:"upper", enthält:"contains", enthaelt:"contains",
+  ersetzen:"replace", leer:"empty", zahl:"tonumber", format:"text", jetzt:"now", heute:"today", datumplus:"dateadd",
+  jahr:"year", monat:"month", tag:"day", wochentag:"weekday", ende:"end"}).forEach(([de,en])=>{ FN[de] = FN[en]; });
+function fEval(a, ctx){
+  switch (a.n){
+    case "val": return a.v;
+    case "prop": {
+      const want = a.v.toLowerCase();
+      const col = ctx.schema.find(c=>c.name===a.v) || ctx.schema.find(c=>c.name.toLowerCase()===want);
+      if (!col) throw new Error("Eigenschaft „"+a.v+"“ gibt es nicht");
+      const tv = typed(ctx.r, col, ctx.schema, ctx.depth+1);
+      if (tv.t==="err") throw new Error(tv.v);
+      if (tv.t==="date" && tv.v){ const d = new Date(tv.v); d.end = tv.end; return d; }
+      return tv.v;
+    }
+    case "or": return fTruthy(fEval(a.a, ctx)) || fTruthy(fEval(a.b, ctx));
+    case "and": return fTruthy(fEval(a.a, ctx)) && fTruthy(fEval(a.b, ctx));
+    case "not": return !fTruthy(fEval(a.a, ctx));
+    case "neg": return -fNum(fEval(a.a, ctx));
+    case "cmp": {
+      const x = fEval(a.a, ctx), y = fEval(a.b, ctx); let d;
+      if (x instanceof Date || y instanceof Date){ const dx = fDate(x), dy = fDate(y); if (!dx || !dy) return a.o==="!="; d = dayStart(dx)-dayStart(dy); }
+      else if (typeof x==="number" || typeof y==="number") d = fNum(x)-fNum(y);
+      else if (typeof x==="boolean" || typeof y==="boolean") d = (fTruthy(x)?1:0)-(fTruthy(y)?1:0);
+      else d = fStr(x).localeCompare(fStr(y), "de");
+      return a.o==="==" ? d===0 : a.o==="!=" ? d!==0 : a.o==="<" ? d<0 : a.o===">" ? d>0 : a.o==="<=" ? d<=0 : d>=0;
+    }
+    case "bin": {
+      const x = fEval(a.a, ctx), y = fEval(a.b, ctx);
+      if (a.o==="+"){
+        if (x instanceof Date) return fAdd(x, y, "d");
+        if (typeof x==="string" || typeof y==="string") return fStr(x)+fStr(y);
+        return fNum(x)+fNum(y);
+      }
+      if (a.o==="-"){
+        if (x instanceof Date && y instanceof Date) return fDiff(x, y, "d");
+        if (x instanceof Date) return fAdd(x, -fNum(y), "d");
+        return fNum(x)-fNum(y);
+      }
+      const nx = fNum(x), ny = fNum(y);
+      if (a.o==="*") return nx*ny;
+      if (ny===0) return null;          // Teilen durch 0 ergibt ein leeres Feld
+      return a.o==="/" ? nx/ny : nx%ny;
+    }
+    case "call": {
+      if (a.f==="if" || a.f==="wenn"){
+        if (a.args.length < 2) throw new Error("wenn(Bedingung, dann, sonst) braucht mindestens zwei Angaben");
+        return fTruthy(fEval(a.args[0], ctx)) ? fEval(a.args[1], ctx) : (a.args[2] ? fEval(a.args[2], ctx) : null);
+      }
+      const fn = FN[a.f]; if (!fn) throw new Error("Unbekannte Funktion „"+a.f+"“");
+      return fn(...a.args.map(x=>fEval(x, ctx)));
+    }
+  }
+  throw new Error("Formel nicht verstanden");
+}
+const FCACHE = new Map();
+function formulaValue(r, col, schema, depth){
+  const src = String(col.expr||"").trim();
+  if (!src) return {t:"text", v:""};
+  let ast = FCACHE.get(src);
+  if (ast === undefined){ try { ast = fParse(src); } catch(e){ ast = {n:"err", v:e.message}; } FCACHE.set(src, ast); }
+  if (ast.n==="err") return {t:"err", v:ast.v};
+  try {
+    const v = fEval(ast, {r, schema, depth});
+    if (v == null) return {t:"text", v:""};
+    if (typeof v==="number") return (isNaN(v) || !isFinite(v)) ? {t:"err", v:"Ergebnis ist keine Zahl"} : {t:"num", v, fmt:col.format};
+    if (typeof v==="boolean") return {t:"bool", v};
+    if (v instanceof Date) return isNaN(+v) ? {t:"err", v:"Ungültiges Datum"} : {t:"date", v:dayStart(v), end:null};
+    return {t:"text", v:String(v)};
+  } catch(e){ return {t:"err", v:e.message}; }
+}
+
+// Anzeige von Verknüpfungen, Rollups und Formeln in einer Zelle
+function renderComputed(el, col, r, schema){
+  el.innerHTML = "";
+  if (isRel(col)){
+    if (!DBC[col.db]){ el.append(h("span",{class:"ferr"},"…")); return; }
+    for (const x of linkedRows(r, col))
+      el.append(h("a",{class:"relchip", href:"#/p/"+x.id, title:"Öffnen", onclick:e=>{ e.preventDefault(); e.stopPropagation(); openPeek(x.id); }}, (x.icon ? x.icon+" " : "")+(x.title||"Ohne Titel")));
+    return;
+  }
+  const tv = typed(r, col, schema);
+  if (tv.t==="err"){ el.append(h("span",{class:"ferr", title:tv.v},"⚠ "+tv.v)); return; }
+  if (tv.tags){ for (const n of tv.tags.names) el.append(tagEl(tv.tags.col, n)); return; }
+  if (tv.v == null || tv.v==="") return;
+  if (tv.t==="bool"){ el.append(h("input",{type:"checkbox", class:"cb", checked:tv.v, tabindex:"-1", style:"pointer-events:none"})); return; }
+  if (tv.t==="date"){ const d = dateEl(typedText(tv)); if (d) el.append(d); return; }
+  if (tv.t==="num") el.classList.add("num");
+  el.textContent = displayText(tv, col);
+}
+
+// Verknüpfte Einträge auswählen
+async function editRelation(el, col, row, val, commit, redraw){
+  const t = await loadDb(col.db);
+  const pop = popover(el);
+  if (!t){ pop.append(h("div",{class:"hint", style:"padding:8px"},"Die verknüpfte Datenbank wurde nicht gefunden. Wähle sie über die Spaltenüberschrift neu aus.")); return; }
+  const oc = col.mirror ? t.schema.find(c=>c.name===col.mirror && c.type==="relation") : null;
+  if (col.mirror && (!oc || !row)){ pop.append(h("div",{class:"hint", style:"padding:8px"},"Das Gegenstück „"+col.mirror+"“ gibt es in „"+(t.title||"der Datenbank")+"“ nicht mehr.")); return; }
+  let ids = relIds(val).filter(id=>rowsById(t).has(id));
+  const chosen = () => col.mirror ? new Set(t.rows.filter(x=>relIds(x.props?.[oc.name]).includes(row.id)).map(x=>x.id)) : new Set(ids);
+  const inp = h("input",{placeholder:"Suchen in „"+(t.title||"Ohne Titel")+"“ …"}), list = h("div");
+  const toggle = async x => {
+    if (col.mirror){
+      const o = relIds(x.props?.[oc.name]), i = o.indexOf(row.id);
+      if (i >= 0) o.splice(i, 1); else o.push(row.id);
+      x.props[oc.name] = o.join(", ");
+      await save(x.id, {props:x.props});
+      if (redraw) redraw();
+    } else {
+      const i = ids.indexOf(x.id);
+      if (i >= 0) ids.splice(i, 1); else ids.push(x.id);
+      await commit(ids.join(", "));
+    }
+    notifyDb(t.id);
+    if (POP===pop) draw();
+  };
+  const draw = () => {
+    list.innerHTML = "";
+    const q = inp.value.trim().toLowerCase(), sel = chosen();
+    const rows = t.rows.filter(x=>!q || String(x.title||"").toLowerCase().includes(q))
+      .sort((a,b)=>(sel.has(b.id)-sel.has(a.id)) || String(a.title).localeCompare(String(b.title), "de"));
+    for (const x of rows.slice(0, 80)) list.append(h("button",{class:"item", onclick:()=>toggle(x)}, h("span",{class:"tt"}, (x.icon ? x.icon+" " : "")+(x.title||"Ohne Titel")), sel.has(x.id) ? " ✓" : ""));
+    if (rows.length > 80) list.append(h("div",{class:"hint", style:"padding:4px 8px"}, `${rows.length-80} weitere – bitte suchen`));
+    if (!rows.length && !q) list.append(h("div",{class:"hint", style:"padding:4px 8px"},"Noch keine Einträge in dieser Datenbank."));
+    if (q && !rows.some(x=>String(x.title||"").toLowerCase()===q)) list.append(h("button",{class:"item", onclick:async()=>{
+      const title = inp.value.trim(), tc = t.schema.find(c=>c.type==="title")?.name || "Name";
+      try { const res = await api("POST","/api/page",{kind:"row", parent_id:t.id, title, props:{[tc]:title}});
+        const x = {id:res.id, title, props:{[tc]:title}, icon:"", cover:"", thumb:"", sort:1e9, has_content:false};
+        t.rows = [...t.rows, x]; inp.value = ""; await toggle(x); } catch(e){ toast(e.message); } }}, "+ Neu anlegen: „"+inp.value.trim()+"“"));
+  };
+  inp.oninput = draw;
+  inp.onkeydown = e => { if (e.key==="Escape") closePop(); };
+  pop.classList.add("relpop");
+  pop.append(inp, list); draw(); inp.focus();
+}
+
+// Beim Verknüpfen mit einer Datenbank vorhandene Texte/Links (z. B. aus dem Notion-Import) in echte Verknüpfungen umwandeln
+async function convertRelation(db, col){
+  const t = await loadDb(col.db, true); if (!t) return 0;
+  const by = rowsById(t), byTitle = new Map(t.rows.map(x=>[String(x.title||"").trim().toLowerCase(), x.id]));
+  const updates = []; let missed = 0;
+  for (const r of db.rows){
+    const v = String(r.props?.[col.name] || "").trim(); if (!v) continue;
+    const parts = relIds(v);
+    if (parts.every(x=>by.has(x))) continue;                       // schon umgewandelt
+    const ids = [];
+    const add = id => { if (by.has(id) && !ids.includes(id)) ids.push(id); };
+    for (const m of v.matchAll(/#\/p\/([0-9a-zA-Z_-]+)/g)) add(m[1]);
+    for (const m of v.matchAll(/([0-9a-f]{32})/g)) add(m[1]);      // Notion-Links enden auf die Seiten-ID
+    for (const part of v.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").split(/[,\n]/)){
+      const id = byTitle.get(part.replace(/\s*\(https?:[^)]*\)\s*$/, "").trim().toLowerCase()); if (id) add(id); }
+    if (!ids.length){ missed++; continue; }                         // nichts gefunden: Text bleibt unverändert
+    r.props[col.name] = ids.join(", ");
+    updates.push({id:r.id, props:r.props});
+  }
+  if (updates.length) await api("POST","/api/batch",{updates});
+  return {done:updates.length, missed};
+}
+
+const FORMULA_HELP = `<b>Eigenschaften</b> in geschweiften Klammern: {Budget}, {Fällig}<br>
+<b>Rechnen</b>: + − * / % · Dezimalzahlen mit Punkt (1.19) · Text in "Anführungszeichen"<br>
+<b>Vergleichen</b>: == != &lt; &gt; &lt;= &gt;= · und, oder, nicht<br>
+<b>Bedingung</b>: wenn({Erledigt}, "fertig", "offen")<br>
+<b>Zahlen</b>: runden(x, 2), abrunden, aufrunden, betrag, min, max, summe<br>
+<b>Text</b>: verketten(a, b), länge, klein, gross, enthält(text, "x"), ersetzen(text, "alt", "neu"), leer(x)<br>
+<b>Datum</b>: heute(), tage({Start}, {Ende}), datumplus({Fällig}, 7, "tage"), datebetween(a, b, "monate"), jahr, monat, tag, wochentag, ende({Zeitraum})<br>
+Argumente trennst du mit Komma oder Semikolon.`;
 
 // ---- Cover ---------------------------------------------------------------
 const GRADIENTS = [
@@ -1869,25 +2258,28 @@ function pickIcon(p, anchor, inPeek){
 // ===========================================================================
 // Eigenschaften & Zellen
 // ===========================================================================
-const TYPES = {title:"Titel", text:"Text", number:"Zahl", select:"Auswahl", multi_select:"Mehrfachauswahl", date:"Datum", checkbox:"Checkbox", url:"URL", email:"E-Mail", relation:"Verknüpfung", files:"Dateien"};
-function typeIcon(t){ return ({title:"Aa", text:"≡", number:"#", select:"◉", multi_select:"☰", date:"◷", checkbox:"☑", url:"↗", email:"@", relation:"↗", files:"↥"})[t]||"≡"; }
+const TYPES = {title:"Titel", text:"Text", number:"Zahl", select:"Auswahl", multi_select:"Mehrfachauswahl", date:"Datum", checkbox:"Checkbox", url:"URL", email:"E-Mail", relation:"Verknüpfung", rollup:"Rollup", formula:"Formel", files:"Dateien"};
+function typeIcon(t){ return ({title:"Aa", text:"≡", number:"#", select:"◉", multi_select:"☰", date:"◷", checkbox:"☑", url:"↗", email:"@", relation:"⇄", rollup:"∑", formula:"ƒ", files:"↥"})[t]||"≡"; }
 
 function renderProps(p, afterChange){
   const box = h("div",{class:"props"});
   const db = {id:p.parent_id, schema:p.db_schema, rows:[], tpl:p.kind==="template"};
+  const draws = [], drawAll = () => draws.forEach(f=>f());
   for (const col of p.db_schema){
     if (col.type==="title") continue;
     const v = h("div",{class:"v"});
-    const draw = () => { renderCellValue(v, col, p.props[col.name] ?? ""); v.classList.toggle("isempty", !v.childNodes.length); };
-    draw();
+    const draw = () => { renderCellValue(v, col, p.props[col.name] ?? "", p, p.db_schema); v.classList.toggle("isempty", !v.childNodes.length); };
+    draws.push(draw); draw();
     v.onclick = e => { if (e.target.closest("a")) return; editCell(v, col, p.props[col.name] ?? "", async val => {
-      p.props[col.name] = val; draw(); await save(p.id,{props:p.props}); afterChange(); }, db, draw); };
+      p.props[col.name] = val; drawAll(); await save(p.id,{props:p.props}); afterChange(); }, db, drawAll, p); };
     box.append(h("div",{class:"prop"}, h("div",{class:"k", title:col.name}, h("span",{}, typeIcon(col.type)), col.name), v));
   }
+  if (p.db_schema.some(c=>isRel(c) || isCalc(c))) refreshDeps(p.db_schema).then(drawAll);
   return box;
 }
 
-function renderCellValue(el, col, val){
+function renderCellValue(el, col, val, r, schema){
+  if (r && (isRel(col) || isCalc(col))) return renderComputed(el, col, r, schema||[]);
   el.innerHTML = "";
   val = val ?? "";
   switch (col.type){
@@ -1904,7 +2296,9 @@ function renderCellValue(el, col, val){
   }
 }
 
-function editCell(el, col, val, commit, db, redraw){
+function editCell(el, col, val, commit, db, redraw, row){
+  if (isCalc(col)){ toast((col.type==="formula" ? "Formeln" : "Rollups")+" werden berechnet – einstellen über die Spaltenüberschrift der Datenbank"); return; }
+  if (isRel(col)) return editRelation(el, col, row, val, commit, redraw);
   if (el.querySelector("input:not(.cb),textarea")) return;
   if (col.type==="checkbox"){ commit(isOn(val)?"No":"Yes"); return; }
   if (col.type==="select" || col.type==="multi_select") return editTags(el, col, val, commit, db);
@@ -2024,10 +2418,11 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   host.append(bar, body);
 
   const inst = { p, reload: debounce(async () => {
-    try { const np = await api("GET", `/api/page/${dbId}`); p.rows = np.rows; p.schema = np.schema; p.title = np.title; p.templates = np.templates || []; draw(); } catch(e){}
+    try { const np = await api("GET", `/api/page/${dbId}`); p.rows = np.rows; p.schema = np.schema; p.title = np.title; p.templates = np.templates || []; await refreshDeps(p.schema); draw(); } catch(e){}
   }, 300) };
   LIVE.push(inst);
 
+  const comp = c => isRel(c) || isCalc(c);
   const sortedRows = () => {
     let rows = p.rows.slice().sort((a,b)=>(a.sort-b.sort) || String(a.title).localeCompare(String(b.title),"de"));
     const q = (st.filter||"").trim().toLowerCase();
@@ -2036,8 +2431,10 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     if (st.sort){
       const col = p.schema.find(c=>c.name===st.sort);
       if (col){
-        const key = r => { const v = col.type==="title" ? r.title : (r.props[st.sort]||""); if (col.type==="number"){ const n = parseNum(v); return isNaN(n) ? -Infinity : n; } if (col.type==="date") return dateSortKey(v); if (col.type==="checkbox") return isOn(v)?1:0; return String(v).toLowerCase(); };
-        rows.sort((a,b)=>{ const x=key(a), y=key(b); return (x<y?-1:x>y?1:0)*st.dir; });
+        const et = effType(col, p.schema, p.rows[0]);
+        const key = r => { const v = col.type==="title" ? r.title : comp(col) ? cellRaw(r, col, p.schema) : (r.props[st.sort]||""); if (et==="number"){ const n = parseNum(v); return isNaN(n) ? -Infinity : n; } if (et==="date") return dateSortKey(v); if (et==="checkbox") return isOn(v)?1:0; return String(v).toLowerCase(); };
+        const keys = new Map(rows.map(r=>[r, key(r)]));
+        rows.sort((a,b)=>{ const x=keys.get(a), y=keys.get(b); return (x<y?-1:x>y?1:0)*st.dir; });
       }
     }
     return rows;
@@ -2284,7 +2681,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     const box = h("div",{class:"lv"});
     for (const r of rows){
       const meta = h("span",{class:"lv-m"});
-      for (const name of shown){ const x = p.schema.find(c=>c.name===name), v = r.props[name]; if (!x || !v || x.type==="title" || x.type==="checkbox") continue; const sp = h("span",{}); renderCellValue(sp, x, v); meta.append(sp); }
+      for (const name of shown){ const x = p.schema.find(c=>c.name===name), v = r.props[name]; if (!x || (!v && !comp(x)) || x.type==="title" || x.type==="checkbox") continue; const sp = h("span",{}); renderCellValue(sp, x, v, r, p.schema); if (sp.childNodes.length) meta.append(sp); }
       const row = h("div",{class:"lv-row", onclick:()=>openPeek(r.id)}, h("span",{class:"lv-dot", style:`background:${rowColor(r)}`}), h("span",{class:"lv-t"}, (r.icon?r.icon+" ":"")+(r.title||"Ohne Titel")), meta);
       row.oncontextmenu = ev => { ev.preventDefault(); rowMenu(r, ev); };
       box.append(row);
@@ -2300,7 +2697,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     for (const r of rows){
       const img = coverCss(r.cover || r.thumb);
       const meta = h("div",{class:"gm"});
-      for (const name of shown){ const x = p.schema.find(c=>c.name===name), v = r.props[name]; if (!x || !v || x.type==="title" || x.type==="checkbox") continue; const sp = h("span",{}); renderCellValue(sp, x, v); meta.append(sp); }
+      for (const name of shown){ const x = p.schema.find(c=>c.name===name), v = r.props[name]; if (!x || (!v && !comp(x)) || x.type==="title" || x.type==="checkbox") continue; const sp = h("span",{}); renderCellValue(sp, x, v, r, p.schema); if (sp.childNodes.length) meta.append(sp); }
       const card = h("div",{class:"gcard", onclick:()=>openPeek(r.id)},
         h("div",{class:"gcover"+(img?"":" noimg"), style:img}, img ? null : h("span",{}, r.icon || "")),
         h("div",{class:"gbody"}, h("div",{class:"gt"}, (img && r.icon ? r.icon+" " : "")+(r.title||"Ohne Titel")), meta.childNodes.length ? meta : null));
@@ -2343,13 +2740,13 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
         if (col.type==="title"){
           const drawT = () => { cell.innerHTML=""; cell.append(...(r.icon?[h("span",{},r.icon)]:[]), h("span",{class:"tt"}, r.title || h("span",{style:"color:var(--muted);font-weight:400"},"Ohne Titel")), h("button",{class:"open", onclick:e=>{e.stopPropagation(); openPeek(r.id);}},"ÖFFNEN")); };
           drawT();
-          cell.onclick = e => { if (e.target.closest("button")) return; const tt=$(".tt",cell); if(!tt) return; editCell(tt, {type:"title"}, r.title, async val => { r.title = val; r.props[col.name]=val; drawT(); await save(r.id,{title:val}); }, p, drawT); };
+          cell.onclick = e => { if (e.target.closest("button")) return; const tt=$(".tt",cell); if(!tt) return; editCell(tt, {type:"title"}, r.title, async val => { r.title = val; r.props[col.name]=val; if (p.schema.some(isCalc)) draw(); else drawT(); await save(r.id,{title:val}); }, p, drawT); };
           if (editRowId===r.id) setTimeout(()=>{ editRowId=null; cell.click(); },0);
           row.append(h("td",{class:"tcell"}, cell));
         } else {
-          const redraw = () => renderCellValue(cell, col, r.props[col.name]);
+          const redraw = () => renderCellValue(cell, col, r.props[col.name], r, p.schema);
           redraw();
-          cell.onclick = e => { if (e.target.closest("a")) return; editCell(cell, col, r.props[col.name]||"", async val => { r.props[col.name]=val; redraw(); await save(r.id,{props:r.props}); }, p, redraw); };
+          cell.onclick = e => { if (e.target.closest("a")) return; editCell(cell, col, r.props[col.name]||"", async val => { r.props[col.name]=val; if (p.schema.some(isCalc)) draw(); else redraw(); await save(r.id,{props:r.props}); }, p, redraw, r); };
           row.append(h("td",{class:col.type==="checkbox"?"narrow":""}, cell));
         }
       }
@@ -2361,12 +2758,12 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     // Fußzeile mit Berechnungen (Summe, Anzahl, % angehakt …) über die gerade sichtbaren Einträge
     const fr = h("tr");
     for (const col of p.schema){
-      const key = st.calc[col.name] || "", lb = (calcsFor(col).find(c=>c[0]===key)||[])[1];
+      const key = st.calc[col.name] || "", cl = calcsFor(col, p.schema, p.rows[0]), lb = (cl.find(c=>c[0]===key)||[])[1];
       fr.append(h("td",{class:"calc"+(key?" on":"")+(col.type==="checkbox"?" narrow":""), title:"Berechnung wählen", onclick:e=>{
         const pop = popover(e.currentTarget);
         pop.append(h("label",{},"Berechnung für „"+col.name+"“"));
-        for (const [k,l] of calcsFor(col)) pop.append(h("button",{class:"item", onclick:()=>{ closePop(); if (k) st.calc[col.name] = k; else delete st.calc[col.name]; persist(); draw(); }}, l, k===key ? " ✓" : ""));
-      }}, key ? [h("span",{class:"cl"}, lb), " ", h("span",{class:"cv"}, calcValue(rows, col, key))] : h("span",{class:"cl"},"Berechnen")));
+        for (const [k,l] of cl) pop.append(h("button",{class:"item", onclick:()=>{ closePop(); if (k) st.calc[col.name] = k; else delete st.calc[col.name]; persist(); draw(); }}, l, k===key ? " ✓" : ""));
+      }}, key ? [h("span",{class:"cl"}, lb), " ", h("span",{class:"cv"}, calcValue(rows, col, key, p.schema))] : h("span",{class:"cl"},"Berechnen")));
     }
     fr.append(h("td"));
     t.append(h("tfoot",{}, fr));
@@ -2439,8 +2836,9 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
         card.append(h("label",{class:"m", onclick:e=>e.stopPropagation()}, cb, h("span",{}, name)));
         continue;
       }
-      if (!v) continue;
-      const m = h("div",{class:"m"}); renderCellValue(m, x, v);
+      if (!v && !comp(x)) continue;
+      const m = h("div",{class:"m"}); renderCellValue(m, x, v, r, p.schema);
+      if (!m.childNodes.length) continue;
       if (x.type==="date") {}
       else if (!["select","multi_select"].includes(x.type)) m.prepend(h("span",{class:"k"}, name+":"));
       card.append(m);
@@ -2570,7 +2968,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       box.innerHTML = "";
       st.filters.forEach((f, i) => {
         const col = p.schema.find(c=>c.name===f.prop) || p.schema[0];
-        const ops = opsFor(col.type);
+        const ops = opsFor(effType(col, p.schema, p.rows[0]));
         if (!ops.some(o=>o[0]===f.op)) f.op = ops[0][0];
         const propSel = h("select",{}, p.schema.map(c=>h("option",{value:c.name, selected:c.name===col.name}, c.name)));
         const opSel = h("select",{}, ops.map(([k,l])=>h("option",{value:k, selected:k===f.op}, l)));
@@ -2595,7 +2993,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
         box.append(row);
       });
       box.append(h("button",{class:"item", onclick:()=>{ const c = p.schema.find(c=>c.type==="select") || p.schema.find(c=>c.type==="multi_select") || p.schema[0];
-        st.filters.push({prop:c.name, op:opsFor(c.type)[0][0], value:""}); persist(); draw(); redraw(); }},"+ Filter hinzufügen"));
+        st.filters.push({prop:c.name, op:opsFor(effType(c, p.schema, p.rows[0]))[0][0], value:""}); persist(); draw(); redraw(); }},"+ Filter hinzufügen"));
       if (st.filters.length>1) box.append(h("div",{class:"hint", style:"padding:0 8px"},"Alle Filter müssen zutreffen."));
     };
     redraw();
@@ -2659,14 +3057,138 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     pop.append(h("hr"), h("button",{class:"item", onclick:e=>{ addColumn(anchor); }},"＋ Eigenschaft hinzufügen"));
   };
 
+  // Zusatzeinstellungen für Verknüpfung, Rollup und Formel (beim Anlegen und Bearbeiten einer Spalte)
+  const colExtra = (col, typeSel) => {
+    const box = h("div",{class:"colx"});
+    const cfg = {db:col.db||"", mirror:col.mirror||"", back:false, rel:col.rel||"", prop:col.prop||"", calc:col.calc||"show", expr:col.expr||""};
+    let tok = 0;
+    const redraw = async () => {
+      const my = ++tok, t = typeSel.value, parts = [];
+      if (t==="relation"){
+        const dbs = TREE.filter(n=>n.kind==="database");
+        const other = cfg.db ? await loadDb(cfg.db) : null;
+        if (my !== tok) return;
+        const dsel = h("select",{}, h("option",{value:""},"– Datenbank wählen –"),
+          dbs.map(n=>h("option",{value:n.id, selected:n.id===cfg.db}, n.id===p.id ? "Diese Datenbank" : (n.icon ? n.icon+" " : "")+(n.title||"Ohne Titel"))));
+        dsel.onchange = () => { cfg.db = dsel.value; cfg.mirror = ""; redraw(); };
+        parts.push(h("label",{},"Verknüpft mit"), dsel);
+        if (other){
+          const cands = other.schema.filter(c=>c.type==="relation" && c.db===p.id && !c.mirror && c.name!==col.name);
+          if (cands.length){
+            const msel = h("select",{}, h("option",{value:""},"Eigene Auswahl in dieser Spalte"),
+              cands.map(c=>h("option",{value:c.name, selected:c.name===cfg.mirror}, "Gegenstück zu „"+c.name+"“")));
+            msel.onchange = () => { cfg.mirror = msel.value; redraw(); };
+            parts.push(h("label",{},"Einträge"), msel);
+          }
+          if (cfg.mirror) parts.push(h("div",{class:"hint colhint"},"Zeigt, welche Einträge in „"+(other.title||"Ohne Titel")+"“ über „"+cfg.mirror+"“ auf diesen Eintrag verweisen. Änderungen wirken in beide Richtungen."));
+          else if (other.id!==p.id && !(isRel(col) && col.db===other.id)){
+            const cb = h("input",{type:"checkbox", checked:cfg.back}); cb.onchange = () => { cfg.back = cb.checked; };
+            parts.push(h("label",{class:"chk"}, cb, "Gegenstück in „"+(other.title||"Ohne Titel")+"“ anlegen"));
+          }
+        }
+      } else if (t==="rollup"){
+        const rels = p.schema.filter(isRel);
+        if (!rels.length) parts.push(h("div",{class:"hint colhint"},"Für ein Rollup brauchst du zuerst eine Verknüpfung zu einer Datenbank."));
+        else {
+          if (!rels.some(c=>c.name===cfg.rel)) cfg.rel = rels[0].name;
+          const other = await loadDb(rels.find(c=>c.name===cfg.rel).db);
+          if (my !== tok) return;
+          const props = other?.schema || [];
+          if (!props.some(c=>c.name===cfg.prop)) cfg.prop = props.find(c=>c.type==="number")?.name || props.find(c=>c.type==="title")?.name || "";
+          const rsel = h("select",{}, rels.map(c=>h("option",{value:c.name, selected:c.name===cfg.rel}, c.name)));
+          rsel.onchange = () => { cfg.rel = rsel.value; cfg.prop = ""; redraw(); };
+          const psel = h("select",{}, props.map(c=>h("option",{value:c.name, selected:c.name===cfg.prop}, c.name)));
+          psel.onchange = () => { cfg.prop = psel.value; };
+          const csel = h("select",{}, ROLLUPS.map(([k,l])=>h("option",{value:k, selected:k===cfg.calc}, l)));
+          csel.onchange = () => { cfg.calc = csel.value; };
+          parts.push(h("label",{},"Verknüpfung"), rsel, h("label",{},"Eigenschaft in „"+(other?.title||"…")+"“"), psel, h("label",{},"Berechnen"), csel);
+        }
+      } else if (t==="formula"){
+        const ta = h("textarea",{class:"fexpr", rows:3, placeholder:"z. B. {Budget} * 1.19", spellcheck:"false"});
+        ta.value = cfg.expr;
+        const prev = h("div",{class:"hint colhint"});
+        const upd = () => {
+          cfg.expr = ta.value; const src = cfg.expr.trim(), r0 = p.rows[0];
+          if (!src){ prev.textContent = ""; return; }
+          let tv = null; try { fParse(src); if (r0) tv = formulaValue(r0, {type:"formula", expr:src}, p.schema, 0); } catch(e){ tv = {t:"err", v:e.message}; }
+          prev.classList.toggle("ferr", !!tv && tv.t==="err");
+          prev.textContent = !tv ? "✓ Formel ist gültig" : tv.t==="err" ? "⚠ "+tv.v : "Ergebnis für „"+(r0.title||"Ohne Titel")+"“: "+(displayText(tv)||"(leer)");
+        };
+        ta.oninput = debounce(upd, 200);
+        ta.onkeydown = e => e.stopPropagation();
+        const chips = p.schema.filter(c=>c.name!==col.name).map(c=>h("button",{class:"fchip", title:"Einfügen", onclick:()=>{
+          const a = ta.selectionStart ?? ta.value.length, b = ta.selectionEnd ?? a, ins = "{"+c.name+"}";
+          ta.value = ta.value.slice(0,a)+ins+ta.value.slice(b); ta.focus(); ta.selectionStart = ta.selectionEnd = a+ins.length; upd(); }}, c.name));
+        parts.push(h("label",{},"Formel"), ta, prev, h("div",{class:"fchips"}, chips),
+          h("details",{class:"fhelp"}, h("summary",{},"Was kann ich schreiben?"), h("div",{html:FORMULA_HELP})));
+        upd();
+      }
+      box.innerHTML = ""; box.append(...parts);
+    };
+    redraw();
+    return {el:box, cfg, redraw};
+  };
+  const applyExtra = (c, cfg) => {
+    for (const k of ["db","mirror","rel","prop","calc","expr"]) delete c[k];
+    if (c.type==="relation" && cfg.db){ c.db = cfg.db; if (cfg.mirror) c.mirror = cfg.mirror; }
+    if (c.type==="rollup"){ c.rel = cfg.rel; c.prop = cfg.prop; c.calc = cfg.calc; }
+    if (c.type==="formula") c.expr = cfg.expr.trim();
+  };
+  const extraOk = (type, cfg) => {
+    if (type==="relation" && !cfg.db) return "Bitte eine Datenbank wählen";
+    if (type==="rollup" && !p.schema.some(isRel)) return "Lege zuerst eine Verknüpfung an";
+    if (type==="formula" && cfg.expr.trim()){ try { fParse(cfg.expr.trim()); } catch(e){ return "Formel: "+e.message; } }
+    return "";
+  };
+  // nach dem Speichern einer (neuen) Verknüpfung: vorhandene Texte umwandeln, Gegenstück anlegen
+  const afterRelation = async (c, cfg) => {
+    if (!c.mirror){
+      const res = await convertRelation(p, c);
+      if (res && (res.done || res.missed)) toast(res.done+(res.done===1 ? " Eintrag" : " Einträge")+" verknüpft"+(res.missed ? ", "+res.missed+(res.missed===1 ? " Wert" : " Werte")+" nicht zugeordnet (bleibt als Text erhalten)" : ""));
+      if (cfg.back){
+        const other = await loadDb(c.db, true);
+        if (other){
+          let nm = p.title || "Verknüpft", i = 2; const base = nm;
+          while (other.schema.some(x=>x.name===nm)) nm = base+" "+(i++);
+          other.schema.push({name:nm, type:"relation", db:p.id, mirror:c.name});
+          await save(other.id, {schema:other.schema}); notifyDb(other.id);
+        }
+      }
+    }
+    await refreshDeps(p.schema);
+  };
+  // Umbenennen: Formeln, Rollups und Gegenstücke (auch in anderen Datenbanken) mitziehen
+  const renameRefs = async (from, to) => {
+    const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const r1 = new RegExp("\\{\\s*"+esc(from)+"\\s*\\}", "g"), r2 = new RegExp("prop\\(\\s*\"" + esc(from) + "\"\\s*\\)", "g");
+    const fix = (schema, here) => { let ch = false;
+      for (const c of schema){
+        if (here && c.type==="formula" && c.expr){ const e = c.expr.replace(r1, "{"+to+"}").replace(r2, "prop(\""+to+"\")"); if (e!==c.expr){ c.expr = e; ch = true; } }
+        if (here && c.type==="rollup" && c.rel===from){ c.rel = to; ch = true; }
+        if (c.type==="relation" && c.db===p.id && c.mirror===from){ c.mirror = to; ch = true; }
+        if (c.type==="rollup" && c.prop===from && schema.find(x=>x.name===c.rel)?.db===p.id){ c.prop = to; ch = true; }
+      }
+      return ch; };
+    if (fix(p.schema, true)) await saveSchema();
+    for (const n of TREE.filter(n=>n.kind==="database" && n.id!==p.id)){
+      const o = await loadDb(n.id); if (!o) continue;
+      if (fix(o.schema, false)){ await save(o.id, {schema:o.schema}); notifyDb(o.id); }
+    }
+  };
+
   const addColumn = anchor => {
     const pop = popover(anchor);
     const name = h("input",{placeholder:"Name der Eigenschaft"});
     const type = h("select",{}, Object.entries(TYPES).filter(([k])=>k!=="title").map(([k,v])=>h("option",{value:k},v)));
+    const ex = colExtra({}, type);
+    type.onchange = () => ex.redraw();
     const ok = async () => { const n=name.value.trim(); if(!n) return; if (p.schema.some(c=>c.name===n)) return toast("Diesen Namen gibt es schon");
-      p.schema.push({name:n, type:type.value}); await saveSchema(); closePop(); draw(); };
+      const bad = extraOk(type.value, ex.cfg); if (bad) return toast(bad);
+      const c = {name:n, type:type.value}; applyExtra(c, ex.cfg);
+      p.schema.push(c); await saveSchema(); if (isRel(c)) await afterRelation(c, ex.cfg); closePop(); draw(); };
     name.onkeydown = e => { if (e.key==="Enter") ok(); };
-    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type, h("button",{class:"item", style:"color:var(--accent)", onclick:ok},"Hinzufügen"));
+    pop.classList.add("colpop");
+    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type, ex.el, h("button",{class:"item", style:"color:var(--accent)", onclick:ok},"Hinzufügen"));
     name.focus();
   };
 
@@ -2688,22 +3210,31 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
             if (col.name in v.calc){ v.calc[nn] = v.calc[col.name]; delete v.calc[col.name]; }
           }
           persist(); p.schema = res.schema;
+          await renameRefs(col.name, nn);
         }
         const c2 = p.schema[ci];
-        const fmt = type.value==="number" ? fmtSel.value : "";
-        if (c2.type !== type.value || (c2.format||"") !== fmt){
-          c2.type = type.value; if (fmt) c2.format = fmt; else delete c2.format;
-          if (["select","multi_select"].includes(c2.type)) colOptions(p, c2); await saveSchema(); }
+        const bad = extraOk(type.value, ex.cfg); if (bad){ toast(bad); return; }
+        const fmt = ["number","formula"].includes(type.value) ? fmtSel.value : "";
+        const before = JSON.stringify(c2), oldDb = isRel(c2) && !c2.mirror ? c2.db : "";
+        c2.type = type.value; if (fmt) c2.format = fmt; else delete c2.format;
+        applyExtra(c2, ex.cfg);
+        if (JSON.stringify(c2) !== before){
+          if (["select","multi_select"].includes(c2.type)) colOptions(p, c2);
+          await saveSchema();
+          if (isRel(c2) && !c2.mirror && (c2.db !== oldDb || ex.cfg.back)) await afterRelation(c2, ex.cfg); else await refreshDeps(p.schema);
+        }
       } catch(e){ toast(e.message); }
       closePop(); draw();
     };
     name.onkeydown = e => { if (e.key==="Enter") apply(); };
     const fmtSel = h("select",{}, Object.entries(NUMFORMATS).map(([k,v])=>h("option",{value:k, selected:(col.format||"")===k}, v)));
-    const fmtWrap = h("div",{style: col.type==="number" ? "" : "display:none"}, h("label",{},"Zahlenformat"), fmtSel);
-    type.onchange = () => { fmtWrap.style.display = type.value==="number" ? "" : "none"; };
+    const fmtWrap = h("div",{style: ["number","formula"].includes(col.type) ? "" : "display:none"}, h("label",{},"Zahlenformat"), fmtSel);
+    const ex = colExtra(col, type);
+    type.onchange = () => { fmtWrap.style.display = ["number","formula"].includes(type.value) ? "" : "none"; ex.redraw(); };
+    pop.classList.add("colpop");
     fmtSel.onchange = () => apply();
     const mv = async d => { [p.schema[ci+d],p.schema[ci]]=[p.schema[ci],p.schema[ci+d]]; await saveSchema(); closePop(); draw(); };
-    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type, fmtWrap,
+    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type, ex.el, fmtWrap,
       h("button",{class:"item", style:"color:var(--accent)", onclick:apply},"Übernehmen"), h("hr"),
       h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=1; persist(); closePop(); draw();}},"↑ Aufsteigend sortieren"),
       h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=-1; persist(); closePop(); draw();}},"↓ Absteigend sortieren"),
@@ -2714,6 +3245,8 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     name.focus(); name.select();
   };
 
+  DBC[p.id] = p;
+  await refreshDeps(p.schema);
   draw();
 }
 
@@ -2902,9 +3435,14 @@ async function checkUpdate(manual){
 }
 async function installUpdate(u){
   if (!confirm(`Update auf Version ${u.latest} installieren?` + (u.notes ? `\n\nNeu: ${u.notes}` : "") + "\n\nDeine Daten bleiben unverändert. Die App startet kurz neu.")) return;
+  // Lokal bearbeitete Programmdateien nicht stillschweigend überschreiben
+  const mod = u.modified || [];
+  if (mod.length && !confirm("Achtung: Diese Programmdateien wurden auf diesem Rechner verändert und würden durch das Update überschrieben:\n\n  " + mod.join("\n  ")
+    + "\n\nDie bisherigen Dateien werden im Ordner „alte-versionen“ aufgehoben. Trotzdem aktualisieren?")) return;
   flushAll();
   const ov = dialog(h("div",{class:"body"}, h("h2",{},"⬆️ Update wird installiert …"), h("p",{class:"hint"},"Bitte einen Moment warten. Die Seite lädt danach von selbst neu.")));
-  try { await api("POST","/api/update"); }
+  try { const res = await api("POST","/api/update", {force: mod.length > 0});
+    if (res.blocked){ ov.close(); toast("Nicht aktualisiert: Programmdateien wurden lokal geändert (" + (res.modified||[]).join(", ") + "). Bitte erneut auf „Update“ klicken."); checkUpdate(false); return; } }
   catch(e){ ov.close(); toast("Update fehlgeschlagen: " + e.message); return; }
   // warten, bis der Server wieder antwortet, dann neu laden
   for (let i=0; i<40; i++){

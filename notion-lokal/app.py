@@ -11,7 +11,7 @@ Benutzung:
     python3 app.py import Export.zip    # Notion-Export importieren
     python3 app.py export ./ordner      # Alles als Markdown + CSV exportieren
     python3 app.py backup               # ZIP-Sicherung des Datenordners anlegen
-    python3 app.py update               # neueste Version von GitHub einspielen
+    python3 app.py update               # neueste Version von GitHub einspielen (--trotzdem: lokale Änderungen überschreiben)
     python3 app.py passwort-entfernen   # Passwortschutz aufheben (Passwort vergessen)
 """
 
@@ -770,6 +770,26 @@ def export_all(con, dest):
         by_parent.setdefault(p["parent_id"], []).append(p)
     ids = {p["id"] for p in rows}
     roots = [p for p in rows if p["parent_id"] not in ids]
+    titles = {p["id"]: p["title"] or "Ohne Titel" for p in rows}
+    schemas = {p["id"]: p["schema"] for p in rows if p["kind"] == "database"}
+
+    def rel_ids(v):
+        return [x.strip() for x in str(v or "").split(",") if x.strip()]
+
+    def cell(row, col):
+        """Wert einer Spalte für den Export; Verknüpfungen werden zu Titeln."""
+        if col["type"] == "title":
+            return row["title"]
+        if col["type"] == "relation" and col.get("db"):
+            if col.get("mirror"):
+                hits = [c for c in by_parent.get(col["db"], []) if c["kind"] == "row"
+                        and row["id"] in rel_ids(c["props"].get(col["mirror"]))]
+                return ", ".join(titles[c["id"]] for c in hits)
+            return ", ".join(titles.get(i, i) for i in rel_ids(row["props"].get(col["name"])))
+        return row["props"].get(col["name"], "")
+
+    def stored(schema):   # Rollups und Formeln werden nur in der App berechnet
+        return [c for c in schema if c.get("type") not in ("rollup", "formula")]
 
     def fix_links(md, here_depth):
         md = re.sub(r"\(/dateien/", "(" + "../" * here_depth + "_dateien/", md)
@@ -784,17 +804,23 @@ def export_all(con, dest):
             n += 1
         children = sorted(by_parent.get(p["id"], []), key=lambda c: (c["sort"], c["title"]))
         if p["kind"] == "database":
-            cols = [c["name"] for c in p["schema"]]
+            cols = stored(p["schema"])
             with open(base + ".csv", "w", newline="", encoding="utf-8-sig") as fh:
                 w = csv.writer(fh)
-                w.writerow(cols)
+                w.writerow([c["name"] for c in cols])
                 for c in children:
                     if c["kind"] == "row":
-                        w.writerow([c["title"] if i == 0 else c["props"].get(col, "")
-                                    for i, col in enumerate(cols)])
+                        w.writerow([cell(c, col) for col in cols])
         head = f"# {p['title']}\n\n"
         if p["kind"] == "row":
-            head += "".join(f"{k}: {v}\n" for k, v in p["props"].items() if v) + "\n"
+            schema = schemas.get(p["parent_id"])
+            if schema:
+                vals = [(c["name"], cell(p, c)) for c in stored(schema) if c["type"] != "title"]
+                known = {c["name"] for c in schema}
+                vals += [(k, v) for k, v in p["props"].items() if k not in known]
+            else:
+                vals = list(p["props"].items())
+            head += "".join(f"{k}: {v}\n" for k, v in vals if v) + "\n"
         if p["kind"] != "database" or p["content"].strip():
             with open(base + ".md", "w", encoding="utf-8") as fh:
                 fh.write(head + fix_links(p["content"], depth))
@@ -894,12 +920,55 @@ def _vtuple(v):
     return tuple(int(x) for x in re.findall(r"\d+", str(v or "0")))
 
 
-def local_version():
+UPDATE_KEEP = 5      # so viele frühere Programmversionen bleiben in alte-versionen/ liegen
+
+
+def local_info():
     try:
         with open(os.path.join(BASE_DIR, "version.json"), encoding="utf-8") as fh:
-            return json.load(fh).get("version", "0")
+            info = json.load(fh)
+            return info if isinstance(info, dict) else {}
     except (OSError, ValueError):
-        return "0"
+        return {}
+
+
+def local_version():
+    return local_info().get("version", "0")
+
+
+def _norm_sha(data):
+    """Prüfsumme unabhängig von Windows-/Unix-Zeilenenden."""
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
+def local_changes():
+    """Programmdateien, die von der installierten Version abweichen, z. B. weil sie von Hand bearbeitet wurden."""
+    out = []
+    for rel, want in (local_info().get("sha256") or {}).items():
+        try:
+            with open(os.path.join(BASE_DIR, rel), "rb") as fh:
+                got = _norm_sha(fh.read())
+        except OSError:
+            continue        # Datei fehlt: da geht beim Update nichts verloren
+        if got != want:
+            out.append(rel)
+    return sorted(out)
+
+
+def write_checksums():
+    """Für Entwickler: Prüfsummen der Programmdateien in version.json eintragen (vor dem Veröffentlichen)."""
+    info = local_info()
+    sums = {}
+    for rel in info.get("files", []):
+        if rel == "version.json":
+            continue
+        with open(os.path.join(BASE_DIR, rel), "rb") as fh:
+            sums[rel] = _norm_sha(fh.read())
+    info["sha256"] = sums
+    with open(os.path.join(BASE_DIR, "version.json"), "w", encoding="utf-8", newline="\n") as fh:
+        json.dump(info, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    return sums
 
 
 def _fetch(url, timeout=8):
@@ -921,10 +990,15 @@ def check_update():
     return best, src
 
 
-def apply_update():
+def apply_update(force=False):
     info, base = check_update()
     if not info or _vtuple(info.get("version")) <= _vtuple(local_version()):
         return {"updated": False, "version": local_version()}
+    changed = local_changes()
+    if changed and not force:
+        # Lokal bearbeitete Programmdateien nicht stillschweigend überschreiben
+        return {"updated": False, "blocked": True, "modified": changed, "version": local_version()}
+    sums = info.get("sha256") or {}
     files = {}
     for rel in info.get("files", []):
         target = os.path.normpath(os.path.join(BASE_DIR, rel))
@@ -934,24 +1008,36 @@ def apply_update():
         data = _fetch(base + urllib.parse.quote(rel), timeout=30)
         if not data.strip():
             raise ValueError(f"Leere Datei im Update: {rel}")
+        if rel in sums and _norm_sha(data) != sums[rel]:
+            raise ValueError(f"Datei im Update ist unvollständig oder verändert: {rel}")
         files[target] = data
     main_py = os.path.join(BASE_DIR, "app.py")
     if main_py in files:
         compile(files[main_py].decode("utf-8"), "app.py", "exec")   # kaputtes Update gar nicht erst einspielen
     # alte Programmdateien aufheben, dann ersetzen
-    old_dir = os.path.join(BASE_DIR, "alte-version")
+    all_old = os.path.join(BASE_DIR, "alte-versionen")
+    stamp = dt.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    old_dir = os.path.join(all_old, f"{safe_name(str(local_version()))}_{stamp}")
     for target, data in files.items():
         if os.path.exists(target):
             keep = os.path.join(old_dir, os.path.relpath(target, BASE_DIR))
             os.makedirs(os.path.dirname(keep), exist_ok=True)
             shutil.copy2(target, keep)
+    try:    # nur die letzten Versionen behalten
+        kept = sorted((d for d in os.listdir(all_old) if os.path.isdir(os.path.join(all_old, d))),
+                      key=lambda d: os.path.getmtime(os.path.join(all_old, d)))
+        for d in kept[:-UPDATE_KEEP]:
+            shutil.rmtree(os.path.join(all_old, d), ignore_errors=True)
+    except OSError:
+        pass
     for target, data in files.items():
         os.makedirs(os.path.dirname(target), exist_ok=True)
         tmp = target + ".neu"
         with open(tmp, "wb") as fh:
             fh.write(data)
         os.replace(tmp, target)
-    return {"updated": True, "version": info.get("version"), "restart": main_py in files}
+    return {"updated": True, "version": info.get("version"), "restart": main_py in files,
+            "backup": os.path.relpath(old_dir, BASE_DIR), "overwritten": changed}
 
 
 def _restart_soon():
@@ -1190,7 +1276,8 @@ class Handler(BaseHTTPRequestHandler):
                 cur = local_version()
                 newer = bool(info) and _vtuple(info.get("version")) > _vtuple(cur)
                 return self._json({"current": cur, "reachable": info is not None, "available": newer,
-                                   "latest": (info or {}).get("version"), "notes": (info or {}).get("notes", "")})
+                                   "latest": (info or {}).get("version"), "notes": (info or {}).get("notes", ""),
+                                   "modified": local_changes()})
             if path == "/api/meta":
                 con = connect()
                 return self._json({r["key"]: json.loads(r["value"]) for r in con.execute("SELECT * FROM meta")
@@ -1228,7 +1315,7 @@ class Handler(BaseHTTPRequestHandler):
             if url.path == "/api/import":
                 return self.api_import()
             if url.path == "/api/update":
-                res = apply_update()
+                res = apply_update(force=bool(self._jbody().get("force")))
                 self._json(res)
                 if res.get("restart"):
                     _restart_soon()
@@ -1728,8 +1815,16 @@ def main(argv):
         auth_set("")
         print("Passwortschutz aufgehoben. In der App kannst du unter „Passwort“ ein neues setzen.")
     elif cmd == "update":
-        res = apply_update()
-        print(f"Aktualisiert auf {res['version']}." if res["updated"] else f"Bereits aktuell ({res['version']}).")
+        res = apply_update(force="--trotzdem" in argv)
+        if res.get("blocked"):
+            sys.exit("Nicht aktualisiert: Diese Programmdateien wurden lokal geändert und würden überschrieben:\n  "
+                     + "\n  ".join(res["modified"]) + "\nMit  python3 app.py update --trotzdem  trotzdem einspielen. "
+                     "Die bisherigen Dateien landen in alte-versionen/.")
+        print(f"Aktualisiert auf {res['version']}. Vorherige Dateien: {res['backup']}" if res["updated"]
+              else f"Bereits aktuell ({res['version']}).")
+    elif cmd == "pruefsummen":
+        for rel, s in write_checksums().items():
+            print(s[:12], rel)
     else:
         sys.exit(__doc__)
 

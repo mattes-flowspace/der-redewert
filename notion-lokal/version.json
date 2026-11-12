@@ -1,5 +1,15 @@
 {
-  "version": "2026.11.12.4",
-  "notes": "Passwortschutz: Unter Passwort in der Seitenleiste ein Passwort festlegen, dann fragt die App vor dem Anzeigen der Inhalte danach.",
-  "files": ["app.py", "static/index.html", "README.md", "version.json"]
+  "version": "2026.11.12.5",
+  "notes": "Verknüpfungen zwischen Datenbanken mit Gegenstück, Rollups und Formeln. Updates überschreiben selbst geänderte Programmdateien nicht mehr ohne Nachfrage und heben die letzten fünf Versionen auf.",
+  "files": [
+    "app.py",
+    "static/index.html",
+    "README.md",
+    "version.json"
+  ],
+  "sha256": {
+    "app.py": "be55e688fe5a87eaa196dae9d1967fcebe522f1518dfa133cd1bb1f8ff718c52",
+    "static/index.html": "afd3ab4a0fd241f7509954b9284ce121095f5202932859f8c5bedb45be659ce8",
+    "README.md": "d4fca9ee1398961c651fa9caddf2f41befbe365e12a11860b2b8182861819bbe"
+  }
 }

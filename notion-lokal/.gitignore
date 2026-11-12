@@ -4,4 +4,5 @@ sicherung_*.zip
 export_*/
 __pycache__/
 alte-version/
+alte-versionen/
 *.neu

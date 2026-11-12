@@ -68,7 +68,9 @@ Ein Export als ZIP geht auch über **„Export“** in der Seitenleiste.
 Die App prüft beim Öffnen, ob im GitHub-Repository eine neuere Version liegt. Dann erscheint unten in der Seitenleiste **„⬆️ Update … installieren“**. Ein Klick lädt die neuen Programmdateien, ersetzt die alten und startet die App neu. Manuell prüfst du mit „⟳ Nach Updates suchen“ oder im Terminal mit `python3 app.py update`.
 
 - Der Ordner `daten/` wird dabei nie angefasst.
-- Die vorherigen Programmdateien liegen danach in `alte-version/`. Läuft nach einem Update etwas nicht, kopierst du sie zurück.
+- **Sicherung:** Die vorherigen Programmdateien liegen danach in `alte-versionen/<Version>_<Datum>/`. Die letzten fünf Stände bleiben erhalten. Läuft nach einem Update etwas nicht, kopierst du sie von dort zurück.
+- **Eigene Änderungen:** Hast du `app.py` oder `static/index.html` von Hand verändert, installiert die App das Update nicht stillschweigend. Sie nennt die geänderten Dateien und fragt nach. Bestätigst du, landen deine Fassungen ebenfalls in `alte-versionen/`. Im Terminal: `python3 app.py update` bricht in diesem Fall ab, `python3 app.py update --trotzdem` installiert trotzdem.
+- **Prüfsummen:** Jede heruntergeladene Datei wird gegen die Prüfsumme in `version.json` geprüft. Ist eine Datei unvollständig angekommen, bricht das Update ab und nichts wird ersetzt.
 - Die App lädt nur von `raw.githubusercontent.com` aus dem eigenen Repository. Es werden keine Daten von dir übertragen.
 
 ## An PC und Mac über Dropbox nutzen
@@ -129,6 +131,29 @@ Zeitleiste und Kalender nutzen eine Eigenschaft vom Typ „Datum“. Gibt es meh
 - **Zahlenformat:** in der Tabelle auf die Überschrift einer Zahlen-Spalte klicken → „Zahlenformat“: Zahl (1.234,5), Euro (1.234,50 €) oder Prozent. Eingaben wie `1234,5`, `1.234,50 €` oder `1234.5` werden erkannt.
 - **Berechnungen:** Unter jeder Tabellenspalte erscheint beim Darüberfahren „Berechnen“: Summe, Durchschnitt, Minimum, Maximum, Anzahl, % ausgefüllt, bei Checkboxen % angehakt. Gerechnet wird mit den Einträgen, die Filter und Suche gerade zeigen.
 
+## Verknüpfungen, Rollups und Formeln
+
+Neue Eigenschaft anlegen („＋“ rechts in der Tabelle) oder eine vorhandene über ihre Spaltenüberschrift umstellen:
+
+- **Verknüpfung:** Typ „Verknüpfung“, dann die Datenbank wählen, z. B. „Projekte“. In der Zelle wählst du Einträge aus, suchst danach oder legst mit „+ Neu anlegen“ direkt einen an. Ein Klick auf einen verknüpften Eintrag öffnet ihn rechts.
+- **Gegenstück:** Mit „Gegenstück in … anlegen“ bekommt die andere Datenbank eine Spalte, die zeigt, wer auf sie verweist (z. B. in „Projekte“ alle zugehörigen Aufgaben). Änderungen auf einer Seite erscheinen sofort auf der anderen. Für eine vorhandene Spalte wählst du unter „Einträge“ → „Gegenstück zu …“.
+- **Aus dem Notion-Import:** Stellst du eine importierte Verknüpfungs-Spalte auf eine Datenbank um, wandelt die App die Titel bzw. Notion-Links in echte Verknüpfungen um. Was sie nicht zuordnen kann, bleibt als Text stehen.
+- **Rollup:** rechnet über die verknüpften Einträge, z. B. „Summe von Budget“, „Anzahl Verknüpfungen“, „% angehakt“ oder „Spätestes Datum“.
+- **Formel:** rechnet mit den Eigenschaften desselben Eintrags. Unter dem Eingabefeld siehst du sofort das Ergebnis für den ersten Eintrag oder den Fehler. Die Namen der Eigenschaften lassen sich anklicken und einfügen.
+
+| Beispiel | Ergebnis |
+|---|---|
+| `{Budget} * 1.19` | Brutto (Zahlenformat Euro wählen) |
+| `wenn({Erledigt}, "fertig", "offen")` | Text je nach Checkbox |
+| `tage(heute(), {Fällig})` | Tage bis zur Fälligkeit, negativ = überfällig |
+| `datumplus({Start}, 2, "wochen")` | Datum zwei Wochen später |
+| `runden({Stunden} * {Satz}, 2)` | gerundeter Betrag |
+| `verketten({Kunde}, " – ", {Projekt})` | zusammengesetzter Text |
+
+Dezimalzahlen schreibst du mit Punkt (`1.19`), Argumente trennst du mit Komma. Weitere Funktionen stehen unter „Was kann ich schreiben?“ im Formelfeld. Englische Namen wie `if`, `round` oder `dateBetween` funktionieren auch.
+
+Rollups und Formeln werden beim Anzeigen berechnet. Filter, Sortierung und die Berechnungen unter der Tabelle funktionieren mit ihnen wie mit normalen Spalten. Benennst du eine Eigenschaft um, passt die App Formeln, Rollups und Gegenstücke an. Im Export stehen Verknüpfungen als Titel; Rollups und Formeln fehlen dort, weil sie nur in der App berechnet werden.
+
 ## Vorlagen
 
 Jede Datenbank kann Vorlagen für neue Einträge haben, z. B. „Bug-Report“ oder „Meeting-Notiz“.
@@ -182,8 +207,8 @@ Diese Einschränkungen kommen vom Notion-Export selbst:
 
 - **Seiten-Icons und Titelbilder:** Notion exportiert sie im Markdown-Format nicht. Icons kannst du lokal neu setzen.
 - **Gespeicherte Ansichten, Filter und Vorlagen** aus Notion. Lege sie lokal einmal neu an, danach bleiben sie erhalten.
-- **Formeln und Rollups** kommen als fester Text-Wert an.
-- **Verknüpfungen (Relations)** werden als klickbare Links übernommen, sind aber keine „echten“ Relationen mehr.
+- **Formeln und Rollups** kommen als fester Text-Wert an. Lokal kannst du sie neu anlegen (siehe „Verknüpfungen, Rollups und Formeln“).
+- **Verknüpfungen (Relations)** kommen als Text bzw. Links an. Stellst du die Spalte auf die passende Datenbank um, werden daraus echte Verknüpfungen.
 - **Spaltentypen** werden aus den Werten erraten. Ein Klick auf die Spaltenüberschrift korrigiert sie.
 - **Kommentare und Versionsverlauf** sind im Export nicht enthalten.
 
