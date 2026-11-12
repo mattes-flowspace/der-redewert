@@ -115,6 +115,18 @@ Seiten können Datenbanken **einbetten**. Damit funktioniert ein Dashboard wie d
 
 Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben der Board-Spalten** nicht. Bring sie über „⋯“ einmal in die gewünschte Reihenfolge, danach bleibt sie erhalten, auch bei einem erneuten Import. Spalten-Layouts (nebeneinander) exportiert Notion ebenfalls nicht, die Inhalte stehen dann untereinander.
 
+## Heute
+
+**„☀️ Heute“** oben in der Seitenleiste sammelt aus allen Datenbanken, was ansteht:
+
+- **Überfällig:** Datum liegt in der Vergangenheit und der Eintrag ist nicht erledigt. „Auf heute“ verschiebt das Datum auf heute, ein Zeitraum behält seine Länge.
+- **Heute:** alles, dessen Datum oder Zeitraum heute einschließt.
+- **Nächste 7 Tage:** nach Tagen sortiert.
+- **Abhaken:** Das Kästchen vorne markiert einen Eintrag als erledigt (mit „Rückgängig“). Ein Klick auf den Titel öffnet ihn rechts, ein Klick auf den Datenbanknamen öffnet die Datenbank.
+- **Als Startseite:** „🏠 Als Startseite festlegen“ auf der Heute-Seite.
+- **Welche Datenbanken:** ganz unten aufklappen. Dort schaltest du Datenbanken ab und wählst die Datumsspalte. Von selbst nimmt die App eine Spalte wie „Fällig“, „Deadline“ oder „Termin“, sonst die erste Datumsspalte, aber nie „Erstellt“ oder „Zuletzt bearbeitet“.
+- **Was als erledigt gilt:** eine angehakte Checkbox namens „Erledigt“ oder „Done“ oder ein Status wie „Fertig“, „Erledigt“, „Done“ oder „Abgeschlossen“. Datenbanken ohne so eine Spalte (z. B. ein Tagebuch) erscheinen bei „Heute“ und „Nächste 7 Tage“, aber nie bei „Überfällig“.
+
 ## Ansichten einer Datenbank
 
 Jede Datenbank hat **gespeicherte Ansichten**, die als Reiter über ihr stehen. Jede Ansicht merkt sich Layout, Filter, Sortierung und Anzeige. Welche Ansicht gerade offen ist, wird pro Stelle gespeichert, an der die Datenbank eingebettet ist.
@@ -149,7 +161,8 @@ Neue Eigenschaft anlegen („＋“ rechts in der Tabelle) oder eine vorhandene 
 - **Verknüpfung:** Typ „Verknüpfung“, dann die Datenbank wählen, z. B. „Projekte“. In der Zelle wählst du Einträge aus, suchst danach oder legst mit „+ Neu anlegen“ direkt einen an. Ein Klick auf einen verknüpften Eintrag öffnet ihn rechts.
 - **Gegenstück:** Mit „Gegenstück in … anlegen“ bekommt die andere Datenbank eine Spalte, die zeigt, wer auf sie verweist (z. B. in „Projekte“ alle zugehörigen Aufgaben). Änderungen auf einer Seite erscheinen sofort auf der anderen. Für eine vorhandene Spalte wählst du unter „Einträge“ → „Gegenstück zu …“.
 - **Aus dem Notion-Import:** Stellst du eine importierte Verknüpfungs-Spalte auf eine Datenbank um, wandelt die App die Titel bzw. Notion-Links in echte Verknüpfungen um. Was sie nicht zuordnen kann, bleibt als Text stehen.
-- **Rollup:** rechnet über die verknüpften Einträge, z. B. „Summe von Budget“, „Anzahl Verknüpfungen“, „% angehakt“ oder „Spätestes Datum“.
+- **Rollup:** rechnet über die verknüpften Einträge, z. B. „Summe von Budget“, „Anzahl Verknüpfungen“, „% angehakt“, „Fortschritt (erledigt von gesamt)“ oder „Spätestes Datum“.
+- **Unteraufgaben:** „Ansicht“ → „↳ Unteraufgaben einrichten“ legt drei Spalten an: „Übergeordnet“, „Unteraufgaben“ und „Fortschritt“. Danach gibt es bei jedem Eintrag unter „⋯“ (oder Rechtsklick) „↳ Unteraufgabe hinzufügen“. In der Tabelle stehen Unteraufgaben eingerückt unter ihrem Eintrag und lassen sich mit ▶ auf- und zuklappen (nicht in gruppierten Tabellen). „Fortschritt“ zeigt „3/5“ mit Balken, auch auf den Board-Karten. Als erledigt gilt dasselbe wie bei „Heute“.
 - **Formel:** rechnet mit den Eigenschaften desselben Eintrags. Unter dem Eingabefeld siehst du sofort das Ergebnis für den ersten Eintrag oder den Fehler. Die Namen der Eigenschaften lassen sich anklicken und einfügen.
 
 | Beispiel | Ergebnis |
@@ -173,6 +186,7 @@ Jede Datenbank kann Vorlagen für neue Einträge haben, z. B. „Bug-Report“ o
 - **Eintrag aus Vorlage:** „▾“ → Vorlage anklicken. Bilder der Vorlage werden mitkopiert.
 - **Standardvorlage:** „▾“ → „⋯“ neben der Vorlage → „Als Standard festlegen“. Dann nutzen auch „Neu“, die Schnelleingabe im Board und „+“ im Kalender diese Vorlage.
 - **Heutiges Datum:** `@heute` in einer Eigenschaft oder im Text wird beim Anlegen durch das aktuelle Datum ersetzt. In Datumsfeldern einer Vorlage gibt es dafür den Punkt „@heute – Tag des Anlegens“.
+- **Wiederkehrende Einträge:** In der geöffneten Vorlage unter dem Hinweiskasten „🔁 Wiederholen“ auf täglich, wöchentlich (Wochentage wählen) oder monatlich (Tag wählen) stellen. Am fälligen Tag legt die App den Eintrag selbst an: Titel ist der Name der Vorlage mit Datum (oder `@heute` im Vorlagennamen wird zum Datum), die Datumsspalte bekommt diesen Tag. Das passiert beim Start, alle 15 Minuten und beim Öffnen von „Heute“. War die App mehrere Tage aus, kommt nur der zuletzt fällige Eintrag dazu, verpasste Tage werden nicht nachgeholt. Läuft die App an zwei Rechnern über Dropbox, legt nur der Rechner mit der Sperre Einträge an. Wiederkehrende Vorlagen tragen im Menü „▾“ ein 🔁.
 - Vorlagen erscheinen nicht in den Ansichten, in der Suche oder im Markdown-Export. Sie liegen aber in `daten/notion.sqlite3` und damit in jeder Sicherung.
 
 ## Cover

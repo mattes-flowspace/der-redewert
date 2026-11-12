@@ -268,6 +268,144 @@ def row_to_page(r, full=True):
 
 
 # ---------------------------------------------------------------------------
+# Vorlagen und wiederkehrende Einträge
+# ---------------------------------------------------------------------------
+
+def meta_get(con, key, default=None):
+    r = con.execute("SELECT value FROM meta WHERE key=?", (key,)).fetchone()
+    try:
+        return json.loads(r["value"]) if r else default
+    except ValueError:
+        return default
+
+
+def meta_set(con, key, value):
+    con.execute("INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                (key, json.dumps(value, ensure_ascii=False)))
+
+
+def create_from_template(con, tid, title="", extra=None, day=None, date_col=None):
+    """Eintrag aus einer Vorlage anlegen (ohne commit). day: Datum für „@heute“ und die Datumsspalte."""
+    t = con.execute("SELECT * FROM pages WHERE id=? AND kind='template' AND deleted=0", (tid,)).fetchone()
+    if not t:
+        return None
+    db = con.execute("SELECT schema FROM pages WHERE id=?", (t["parent_id"],)).fetchone()
+    schema = json.loads(db["schema"]) if db else []
+    tcol = next((c["name"] for c in schema if c["type"] == "title"), None)
+    nid, ts = new_id(), now()
+    day = day or dt.date.today()
+    props = json.loads(t["props"] or "{}")
+    for k, v in list(props.items()):
+        if isinstance(v, str) and "@heute" in v:
+            props[k] = v.replace("@heute", day.isoformat())
+    props.update(extra or {})
+    if date_col is not None:
+        dcol = next((c["name"] for c in schema if c["type"] == "date" and c["name"] == date_col), None) \
+            or next((c["name"] for c in schema if c["type"] == "date"), None)
+        if dcol and not str(props.get(dcol, "")).strip():
+            props[dcol] = day.isoformat()
+    if tcol:
+        props[tcol] = title
+    swap = lambda x: (x or "").replace(f"/dateien/{tid}/", f"/dateien/{nid}/")  # noqa: E731
+    content = swap(t["content"]).replace("@heute", day.strftime("%d.%m.%Y"))
+    mx = con.execute("SELECT COALESCE(MAX(sort),0)+1 FROM pages WHERE parent_id IS ? AND kind='row'",
+                     (t["parent_id"],)).fetchone()[0]
+    con.execute(
+        "INSERT INTO pages (id,parent_id,kind,title,icon,cover,content,props,schema,sort,created,updated) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+        (nid, t["parent_id"], "row", title, t["icon"], swap(t["cover"]), content,
+         json.dumps(props, ensure_ascii=False), "[]", mx, ts, ts))
+    src = os.path.join(FILES_DIR, tid)
+    if os.path.isdir(src):
+        shutil.copytree(src, os.path.join(FILES_DIR, nid), dirs_exist_ok=True)
+    m = re.search(r"!\[[^\]]*\]\(([^)\s]+)", content)
+    return {"id": nid, "title": title, "icon": t["icon"], "cover": swap(t["cover"]), "props": props,
+            "sort": mx, "has_content": bool(content.strip()), "thumb": m.group(1) if m else "",
+            "db": t["parent_id"], "template_title": t["title"]}
+
+
+WEEKDAYS_DE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"]
+
+
+def recur_due(cfg, today):
+    """Letzter fälliger Tag (<= heute) einer Wiederholung oder None.
+
+    cfg: {"freq": "daily"|"weekly"|"monthly", "days": [1..7] (Mo=1), "mday": 1..31, "since": "JJJJ-MM-TT"}"""
+    try:
+        since = dt.date.fromisoformat(cfg.get("since") or today.isoformat())
+    except ValueError:
+        since = today
+    freq, d = cfg.get("freq"), None
+    if freq == "daily":
+        d = today
+    elif freq == "weekly":
+        days = {int(x) for x in (cfg.get("days") or []) if str(x).isdigit()} or {since.isoweekday()}
+        d = next((today - dt.timedelta(k) for k in range(7) if (today - dt.timedelta(k)).isoweekday() in days), None)
+    elif freq == "monthly":
+        want = max(1, min(31, int(cfg.get("mday") or 1)))
+
+        def in_month(y, m):
+            last = (dt.date(y + (m == 12), m % 12 + 1, 1) - dt.timedelta(1)).day
+            return dt.date(y, m, min(want, last))
+        d = in_month(today.year, today.month)
+        if d > today:
+            y, m = (today.year, today.month - 1) if today.month > 1 else (today.year - 1, 12)
+            d = in_month(y, m)
+    if d is None or d < since:
+        return None
+    return d
+
+
+def recur_title(tpl_title, day):
+    date = day.strftime("%d.%m.%Y")
+    tpl_title = (tpl_title or "").strip()
+    if "@heute" in tpl_title:
+        return tpl_title.replace("@heute", date)
+    return f"{tpl_title} – {WEEKDAYS_DE[day.weekday()]}, {date}" if tpl_title else f"{WEEKDAYS_DE[day.weekday()]}, {date}"
+
+
+def run_recurring(today=None):
+    """Fällige wiederkehrende Einträge anlegen. Verpasste Tage werden nicht nachgeholt:
+    je Vorlage entsteht höchstens der zuletzt fällige Eintrag. Gibt die Zahl neuer Einträge zurück."""
+    if not OWNS_LOCK or foreign_lock() is not None:
+        return 0
+    today = today or dt.date.today()
+    made = 0
+    with _write_lock:
+        con = connect()
+        cfg = meta_get(con, "recur", {}) or {}
+        done = meta_get(con, "_recur_done", {}) or {}
+        for tid, c in cfg.items():
+            if not isinstance(c, dict):
+                continue
+            d = recur_due(c, today)
+            if not d or done.get(tid, "") >= d.isoformat():
+                continue
+            t = con.execute("SELECT title FROM pages WHERE id=? AND kind='template' AND deleted=0", (tid,)).fetchone()
+            if not t:
+                continue
+            create_from_template(con, tid, recur_title(t["title"], d), day=d, date_col=c.get("dateCol") or "")
+            done[tid] = d.isoformat()
+            made += 1
+        if made:
+            meta_set(con, "_recur_done", done)
+            con.commit()
+    return made
+
+
+def _recur_loop():
+    try:
+        n = run_recurring()
+        if n:
+            print(f"{n} wiederkehrende Einträge angelegt.")
+    except Exception as e:  # noqa: BLE001
+        print("Wiederkehrende Einträge:", e)
+    t = threading.Timer(15 * 60, _recur_loop)
+    t.daemon = True
+    t.start()
+
+
+# ---------------------------------------------------------------------------
 # Notion-Import
 # ---------------------------------------------------------------------------
 
@@ -1323,6 +1461,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_search((q.get("q") or [""])[0])
             if path == "/api/trash":
                 return self.api_trash()
+            if path == "/api/agenda":
+                return self.api_agenda()
             if path == "/api/lock":
                 return self._json(lock_status())
             if path == "/api/update":
@@ -1382,6 +1522,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(lock_status())
             if url.path == "/api/batch":
                 return self.api_batch(self._jbody())
+            if url.path == "/api/recur/run":
+                return self._json({"made": run_recurring()})
             if url.path.startswith("/api/from-template/"):
                 return self.api_from_template(url.path.split("/")[3], self._jbody())
             if url.path.startswith("/api/duplicate/"):
@@ -1593,38 +1735,11 @@ class Handler(BaseHTTPRequestHandler):
         """Neuen Eintrag aus einer Vorlage anlegen: Icon, Cover, Eigenschaften, Inhalt und Dateien übernehmen."""
         with _write_lock:
             con = connect()
-            t = con.execute("SELECT * FROM pages WHERE id=? AND kind='template' AND deleted=0", (tid,)).fetchone()
-            if not t:
+            row = create_from_template(con, tid, (b.get("title") or "").strip(), b.get("props") or {})
+            if not row:
                 return self._err(404, "Vorlage nicht gefunden")
-            db = con.execute("SELECT schema FROM pages WHERE id=?", (t["parent_id"],)).fetchone()
-            schema = json.loads(db["schema"]) if db else []
-            tcol = next((c["name"] for c in schema if c["type"] == "title"), None)
-            nid, ts = new_id(), now()
-            today = dt.date.today()
-            title = (b.get("title") or "").strip()
-            props = json.loads(t["props"] or "{}")
-            for k, v in list(props.items()):
-                if isinstance(v, str) and "@heute" in v:
-                    props[k] = v.replace("@heute", today.isoformat())
-            props.update(b.get("props") or {})
-            if tcol:
-                props[tcol] = title
-            swap = lambda s: (s or "").replace(f"/dateien/{tid}/", f"/dateien/{nid}/")  # noqa: E731
-            content = swap(t["content"]).replace("@heute", today.strftime("%d.%m.%Y"))
-            mx = con.execute("SELECT COALESCE(MAX(sort),0)+1 FROM pages WHERE parent_id IS ? AND kind='row'",
-                             (t["parent_id"],)).fetchone()[0]
-            con.execute(
-                "INSERT INTO pages (id,parent_id,kind,title,icon,cover,content,props,schema,sort,created,updated) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                (nid, t["parent_id"], "row", title, t["icon"], swap(t["cover"]), content,
-                 json.dumps(props, ensure_ascii=False), "[]", mx, ts, ts))
             con.commit()
-            src = os.path.join(FILES_DIR, tid)
-            if os.path.isdir(src):
-                shutil.copytree(src, os.path.join(FILES_DIR, nid), dirs_exist_ok=True)
-        m = re.search(r"!\[[^\]]*\]\(([^)\s]+)", content)
-        self._json({"id": nid, "title": title, "icon": t["icon"], "cover": swap(t["cover"]), "props": props,
-                    "sort": mx, "has_content": bool(content.strip()), "thumb": m.group(1) if m else ""})
+        self._json(row)
 
     def api_db_op(self, db_id, b):
         """Spalten/Optionen umbenennen oder löschen – inklusive aller Einträge, in einer Transaktion."""
@@ -1770,6 +1885,27 @@ class Handler(BaseHTTPRequestHandler):
             con.commit()
         self._json({"ok": True})
 
+    def api_agenda(self):
+        """Alle Datenbanken mit Datumsspalte samt Einträgen (ohne Inhalt) für die Heute-Übersicht."""
+        try:
+            run_recurring()
+        except Exception:  # noqa: BLE001
+            pass
+        con = connect()
+        out = []
+        for d in con.execute("SELECT id,title,icon,parent_id,schema FROM pages WHERE kind='database' AND deleted=0 "
+                             "ORDER BY title COLLATE NOCASE"):
+            schema = json.loads(d["schema"] or "[]")
+            if not any(c.get("type") == "date" for c in schema):
+                continue
+            rows = [{"id": r["id"], "title": r["title"], "icon": r["icon"], "sort": r["sort"],
+                     "props": json.loads(r["props"] or "{}")}
+                    for r in con.execute("SELECT id,title,icon,sort,props FROM pages WHERE parent_id=? AND kind='row' "
+                                         "AND deleted=0", (d["id"],))]
+            out.append({"id": d["id"], "title": d["title"], "icon": d["icon"], "parent_id": d["parent_id"],
+                        "kind": "database", "schema": schema, "rows": rows})
+        self._json(out)
+
     def api_trash(self):
         con = connect()
         rows = con.execute("SELECT id,title,icon,kind,updated FROM pages WHERE deleted=2 "
@@ -1853,6 +1989,7 @@ def serve(open_browser=True):
     _heartbeat_loop()
     if other is None:
         _backup_loop()
+    _recur_loop()
     print(f"Notion Lokal {local_version()} läuft auf {url}")
     print(f"Daten liegen in: {DATA_DIR}")
     if other:

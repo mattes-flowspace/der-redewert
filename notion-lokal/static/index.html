@@ -688,12 +688,53 @@ table.db td.calc .cv{color:var(--text);font-size:14px;letter-spacing:0;text-tran
 .fchip:hover{color:var(--accent);border-color:var(--accent)}
 .fhelp{padding:2px 8px;font-size:12px;color:var(--muted);line-height:1.55}
 .fhelp summary{cursor:pointer;margin-bottom:4px}
+/* Fortschritt (Unteraufgaben) */
+.prog{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.prog-bar{display:inline-block;width:64px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog-bar i{display:block;height:100%;background:var(--c-green,#448361);border-radius:3px}
+.prog-t{font-size:12px;color:var(--muted)}
+.subtg{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;flex:none;color:var(--muted);border-radius:3px;font-size:11px;margin-right:2px}
+button.subtg:hover{background:var(--hover)}
+/* Wiederholung einer Vorlage */
+.recur{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:-10px 0 20px;padding:10px 16px;background:var(--callout);border-left:2px solid var(--line);font-size:13.5px}
+.recur select,.recur input{font:inherit;padding:3px 6px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--text)}
+.recur .wd{padding:3px 7px;border:1px solid var(--line);border-radius:4px;font-size:12.5px}
+.recur .wd.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.recur .wdays{display:inline-flex;gap:3px}
+/* Heute-Übersicht */
+.today .ag-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px;margin-bottom:6px}
+.today .ag-head h1{margin:0}
+.today .ag-date{color:var(--muted)}
+.today .ag-btns{display:flex;gap:6px;margin:6px 0 18px;flex-wrap:wrap}
+.ag-sec{margin:22px 0 4px;display:flex;align-items:baseline;gap:8px;font-size:15px;font-weight:600}
+.ag-sec .n{color:var(--muted);font-weight:400;font-size:13px}
+.ag-sec.over{color:var(--danger)}
+.ag-day{margin:12px 0 2px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ag-row{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid var(--line);min-width:0;transition:opacity .25s}
+.ag-row:hover{background:var(--hover)}
+.ag-row.gone{opacity:.35}
+.ag-row .cb{flex:none;margin:0}
+.ag-dot{width:8px;height:8px;border-radius:50%;background:var(--line);flex:none;margin:0 3px}
+.ag-t{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14.5px}
+.ag-t:hover{text-decoration:underline}
+.ag-db{font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap;max-width:30%;overflow:hidden;text-overflow:ellipsis}
+.ag-db:hover{color:var(--text)}
+.ag-row .date{font-size:12.5px;white-space:nowrap}
+.ag-mv{font-size:12px;padding:2px 8px}
+.ag-empty{color:var(--muted);font-size:13.5px;padding:6px 4px}
+.ag-set{margin-top:32px;font-size:13.5px}
+.ag-set summary{cursor:pointer;color:var(--muted)}
+.ag-set table{border-collapse:collapse;margin-top:8px;width:100%}
+.ag-set td{padding:5px 8px 5px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+.ag-set select{font:inherit;padding:2px 4px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--text)}
+@media (max-width:700px){.ag-db{display:none}}
 </style>
 </head>
 <body>
 <nav id="side">
   <header><span class="home" id="homeBtn" title="Startseite">Notion Lokal</span></header>
   <button class="side-btn" id="btnSearch">Suchen <kbd>Strg K</kbd></button>
+  <button class="side-btn" id="btnToday">☀️ Heute</button>
   <div id="tree"></div>
   <footer>
     <button class="side-btn" id="btnNewPage">Neue Seite</button>
@@ -973,13 +1014,32 @@ function effType(col, schema, sample){
   return tv ? ({num:"number", bool:"checkbox", date:"date"})[tv.t] || "text" : "text";
 }
 
-const ROLLUPS = [["show","Werte anzeigen"],["count","Anzahl Verknüpfungen"],["filled","Anzahl ausgefüllt"],["sum","Summe"],["avg","Durchschnitt"],["min","Minimum"],["max","Maximum"],["pct_checked","% angehakt"],["pct_filled","% ausgefüllt"],["earliest","Frühestes Datum"],["latest","Spätestes Datum"]];
+// Erledigt-Erkennung: Checkbox namens „Erledigt“/„Done“ … oder Auswahl mit einer Option wie „Fertig“/„Erledigt“/„Done“
+const DONE_RE = /^(erledigt|fertig|done|abgeschlossen|complete|completed|archiviert|✓|✅)$/i;
+const DONE_COL_RE = /erledigt|done|fertig|abgeschlossen|completed?/i;
+function doneCol(schema){
+  return (schema||[]).find(c=>c.type==="checkbox" && DONE_COL_RE.test(c.name))
+      || (schema||[]).find(c=>c.type==="select" && (c.options||[]).some(o=>DONE_RE.test(String(o.name).trim())))
+      || (schema||[]).find(c=>c.type==="select" && /status/i.test(c.name)) || null;
+}
+function isDoneRow(r, schema){
+  const c = doneCol(schema); if (!c) return false;
+  const v = r.props?.[c.name];
+  return c.type==="checkbox" ? isOn(v) : DONE_RE.test(String(v||"").trim());
+}
+function doneValue(c){   // Wert, der einen Eintrag als erledigt markiert
+  if (c.type==="checkbox") return "Yes";
+  return ((c.options||[]).find(o=>DONE_RE.test(String(o.name).trim()))||{}).name || "Erledigt";
+}
+const ROLLUPS = [["show","Werte anzeigen"],["progress","Fortschritt (erledigt von gesamt)"],["count","Anzahl Verknüpfungen"],["filled","Anzahl ausgefüllt"],["sum","Summe"],["avg","Durchschnitt"],["min","Minimum"],["max","Maximum"],["pct_checked","% angehakt"],["pct_filled","% ausgefüllt"],["earliest","Frühestes Datum"],["latest","Spätestes Datum"]];
 function rollupValue(r, col, schema, depth){
   const rc = schema.find(c=>c.name===col.rel && isRel(c));
   if (!rc) return {t:"err", v:"Verknüpfung fehlt"};
   const t = DBC[rc.db]; if (!t) return {t:"text", v:""};
   const rows = linkedRows(r, rc), calc = col.calc || "show";
   if (calc==="count") return {t:"num", v:rows.length};
+  if (calc==="progress"){ const n = rows.length, d = rows.filter(x=>isDoneRow(x, t.schema)).length;
+    return {t:"num", v:n ? Math.round(d/n*100) : null, fmt:"percent", progress:{d, n}}; }
   const tc = t.schema.find(c=>c.name===col.prop) || t.schema.find(c=>c.type==="title");
   if (!tc) return {t:"err", v:"Eigenschaft fehlt"};
   const vals = rows.map(x=>typed(x, tc, t.schema, depth+1));
@@ -1194,6 +1254,9 @@ function renderComputed(el, col, r, schema){
   }
   const tv = typed(r, col, schema);
   if (tv.t==="err"){ el.append(h("span",{class:"ferr", title:tv.v},"⚠ "+tv.v)); return; }
+  if (tv.progress){ if (!tv.progress.n) return;
+    el.append(h("span",{class:"prog", title:`${tv.progress.d} von ${tv.progress.n} erledigt`},
+      h("span",{class:"prog-bar"}, h("i",{style:`width:${tv.v}%`})), h("span",{class:"prog-t"}, `${tv.progress.d}/${tv.progress.n}`))); return; }
   if (tv.tags){ for (const n of tv.tags.names) el.append(tagEl(tv.tags.col, n)); return; }
   if (tv.v == null || tv.v==="") return;
   if (tv.t==="bool"){ el.append(h("input",{type:"checkbox", class:"cb", checked:tv.v, tabindex:"-1", style:"pointer-events:none"})); return; }
@@ -1623,6 +1686,8 @@ function go(id){ closePeek(); if (location.hash === "#/p/"+id) openPage(id); els
 async function route(){
   const m = location.hash.match(/^#\/p\/([0-9a-zA-Z_-]+)/);
   if (m) return openPage(m[1]);
+  if (location.hash === "#/heute") return renderToday();
+  if (META.home==="heute" && location.hash !== "#/alle"){ history.replaceState(null,"","#/heute"); return renderToday(); }
   if (META.home && NODE[META.home] && location.hash !== "#/alle"){ history.replaceState(null,"","#/p/"+META.home); return openPage(META.home); }
   CURRENT = null; LIVE = []; renderTree(); renderHome();
 }
@@ -1680,7 +1745,8 @@ function renderPageInto(page, p, inPeek){
   const afterChange = () => { if (p.kind==="row" || p.kind==="template") notifyDb(p.parent_id); };
   if (p.kind==="template") page.append(h("div",{class:"tpl-banner"},
     h("span",{}, "Du bearbeitest eine Vorlage für ", h("b",{}, p.db_title || "die Datenbank"), "."),
-    h("span",{class:"hint", style:"margin:0"}, "Neue Einträge übernehmen Icon, Cover, Eigenschaften und Inhalt. „@heute“ wird zum Datum des Anlegens.")));
+    h("span",{class:"hint", style:"margin:0"}, "Neue Einträge übernehmen Icon, Cover, Eigenschaften und Inhalt. „@heute“ wird zum Datum des Anlegens.")),
+    recurEditor(p));
   const iconEl = p.icon ? h("div",{class:"icon-big", title:"Icon ändern", onclick:e=>pickIcon(p, e.currentTarget, inPeek)}, p.icon)
                         : h("button",{class:"add-icon", onclick:e=>pickIcon(p, e.currentTarget, inPeek)},"Icon hinzufügen");
   // Cover: Farbverlauf, hochgeladenes Bild oder Bild-Link
@@ -2420,7 +2486,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   // gerade gezeigt wird, merkt sich jede Seite bzw. Einbettung selbst (META.views[viewKey]).
   const VIEWTYPES = {board:"Board", table:"Tabelle", timeline:"Zeitleiste", calendar:"Kalender", list:"Liste", gallery:"Galerie"};
   const uid = () => Math.random().toString(36).slice(2,10);
-  const normView = v => { v.name ||= VIEWTYPES[v.view] || "Ansicht"; v.filters ||= []; v.calc ||= {}; v.hidden ||= []; v.dir ||= 1; v.filter ??= ""; v.sort ??= null; v.group ??= null; v.cardProps ??= null; v.dateCol ??= null; v.zoom ||= "year"; v.tgroup ??= null; v.tcollapsed ||= []; return v; };
+  const normView = v => { v.name ||= VIEWTYPES[v.view] || "Ansicht"; v.filters ||= []; v.calc ||= {}; v.hidden ||= []; v.dir ||= 1; v.filter ??= ""; v.sort ??= null; v.group ??= null; v.cardProps ??= null; v.dateCol ??= null; v.zoom ||= "year"; v.tgroup ??= null; v.tcollapsed ||= []; v.subOpen ||= []; return v; };
   META.dbviews ||= {};
   let views = META.dbviews[p.id];
   const oldPlace = META.views[viewKey] || {};
@@ -2458,6 +2524,23 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   LIVE.push(inst);
 
   const comp = c => isRel(c) || isCalc(c);
+  // Unteraufgaben: Verknüpfung der Datenbank mit sich selbst („Übergeordnet“)
+  const subCol = () => p.schema.find(c=>c.type==="relation" && c.db===p.id && !c.mirror && (c.sub || /übergeordnet|parent/i.test(c.name))) || null;
+  const setupSub = async () => {
+    const uniq = n => { let x = n, i = 2; while (p.schema.some(c=>c.name===x)) x = n+" "+(i++); return x; };
+    const par = uniq("Übergeordnet"), kids = uniq("Unteraufgaben"), prog = uniq("Fortschritt");
+    p.schema.push({name:par, type:"relation", db:p.id, sub:true}, {name:kids, type:"relation", db:p.id, mirror:par},
+                  {name:prog, type:"rollup", rel:kids, calc:"progress"});
+    await saveSchema(); DBC[p.id] = p; draw();
+    toast("Unteraufgaben eingerichtet: „⋯“ an einem Eintrag → „Unteraufgabe hinzufügen“");
+  };
+  const addSub = async r => {
+    const sc = subCol(); if (!sc) return;
+    const row = await createRow("", {[sc.name]: r.id});
+    if (!st.subOpen.includes(r.id)) st.subOpen.push(r.id);
+    persist();
+    if (st.view==="table"){ editRowId = row.id; draw(); } else { draw(); openPeek(row.id); }
+  };
   const sortedRows = () => {
     let rows = p.rows.slice().sort((a,b)=>(a.sort-b.sort) || String(a.title).localeCompare(String(b.title),"de"));
     const q = (st.filter||"").trim().toLowerCase();
@@ -2573,7 +2656,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     for (const t of p.templates){
       pop.append(h("div",{class:"tplrow"},
         h("button",{class:"item", onclick:()=>newFrom(t)},
-          h("span",{class:"tt"}, (t.icon ? t.icon+" " : "")+(t.title || "Ohne Titel")),
+          h("span",{class:"tt"}, (t.icon ? t.icon+" " : "")+(t.title || "Ohne Titel")+(META.recur?.[t.id] ? " 🔁" : "")),
           def?.id===t.id ? h("span",{class:"tdef"},"Standard") : null),
         h("button",{class:"tmore", title:"Vorlage bearbeiten …", onclick:e=>{ e.stopPropagation(); tplItemMenu(t, e.currentTarget); }},"⋯")));
     }
@@ -2752,6 +2835,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       h("button",{class:"item", onclick:()=>{closePop(); openPeek(r.id);}},"◧ In Seitenleiste öffnen"),
       h("button",{class:"item", onclick:()=>{closePop(); go(r.id);}},"⤢ Als ganze Seite öffnen"),
       h("button",{class:"item", onclick:async()=>{ closePop(); await api("POST",`/api/duplicate/${r.id}`); inst.reload(); }},"⧉ Duplizieren"),
+      subCol() ? h("button",{class:"item", onclick:()=>{ closePop(); addSub(r); }},"↳ Unteraufgabe hinzufügen") : null,
       h("hr"),
       h("button",{class:"item danger", onclick:()=>{ closePop(); removeRow(r); }},"🗑 Löschen"));
   };
@@ -2809,12 +2893,15 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     tr.append(h("th",{title:"Spalte hinzufügen", style:"width:36px;text-align:center", onclick:e=>addColumn(e.currentTarget)},"＋"));
     t.append(h("thead",{},tr));
     const tb = h("tbody");
-    const mkRow = r => {
+    const nestPre = nest => !nest ? [] : [h("span",{style:`display:inline-block;flex:none;width:${nest.depth*20}px`}),
+      nest.n ? h("button",{class:"subtg", title:(nest.open ? "Unteraufgaben zuklappen" : "Unteraufgaben aufklappen")+` (${nest.n})`, onclick:e=>{ e.stopPropagation(); nest.toggle(); }}, nest.open ? "▼" : "▶")
+             : h("span",{class:"subtg"})];
+    const mkRow = (r, nest) => {
       const row = h("tr");
       for (const col of p.schema){
         const cell = h("div",{class:"cell"});
         if (col.type==="title"){
-          const drawT = () => { cell.innerHTML=""; cell.append(...(r.icon?[h("span",{},r.icon)]:[]), h("span",{class:"tt"}, r.title || h("span",{style:"color:var(--muted);font-weight:400"},"Ohne Titel")), h("button",{class:"open", onclick:e=>{e.stopPropagation(); openPeek(r.id);}},"ÖFFNEN")); };
+          const drawT = () => { cell.innerHTML=""; cell.append(...nestPre(nest), ...(r.icon?[h("span",{},r.icon)]:[]), h("span",{class:"tt"}, r.title || h("span",{style:"color:var(--muted);font-weight:400"},"Ohne Titel")), h("button",{class:"open", onclick:e=>{e.stopPropagation(); openPeek(r.id);}},"ÖFFNEN")); };
           drawT();
           cell.onclick = e => { if (e.target.closest("button")) return; const tt=$(".tt",cell); if(!tt) return; editCell(tt, {type:"title"}, r.title, async val => { r.title = val; r.props[col.name]=val; if (p.schema.some(isCalc)) draw(); else drawT(); await save(r.id,{title:val}); }, p, drawT); };
           if (editRowId===r.id) setTimeout(()=>{ editRowId=null; cell.click(); },0);
@@ -2859,6 +2946,23 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
         for (const r of g.rows) tb.append(mkRow(r));
         if (hasCalc) tb.append(calcRow(g.rows, "grpcalc"));
       }
+    } else if (subCol()){
+      const sc = subCol(), inView = new Map(rows.map(r=>[r.id, r])), kids = new Map(), top = [];
+      const parentOf = r => relIds(r.props[sc.name]).find(id=>id!==r.id && inView.has(id));
+      for (const r of rows){
+        // Ringverweise abfangen: wer über seine Eltern wieder bei sich landet, steht oben
+        let pid = parentOf(r), cyc = false; const seen = new Set([r.id]);
+        while (pid){ if (seen.has(pid)){ cyc = true; break; } seen.add(pid); pid = parentOf(inView.get(pid)); }
+        const pr = !cyc && parentOf(r);
+        if (pr){ if (!kids.has(pr)) kids.set(pr, []); kids.get(pr).push(r); } else top.push(r);
+      }
+      const walk = (r, depth) => {
+        const ks = kids.get(r.id) || [], isOpen = st.subOpen.includes(r.id);
+        tb.append(mkRow(r, {depth, n:ks.length, open:isOpen, toggle:()=>{
+          st.subOpen = isOpen ? st.subOpen.filter(x=>x!==r.id) : [...st.subOpen, r.id]; persist(); draw(); }}));
+        if (isOpen) for (const k of ks) walk(k, depth+1);
+      };
+      for (const r of top) walk(r, 0);
     } else for (const r of rows) tb.append(mkRow(r));
     t.append(tb);
     // Fußzeile mit Berechnungen (Summe, Anzahl, % angehakt …) über die gerade sichtbaren Einträge
@@ -2888,7 +2992,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     if (col.type==="checkbox") return (isOn(v)?"Yes":"No")===g;
     if (col.type==="multi_select") return g==="" ? !v : v.split(",").map(s=>s.trim()).includes(g);
     return v===g; };
-  const defaultCardProps = col => p.schema.filter(c=>c.name!==col.name && ["select","multi_select","date"].includes(c.type)).map(c=>c.name);
+  const defaultCardProps = col => p.schema.filter(c=>c.name!==col.name && (["select","multi_select","date"].includes(c.type) || (c.type==="rollup" && c.calc==="progress"))).map(c=>c.name);
 
   const drawBoard = () => {
     const col = groupCol();
@@ -3167,7 +3271,8 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       as.onchange = () => { META.dbs[p.id] = {...(META.dbs[p.id]||{}), autoDate: as.value || false}; saveMeta("dbs"); };
       pop.append(h("label",{},"Datum bei neuen Einträgen"), as);
     }
-    pop.append(h("hr"), h("button",{class:"item", onclick:e=>{ addColumn(anchor); }},"＋ Eigenschaft hinzufügen"));
+    pop.append(h("hr"), h("button",{class:"item", onclick:e=>{ addColumn(anchor); }},"＋ Eigenschaft hinzufügen"),
+      subCol() ? null : h("button",{class:"item", title:"Legt „Übergeordnet“, „Unteraufgaben“ und „Fortschritt“ an", onclick:()=>{ closePop(); setupSub(); }},"↳ Unteraufgaben einrichten"));
   };
 
   // Zusatzeinstellungen für Verknüpfung, Rollup und Formel (beim Anlegen und Bearbeiten einer Spalte)
@@ -3386,6 +3491,173 @@ async function openPeek(id){
 }
 function closePeek(){ if (!PEEK) return; flushAll(); const dbId = PEEK.parent_id; PEEK = null; $("#peek").classList.remove("on"); $("#peek").innerHTML=""; notifyDb(dbId); }
 document.addEventListener("mousedown", e => { if (PEEK && !e.target.closest("#peek, .pop, .overlay, #toast, .cardx, .open, #lightbox")) closePeek(); });
+
+// ===========================================================================
+// Wiederkehrende Einträge (Einstellung an der Vorlage, angelegt vom Server)
+// ===========================================================================
+const WD = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+function recurEditor(p){
+  META.recur ||= {};
+  const box = h("div",{class:"recur"});
+  const store = async () => {
+    draw();
+    try {
+      await api("PUT","/api/meta/recur", META.recur);
+      const r = await api("POST","/api/recur/run");
+      if (r.made){ toast(r.made===1 ? "Der heute fällige Eintrag wurde angelegt." : r.made+" fällige Einträge angelegt."); notifyDb(p.parent_id); }
+    } catch(e){ toast(e.message); }
+  };
+  const draw = () => {
+    const c = META.recur[p.id] || null;
+    box.innerHTML = "";
+    const freq = h("select",{}, [["","Nicht wiederholen"],["daily","Täglich"],["weekly","Wöchentlich"],["monthly","Monatlich"]]
+      .map(([k,l])=>h("option",{value:k, selected:(c?.freq||"")===k}, l)));
+    freq.onchange = () => {
+      if (!freq.value){ delete META.recur[p.id]; return store(); }
+      const now = new Date();
+      META.recur[p.id] = {...(c||{}), freq:freq.value, since:c?.since || isoOf(now),
+        days:c?.days?.length ? c.days : [(now.getDay()+6)%7+1], mday:c?.mday || now.getDate()};
+      store();
+    };
+    box.append(h("span",{},"🔁 Wiederholen:"), freq);
+    if (c?.freq==="weekly") box.append(h("span",{class:"wdays"}, WD.map((n,i)=>{ const on = c.days.includes(i+1);
+      return h("button",{class:"wd"+(on?" on":""), title:on ? "Abwählen" : "Auswählen", onclick:()=>{
+        c.days = on ? c.days.filter(x=>x!==i+1) : [...c.days, i+1].sort((a,b)=>a-b);
+        if (!c.days.length) c.days = [i+1];
+        store(); }}, n); })));
+    if (c?.freq==="monthly"){
+      const inp = h("input",{type:"number", min:"1", max:"31", value:String(c.mday||1), style:"width:58px"});
+      inp.onchange = () => { c.mday = Math.max(1, Math.min(31, parseInt(inp.value,10)||1)); store(); };
+      box.append(h("span",{},"am"), inp, h("span",{},". des Monats (gibt es den Tag nicht, am Monatsletzten)"));
+    }
+    if (c?.freq) box.append(h("div",{class:"hint", style:"margin:0;flex-basis:100%"},
+      "Am fälligen Tag legt die App aus dieser Vorlage einen Eintrag an: Titel ist der Name der Vorlage mit Datum, die Datumsspalte bekommt diesen Tag. "
+      + "Das passiert, sobald die App läuft. War sie mehrere Tage aus, kommt nur der zuletzt fällige Eintrag dazu."));
+  };
+  draw();
+  return box;
+}
+
+// ===========================================================================
+// Heute-Übersicht: Fälliges aus allen Datenbanken
+// ===========================================================================
+const DATE_SKIP_RE = /erstellt|created|geändert|bearbeitet|edited|letzte|last/i;
+const DATE_DUE_RE = /fällig|faellig|due|deadline|frist|termin/i;
+function agendaCol(d, cfg){
+  const dates = d.schema.filter(c=>c.type==="date");
+  return dates.find(c=>c.name===cfg?.col)
+    || dates.find(c=>DATE_DUE_RE.test(c.name))
+    || dates.find(c=>!DATE_SKIP_RE.test(c.name)) || null;
+}
+function openToday(){ closePeek(); document.body.classList.remove("side-open"); if (location.hash==="#/heute") renderToday(); else location.hash = "#/heute"; }
+let TODAY_TOKEN = 0;
+async function renderToday(){
+  flushAll(); PENDING.clear();
+  const token = ++TODAY_TOKEN;
+  CURRENT = null; renderTree();
+  const cr = $("#crumbs"); cr.innerHTML = ""; cr.append(h("span",{class:"crumb"},"☀️ Heute"));
+  $("#btnFav").style.display="none"; $("#btnMore").style.display="none";
+  document.title = "Heute – Notion Lokal";
+  let dbs;
+  try { dbs = await api("GET","/api/agenda"); } catch(e){ toast(e.message); return; }
+  if (token !== TODAY_TOKEN) return;
+  META.agenda ||= {};
+  const today = dayStart(new Date()), in7 = plusDays(today, 7);
+  const over = [], now = [], week = [];
+  for (const d of dbs){
+    const cfg = META.agenda[d.id] || {};
+    if (cfg.off) continue;
+    const col = agendaCol(d, cfg); if (!col) continue;
+    const dc = doneCol(d.schema);
+    for (const r of d.rows){
+      const rg = dateRange(r.props?.[col.name]); if (!rg) continue;
+      if (dc && isDoneRow(r, d.schema)) continue;
+      const it = {r, d, col, rg, dc};
+      if (rg.end < today){ if (dc) over.push(it); }      // Überfälliges nur, wenn die Datenbank „erledigt“ kennt
+      else if (rg.start <= today) now.push(it);
+      else if (rg.start <= in7) week.push(it);
+    }
+  }
+  const byDate = (a,b) => (a.rg.start-b.rg.start) || (a.r.sort||0)-(b.r.sort||0) || String(a.r.title).localeCompare(String(b.r.title),"de");
+  over.sort(byDate); now.sort(byDate); week.sort(byDate);
+
+  // Neu zeichnen, wenn ein Eintrag (z. B. in der Seitenleiste) geändert wurde
+  const again = debounce(()=>{ if (location.hash==="#/heute" || (META.home==="heute" && !/^#\/(p\/|alle)/.test(location.hash))) renderToday(); }, 300);
+  LIVE = dbs.map(d=>({p:d, reload:again}));
+
+  const v = $("#view"); v.innerHTML = "";
+  const page = h("div",{class:"page today"}); v.append(page);
+  const isHome = META.home==="heute";
+  page.append(h("div",{class:"ag-head"}, h("h1",{class:"title"},"☀️ Heute"),
+    h("span",{class:"ag-date"}, new Date().toLocaleDateString("de-DE",{weekday:"long", day:"numeric", month:"long", year:"numeric"}))));
+  page.append(h("div",{class:"ag-btns"},
+    h("button",{class:"btn", onclick:()=>{ META.home = isHome ? null : "heute"; saveMeta("home"); toast(isHome ? "Startseite entfernt" : "„Heute“ ist jetzt deine Startseite"); renderToday(); }},
+      isHome ? "🏠 Nicht mehr Startseite" : "🏠 Als Startseite festlegen")));
+
+  const markDone = async (it, row) => {
+    const {r, dc} = it, prev = r.props[dc.name] ?? "";
+    r.props[dc.name] = doneValue(dc); row.classList.add("gone");
+    if (!await save(r.id, {props:r.props})){ r.props[dc.name] = prev; row.classList.remove("gone"); return; }
+    setTimeout(()=>row.remove(), 400);
+    toast("„"+(r.title||"Ohne Titel")+"“ erledigt", "Rückgängig", async()=>{ r.props[dc.name] = prev; await save(r.id, {props:r.props}); renderToday(); });
+  };
+  const toToday = async it => {
+    const {r, col, rg} = it, raw = String(r.props[col.name]||"");
+    const p0 = parseISO(raw.split("→")[0]), t0 = p0?.time ? " "+p0.time : "";
+    const len = Math.round((rg.end-rg.start)/864e5);
+    r.props[col.name] = isoOf(today)+t0 + (raw.includes("→") ? " → "+isoOf(plusDays(today, len)) : "");
+    if (await save(r.id, {props:r.props})) renderToday();
+  };
+  const item = (it, isOver) => {
+    const {r, d, col, dc} = it;
+    const sc = d.schema.find(c=>c.type==="select" && /status/i.test(c.name)) || (dc?.type==="select" ? dc : null);
+    const sv = sc ? String(r.props?.[sc.name]||"").trim() : "";
+    const row = h("div",{class:"ag-row"});
+    row.append(...[
+      dc ? h("input",{type:"checkbox", class:"cb", title:"Als erledigt markieren", onclick:e=>{ e.stopPropagation(); markDone(it, row); }}) : h("span",{class:"ag-dot"}),
+      h("button",{class:"ag-t", title:"Öffnen", onclick:()=>openPeek(r.id)}, (r.icon ? r.icon+" " : "")+(r.title||"Ohne Titel")),
+      sv ? tagEl(sc, sv) : null,
+      h("span",{class:"ag-db", title:"Datenbank öffnen", onclick:()=>go(d.id)}, (d.icon||"🗃️")+" "+(d.title||"Ohne Titel")),
+      dateEl(r.props[col.name]),
+      isOver ? h("button",{class:"btn ag-mv", title:"Datum auf heute verschieben", onclick:()=>toToday(it)},"Auf heute") : null].filter(x=>x!=null));
+    return row;
+  };
+  const section = (cls, title, list, empty, fn) => {
+    page.append(h("div",{class:"ag-sec "+cls}, title, h("span",{class:"n"}, list.length ? String(list.length) : "")));
+    if (!list.length){ page.append(h("div",{class:"ag-empty"}, empty)); return; }
+    fn ? fn(list) : list.forEach(it=>page.append(item(it, cls==="over")));
+  };
+  if (over.length) section("over","Überfällig", over, "");
+  section("now","Heute", now, over.length ? "Für heute ist sonst nichts eingetragen." : "Für heute steht nichts an. 🎉");
+  section("week","Nächste 7 Tage", week, "Nichts geplant.", list => {
+    let last = "";
+    for (const it of list){
+      const k = isoOf(it.rg.start);
+      if (k !== last){ last = k; const tm = +it.rg.start === +plusDays(today,1);
+        page.append(h("div",{class:"ag-day"}, tm ? "Morgen" : it.rg.start.toLocaleDateString("de-DE",{weekday:"long", day:"numeric", month:"long"}))); }
+      page.append(item(it, false));
+    }
+  });
+
+  // Einstellungen: welche Datenbanken, welche Datumsspalte
+  const det = h("details",{class:"ag-set"}, h("summary",{},"Welche Datenbanken erscheinen hier?"));
+  if (!dbs.length) det.append(h("p",{class:"hint"},"Noch keine Datenbank mit einer Datumsspalte."));
+  else {
+    const tbl = h("table");
+    for (const d of dbs){
+      const cfg = META.agenda[d.id] || {}, col = agendaCol(d, cfg), dc = doneCol(d.schema);
+      const on = h("input",{type:"checkbox", checked:!cfg.off});
+      on.onchange = () => { META.agenda[d.id] = {...cfg, off:!on.checked}; saveMeta("agenda"); renderToday(); };
+      const sel = h("select",{}, d.schema.filter(c=>c.type==="date").map(c=>h("option",{value:c.name, selected:col && c.name===col.name}, c.name)));
+      sel.onchange = () => { META.agenda[d.id] = {...cfg, col:sel.value}; saveMeta("agenda"); renderToday(); };
+      tbl.append(h("tr",{}, h("td",{style:"width:24px"}, on), h("td",{}, (d.icon||"🗃️")+" "+(d.title||"Ohne Titel")),
+        h("td",{}, sel),
+        h("td",{class:"hint", style:"margin:0"}, dc ? "Erledigt über „"+dc.name+"“" : "Keine Erledigt-Spalte: Überfälliges wird nicht gezeigt")));
+    }
+    det.append(tbl, h("p",{class:"hint"},"Als erledigt gilt ein Eintrag mit angehakter Checkbox namens „Erledigt“ oder „Done“ oder mit einem Status wie „Fertig“, „Erledigt“ oder „Done“. Erledigtes erscheint hier nicht."));
+  }
+  page.append(det);
+}
 
 // ===========================================================================
 // Seitenverlauf: frühere Fassungen ansehen, vergleichen, wiederherstellen
@@ -3645,7 +3917,8 @@ $("#btnTrash").onclick = openTrash;
 $("#btnNewPage").onclick = () => newPage(null);
 $("#btnNewDb").onclick = () => newPage(null, "database");
 $("#btnMore").onclick = moreMenu;
-$("#homeBtn").onclick = () => { closePeek(); if (META.home && NODE[META.home]) go(META.home); else location.hash = "#/alle"; };
+$("#homeBtn").onclick = () => { closePeek(); if (META.home==="heute") openToday(); else if (META.home && NODE[META.home]) go(META.home); else location.hash = "#/alle"; };
+$("#btnToday").onclick = openToday;
 // ---- Updates ----------------------------------------------------------------
 async function checkUpdate(manual){
   const btn = $("#btnUpdate");
