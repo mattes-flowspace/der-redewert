@@ -57,7 +57,7 @@ SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS pages (
     id        TEXT PRIMARY KEY,
     parent_id TEXT,
-    kind      TEXT NOT NULL DEFAULT 'page',   -- page | database | row
+    kind      TEXT NOT NULL DEFAULT 'page',   -- page | database | row | template
     title     TEXT NOT NULL DEFAULT '',
     icon      TEXT NOT NULL DEFAULT '',
     content   TEXT NOT NULL DEFAULT '',       -- Markdown
@@ -170,7 +170,23 @@ def connect():
     con.execute("PRAGMA journal_mode=DELETE")
     con.execute("PRAGMA foreign_keys=ON")
     con.executescript(SCHEMA_SQL)
+    _migrate(con)
     return con
+
+
+_migrated = False
+
+
+def _migrate(con):
+    """Spalten nachrüsten, die es in älteren Datenbanken noch nicht gibt."""
+    global _migrated
+    if _migrated:
+        return
+    cols = {r[1] for r in con.execute("PRAGMA table_info(pages)")}
+    if "cover" not in cols:
+        con.execute("ALTER TABLE pages ADD COLUMN cover TEXT NOT NULL DEFAULT ''")
+        con.commit()
+    _migrated = True
 
 
 def new_id():
@@ -184,6 +200,7 @@ def row_to_page(r, full=True):
         "kind": r["kind"],
         "title": r["title"],
         "icon": r["icon"],
+        "cover": r["cover"] if "cover" in r.keys() else "",
         "sort": r["sort"],
         "created": r["created"],
         "updated": r["updated"],
@@ -744,7 +761,7 @@ def safe_name(s):
 
 def export_all(con, dest):
     os.makedirs(dest, exist_ok=True)
-    rows = [row_to_page(r) for r in con.execute("SELECT * FROM pages WHERE deleted=0")]
+    rows = [row_to_page(r) for r in con.execute("SELECT * FROM pages WHERE deleted=0 AND kind!='template'")]
     by_parent = {}
     for p in rows:
         by_parent.setdefault(p["parent_id"], []).append(p)
@@ -1087,6 +1104,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(lock_status())
             if url.path == "/api/batch":
                 return self.api_batch(self._jbody())
+            if url.path.startswith("/api/from-template/"):
+                return self.api_from_template(url.path.split("/")[3], self._jbody())
             if url.path.startswith("/api/duplicate/"):
                 return self.api_duplicate(url.path.split("/")[3])
             if url.path.startswith("/api/db/"):
@@ -1136,7 +1155,7 @@ class Handler(BaseHTTPRequestHandler):
     def api_tree(self):
         con = connect()
         rows = con.execute(
-            "SELECT id,parent_id,kind,title,icon,sort FROM pages WHERE deleted=0 AND kind!='row' "
+            "SELECT id,parent_id,kind,title,icon,sort FROM pages WHERE deleted=0 AND kind NOT IN ('row','template') "
             "ORDER BY sort, title COLLATE NOCASE").fetchall()
         self._json([dict(r) for r in rows])
 
@@ -1161,18 +1180,26 @@ class Handler(BaseHTTPRequestHandler):
                 "SELECT * FROM pages WHERE parent_id=? AND kind='row' AND deleted=0 ORDER BY sort, title",
                 (pid,))]
             for x in page["rows"]:
-                x["has_content"] = bool((x.pop("content", "") or "").strip())
-        if page["kind"] == "row":
+                c = x.pop("content", "") or ""
+                x["has_content"] = bool(c.strip())
+                # erstes Bild im Inhalt als Vorschau für die Galerie
+                m = re.search(r"!\[[^\]]*\]\(([^)\s]+)", c)
+                x["thumb"] = m.group(1) if m else ""
+            page["templates"] = [dict(x) for x in con.execute(
+                "SELECT id,title,icon FROM pages WHERE parent_id=? AND kind='template' AND deleted=0 "
+                "ORDER BY sort, title COLLATE NOCASE", (pid,))]
+        if page["kind"] in ("row", "template"):
             db = con.execute("SELECT schema,title FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
             page["db_schema"] = json.loads(db["schema"]) if db else []
+            page["db_title"] = db["title"] if db else ""
         page["children"] = [dict(x) for x in con.execute(
-            "SELECT id,title,icon,kind FROM pages WHERE parent_id=? AND kind!='row' AND deleted=0 "
+            "SELECT id,title,icon,kind FROM pages WHERE parent_id=? AND kind NOT IN ('row','template') AND deleted=0 "
             "ORDER BY sort, title COLLATE NOCASE", (pid,))]
         self._json(page)
 
     def api_create(self, b):
         kind = b.get("kind", "page")
-        if kind not in ("page", "database", "row"):
+        if kind not in ("page", "database", "row", "template"):
             return self._err(400, "Ungültiger Typ")
         pid, ts = new_id(), now()
         schema = b.get("schema") or ([{"name": "Name", "type": "title"},
@@ -1196,7 +1223,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _apply_update(self, con, pid, b):
         fields, vals = [], []
-        for k in ("title", "icon", "content", "parent_id", "sort"):
+        for k in ("title", "icon", "cover", "content", "parent_id", "sort"):
             if k in b:
                 fields.append(f"{k}=?")
                 vals.append(b[k])
@@ -1221,7 +1248,7 @@ class Handler(BaseHTTPRequestHandler):
         con.execute(f"UPDATE pages SET {', '.join(fields)} WHERE id=?", (*vals, pid))
         # Titel einer Datenbankzeile mit Titelspalte synchron halten
         r = con.execute("SELECT kind,parent_id,title,props FROM pages WHERE id=?", (pid,)).fetchone()
-        if r and r["kind"] == "row":
+        if r and r["kind"] in ("row", "template"):
             db = con.execute("SELECT schema FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
             schema = json.loads(db["schema"]) if db else []
             tcol = next((c["name"] for c in schema if c["type"] == "title"), None)
@@ -1264,18 +1291,55 @@ class Handler(BaseHTTPRequestHandler):
             nid, ts = new_id(), now()
             title = (r["title"] or "Ohne Titel") + " (Kopie)"
             props = json.loads(r["props"] or "{}")
-            if r["kind"] == "row":
+            if r["kind"] in ("row", "template"):
                 db = con.execute("SELECT schema FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
                 tcol = next((c["name"] for c in json.loads(db["schema"]) if c["type"] == "title"), None) if db else None
                 if tcol:
                     props[tcol] = title
             con.execute(
-                "INSERT INTO pages (id,parent_id,kind,title,icon,content,props,schema,sort,created,updated) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                (nid, r["parent_id"], r["kind"], title, r["icon"], r["content"],
+                "INSERT INTO pages (id,parent_id,kind,title,icon,cover,content,props,schema,sort,created,updated) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (nid, r["parent_id"], r["kind"], title, r["icon"], r["cover"], r["content"],
                  json.dumps(props, ensure_ascii=False), r["schema"], r["sort"] + 0.5, ts, ts))
             con.commit()
         self._json({"id": nid})
+
+    def api_from_template(self, tid, b):
+        """Neuen Eintrag aus einer Vorlage anlegen: Icon, Cover, Eigenschaften, Inhalt und Dateien übernehmen."""
+        with _write_lock:
+            con = connect()
+            t = con.execute("SELECT * FROM pages WHERE id=? AND kind='template' AND deleted=0", (tid,)).fetchone()
+            if not t:
+                return self._err(404, "Vorlage nicht gefunden")
+            db = con.execute("SELECT schema FROM pages WHERE id=?", (t["parent_id"],)).fetchone()
+            schema = json.loads(db["schema"]) if db else []
+            tcol = next((c["name"] for c in schema if c["type"] == "title"), None)
+            nid, ts = new_id(), now()
+            today = dt.date.today()
+            title = (b.get("title") or "").strip()
+            props = json.loads(t["props"] or "{}")
+            for k, v in list(props.items()):
+                if isinstance(v, str) and "@heute" in v:
+                    props[k] = v.replace("@heute", today.isoformat())
+            props.update(b.get("props") or {})
+            if tcol:
+                props[tcol] = title
+            swap = lambda s: (s or "").replace(f"/dateien/{tid}/", f"/dateien/{nid}/")  # noqa: E731
+            content = swap(t["content"]).replace("@heute", today.strftime("%d.%m.%Y"))
+            mx = con.execute("SELECT COALESCE(MAX(sort),0)+1 FROM pages WHERE parent_id IS ? AND kind='row'",
+                             (t["parent_id"],)).fetchone()[0]
+            con.execute(
+                "INSERT INTO pages (id,parent_id,kind,title,icon,cover,content,props,schema,sort,created,updated) "
+                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (nid, t["parent_id"], "row", title, t["icon"], swap(t["cover"]), content,
+                 json.dumps(props, ensure_ascii=False), "[]", mx, ts, ts))
+            con.commit()
+            src = os.path.join(FILES_DIR, tid)
+            if os.path.isdir(src):
+                shutil.copytree(src, os.path.join(FILES_DIR, nid), dirs_exist_ok=True)
+        m = re.search(r"!\[[^\]]*\]\(([^)\s]+)", content)
+        self._json({"id": nid, "title": title, "icon": t["icon"], "cover": swap(t["cover"]), "props": props,
+                    "sort": mx, "has_content": bool(content.strip()), "thumb": m.group(1) if m else ""})
 
     def api_db_op(self, db_id, b):
         """Spalten/Optionen umbenennen oder löschen – inklusive aller Einträge, in einer Transaktion."""
@@ -1286,7 +1350,7 @@ class Handler(BaseHTTPRequestHandler):
             if not db:
                 return self._err(404, "Datenbank nicht gefunden")
             schema = json.loads(db["schema"])
-            rows = con.execute("SELECT id,props FROM pages WHERE parent_id=? AND kind='row'", (db_id,)).fetchall()
+            rows = con.execute("SELECT id,props FROM pages WHERE parent_id=? AND kind IN ('row','template')", (db_id,)).fetchall()
 
             def save_rows(fn):
                 for r in rows:
@@ -1403,7 +1467,7 @@ class Handler(BaseHTTPRequestHandler):
         con = connect()
         like = f"%{q}%"
         rows = con.execute(
-            "SELECT id,title,icon,kind,parent_id,content,props FROM pages WHERE deleted=0 AND "
+            "SELECT id,title,icon,kind,parent_id,content,props FROM pages WHERE deleted=0 AND kind!='template' AND "
             "(title LIKE ? OR content LIKE ? OR props LIKE ?) "
             "ORDER BY (title LIKE ?) DESC, updated DESC LIMIT 60",
             (like, like, like, like)).fetchall()

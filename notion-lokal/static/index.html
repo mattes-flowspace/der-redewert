@@ -554,6 +554,79 @@ textarea.editor{font:13.5px/1.7 var(--mono);padding:18px}
   .col{width:80vw}
   #side{width:84vw;min-width:0}
 }
+/* Gespeicherte Ansichten, Filter, Summen */
+.tab{position:relative;white-space:nowrap;flex:none}
+.tab .fdot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-left:6px;vertical-align:2px}
+.tab.add{color:var(--muted);padding:7px 12px 7px 2px;font-family:var(--mono);font-size:15px;line-height:1}
+.split{display:inline-flex;gap:1px}
+.split .btn.caret{padding:5px 8px;font-size:10px}
+.viewpop{min-width:300px;max-width:380px}
+.frow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;padding:6px 8px;border:1px solid var(--line);border-radius:2px;margin:0 8px 6px}
+.pop .frow select,.pop .frow input:not([type=checkbox]){width:auto;flex:1;min-width:90px;margin:0}
+.frow .fx{width:22px;height:22px;color:var(--muted);flex:none;padding:0;line-height:1}
+.frow .fx:hover{color:var(--danger)}
+.fopts{flex-basis:100%;display:flex;flex-direction:column}
+.pop .fopts label.chk{padding:2px 2px}
+.pop .filters>.item{color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+table.db td .cell.num{text-align:right}
+table.db tfoot td{border-bottom:0}
+table.db td.calc{padding:8px 10px 8px 0;text-align:right;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap}
+table.db td.calc:not(.on) .cl{opacity:0;transition:opacity .12s}
+table.db tfoot tr:hover td.calc .cl{opacity:1}
+table.db tfoot tr:hover td{background:none}
+table.db td.calc:hover{color:var(--accent)}
+table.db td.calc .cv{color:var(--text);font-size:14px;letter-spacing:0;text-transform:none;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* Vorlagen */
+.tplpop{min-width:280px}
+.tplrow{display:flex;align-items:center;gap:2px}
+.tplrow .item{flex:1;min-width:0}
+.tplpop .tt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tplpop .tdef{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);flex:none}
+.tplrow .tmore{width:26px;height:26px;color:var(--muted);flex:none;opacity:0;padding:0}
+.tplrow:hover .tmore,.tplrow .tmore:focus-visible{opacity:1}
+.tplrow .tmore:hover{color:var(--text)}
+@media (hover:none){ .tplrow .tmore{opacity:1} }
+.tpl-banner{display:flex;flex-direction:column;gap:3px;border-left:2px solid var(--accent);background:var(--callout);padding:12px 16px;margin:0 0 20px;font-size:13.5px}
+
+/* Galerie */
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--gw,230px),1fr));gap:16px;padding:4px 0}
+.gallery.g-s{--gw:170px}.gallery.g-l{--gw:320px}
+.gcard{border:1px solid var(--line);border-radius:3px;background:var(--card);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;min-width:0}
+.gcard:hover{border-color:var(--text)}
+.gcover{aspect-ratio:16/9;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:34px}
+.gcover.noimg{aspect-ratio:auto;height:64px;background:var(--hover)}
+.g-l .gcover.noimg{height:96px}
+.gbody{padding:10px 12px 11px;display:flex;flex-direction:column;gap:7px;font-size:14px;line-height:1.4}
+.gt{font-weight:500;word-break:break-word}
+.gm{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.gm .tag{margin:0}
+.gcard.gnew{align-items:center;justify-content:center;color:var(--muted);min-height:96px;border-style:dashed;background:none;font-size:12px;letter-spacing:.04em}
+.gcard.gnew:hover{color:var(--accent);border-color:var(--accent)}
+
+/* Cover */
+.page-actions{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap}
+#peek .peek-body:hover .add-icon{opacity:1}
+.cover{height:min(28vh,260px);position:relative}
+.page.has-cover{padding-top:0}
+#peek .cover{margin:-28px -44px 0;height:170px}
+.has-cover>.page-actions{margin-top:-26px;position:relative;min-height:26px}
+.has-cover>.page-actions .add-icon{margin-top:34px}
+.cover-btns{position:absolute;right:16px;bottom:12px;display:flex;opacity:0;transition:opacity .15s;background:var(--card);border:1px solid var(--line);border-radius:3px}
+.cover:hover .cover-btns{opacity:1}
+.cover-btns button{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:5px 10px}
+.cover-btns button:hover{color:var(--text)}
+.coverpop{min-width:290px}
+.gradpick{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:4px 8px 8px}
+.gradpick button{height:32px;border-radius:2px;border:1px solid rgba(0,0,0,.1)}
+.gradpick button:hover{outline:1.5px solid var(--accent);outline-offset:1px}
+@media (max-width:760px){
+  .cover{height:150px}
+  #peek .cover{margin:-18px -18px 0}
+  .cover-btns{opacity:1}
+  .viewpop{max-width:92vw}
+}
 </style>
 </head>
 <body>
@@ -667,6 +740,119 @@ function dateEl(v){
   if (!parts.length) return null;
   const f = parts.map(fmtOne);
   return h("span",{class:"date "+f[f.length-1].cls}, f.map(x=>x.text).join(" → "));
+}
+const dayStart = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const plusDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+// Zeitraum eines Datumswerts ("2026-01-05", "2026-01-05 10:00", "2026-01-05 → 2026-01-09")
+function dateRange(v){
+  const parts = String(v||"").split("→").map(s=>parseISO(s.trim())).filter(Boolean);
+  if (!parts.length) return null;
+  const s = dayStart(parts[0].d), e = dayStart((parts[1]||parts[0]).d);
+  return e < s ? {start:s, end:s} : {start:s, end:e};
+}
+
+// ---- Zahlen -----------------------------------------------------------------
+function parseNum(v){   // versteht 1234,5 · 1.234,50 € · 1,234.50 · 12 %
+  let s = String(v ?? "").replace(/[^\d,.\-]/g,"");
+  if (!s || s==="-") return NaN;
+  const lc = s.lastIndexOf(","), ld = s.lastIndexOf(".");
+  if (lc>-1 && ld>-1) s = lc>ld ? s.replace(/\./g,"").replace(",",".") : s.replace(/,/g,"");
+  else if (lc>-1) s = /^-?\d{1,3}(,\d{3}){2,}$/.test(s) ? s.replace(/,/g,"") : s.replace(/,/g,".");
+  else if (ld>-1 && /^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g,"");
+  return parseFloat(s);
+}
+const NUMFORMATS = {"":"Wie eingegeben", number:"Zahl (1.234,5)", euro:"Euro (1.234,50 €)", percent:"Prozent (12 %)"};
+function fmtNum(n, format){
+  if (typeof n !== "number") n = parseNum(n);
+  if (isNaN(n)) return "";
+  if (format==="euro") return n.toLocaleString("de-DE",{style:"currency", currency:"EUR"});
+  if (format==="percent") return n.toLocaleString("de-DE",{maximumFractionDigits:2})+" %";
+  return n.toLocaleString("de-DE",{maximumFractionDigits:2});
+}
+
+// ---- Filter für Datenbank-Ansichten ------------------------------------------
+const FILTER_OPS = {
+  text:[["contains","enthält"],["not_contains","enthält nicht"],["empty","ist leer"],["not_empty","ist nicht leer"]],
+  number:[["eq","ist gleich"],["gt","größer als"],["lt","kleiner als"],["empty","ist leer"],["not_empty","ist nicht leer"]],
+  select:[["any","ist eines von"],["none","ist keines von"],["empty","ist leer"],["not_empty","ist nicht leer"]],
+  multi_select:[["any","enthält eines von"],["none","enthält keines von"],["empty","ist leer"],["not_empty","ist nicht leer"]],
+  checkbox:[["on","ist angehakt"],["off","ist nicht angehakt"]],
+  date:[["today","ist heute"],["past","liegt vor heute"],["future","liegt ab heute"],["this_week","diese Woche"],["this_month","diesen Monat"],["next7","in den nächsten 7 Tagen"],["empty","ist leer"],["not_empty","ist nicht leer"]],
+};
+const opsFor = t => FILTER_OPS[t] || FILTER_OPS.text;
+const cellRaw = (r, col) => col.type==="title" ? String(r.title||"") : String(r.props?.[col.name] ?? "");
+function matchFilter(r, f, schema){
+  const col = schema.find(c=>c.name===f.prop); if (!col) return true;
+  const v = cellRaw(r, col).trim(), q = String(f.value ?? "").toLowerCase();
+  const vals = Array.isArray(f.value) ? f.value : (f.value ? [f.value] : []);
+  const have = col.type==="multi_select" ? v.split(",").map(s=>s.trim()).filter(Boolean) : [v];
+  switch (f.op){
+    case "empty": return !v;
+    case "not_empty": return !!v;
+    case "contains": return v.toLowerCase().includes(q);
+    case "not_contains": return !v.toLowerCase().includes(q);
+    case "eq": return q==="" || (v!=="" && parseNum(v)===parseNum(f.value));
+    case "gt": return q==="" || (v!=="" && parseNum(v) > parseNum(f.value));
+    case "lt": return q==="" || (v!=="" && parseNum(v) < parseNum(f.value));
+    case "any": return !vals.length || have.some(x=>vals.includes(x));
+    case "none": return !have.some(x=>vals.includes(x));
+    case "on": return isOn(v);
+    case "off": return !isOn(v);
+  }
+  const rg = dateRange(v); if (!rg) return false;
+  const t = dayStart(new Date()), wk = plusDays(t, -((t.getDay()+6)%7));
+  switch (f.op){
+    case "today": return rg.start<=t && rg.end>=t;
+    case "past": return rg.end < t;
+    case "future": return rg.end >= t;
+    case "this_week": return rg.start < plusDays(wk,7) && rg.end >= wk;
+    case "this_month": return rg.start.getFullYear()===t.getFullYear() && rg.start.getMonth()===t.getMonth();
+    case "next7": return rg.start >= t && rg.start < plusDays(t,8);
+  }
+  return true;
+}
+
+// ---- Berechnungen unter der Tabelle ----------------------------------------
+const CALCS_ALL = [["","Keine"],["count","Anzahl"],["filled","Ausgefüllt"],["empty","Leer"],["pct_filled","% ausgefüllt"]];
+const CALCS_NUM = [["sum","Summe"],["avg","Durchschnitt"],["min","Minimum"],["max","Maximum"]];
+const CALCS_CB = [["","Keine"],["count","Anzahl"],["checked","Angehakt"],["unchecked","Nicht angehakt"],["pct_checked","% angehakt"]];
+const calcsFor = col => col.type==="checkbox" ? CALCS_CB : col.type==="number" ? [...CALCS_ALL, ...CALCS_NUM] : CALCS_ALL;
+function calcValue(rows, col, key){
+  const vals = rows.map(r=>cellRaw(r, col).trim()), n = vals.length;
+  const pct = x => n ? Math.round(x/n*100)+" %" : "–";
+  const filled = vals.filter(Boolean).length, on = vals.filter(isOn).length;
+  switch (key){
+    case "count": return String(n);
+    case "filled": return String(filled);
+    case "empty": return String(n-filled);
+    case "pct_filled": return pct(filled);
+    case "checked": return String(on);
+    case "unchecked": return String(n-on);
+    case "pct_checked": return pct(on);
+  }
+  const nums = vals.map(parseNum).filter(x=>!isNaN(x));
+  if (!nums.length) return "–";
+  const fmt = col.format || "number";
+  if (key==="sum") return fmtNum(nums.reduce((a,b)=>a+b,0), fmt);
+  if (key==="avg") return fmtNum(nums.reduce((a,b)=>a+b,0)/nums.length, fmt);
+  if (key==="min") return fmtNum(Math.min(...nums), fmt);
+  if (key==="max") return fmtNum(Math.max(...nums), fmt);
+  return "";
+}
+
+// ---- Cover ---------------------------------------------------------------
+const GRADIENTS = [
+  "linear-gradient(120deg,#f6d365,#fda085)", "linear-gradient(120deg,#a1c4fd,#c2e9fb)",
+  "linear-gradient(120deg,#d4fc79,#96e6a1)", "linear-gradient(120deg,#fbc2eb,#a6c1ee)",
+  "linear-gradient(120deg,#ff9a9e,#fecfef)", "linear-gradient(135deg,#667eea,#764ba2)",
+  "linear-gradient(135deg,#e4570f,#f4b183)", "linear-gradient(135deg,#1b1b1a,#77746d)",
+  "linear-gradient(120deg,#89f7fe,#66a6ff)", "linear-gradient(120deg,#e6e3dc,#f7dcc6)",
+];
+function coverCss(c){
+  if (!c) return "";
+  const g = String(c).match(/^gradient:(\d+)$/);
+  if (g) return `background:${GRADIENTS[+g[1] % GRADIENTS.length]}`;
+  return `background:var(--side) url("${String(safeUrl(c)).replace(/"/g,"%22")}") center/cover no-repeat`;
 }
 
 // ===========================================================================
@@ -1052,10 +1238,43 @@ async function openPage(id){
 function isWide(p){ return META.wide[p.id] ?? (p.kind==="database" || [...(p.content||"").matchAll(/^\s*\[[^\n]*\]\(#\/p\/([0-9a-zA-Z_-]+)\)\s*$/gm)].some(m=>NODE[m[1]]?.kind==="database")); }
 
 function renderPageInto(page, p, inPeek){
-  const afterChange = () => { if (p.kind==="row") notifyDb(p.parent_id); };
+  const afterChange = () => { if (p.kind==="row" || p.kind==="template") notifyDb(p.parent_id); };
+  if (p.kind==="template") page.append(h("div",{class:"tpl-banner"},
+    h("span",{}, "Du bearbeitest eine Vorlage für ", h("b",{}, p.db_title || "die Datenbank"), "."),
+    h("span",{class:"hint", style:"margin:0"}, "Neue Einträge übernehmen Icon, Cover, Eigenschaften und Inhalt. „@heute“ wird zum Datum des Anlegens.")));
   const iconEl = p.icon ? h("div",{class:"icon-big", title:"Icon ändern", onclick:e=>pickIcon(p, e.currentTarget, inPeek)}, p.icon)
                         : h("button",{class:"add-icon", onclick:e=>pickIcon(p, e.currentTarget, inPeek)},"Icon hinzufügen");
-  page.append(h("div",{}, iconEl));
+  // Cover: Farbverlauf, hochgeladenes Bild oder Bild-Link
+  const setCover = async c => {
+    closePop(); p.cover = c;
+    await save(p.id, {cover:c}); afterChange();
+    if (inPeek) openPeek(p.id); else openPage(p.id);
+  };
+  const coverMenu = anchor => {
+    const pop = popover(anchor);
+    pop.classList.add("coverpop");
+    const fileInp = h("input",{type:"file", accept:"image/*", style:"display:none"});
+    fileInp.onchange = async () => { const f = fileInp.files[0]; if (!f) return; try { setCover(await uploadFile(p.id, f)); } catch(e){ toast(e.message); } };
+    const url = h("input",{placeholder:"Bild-Link einfügen (https://…), Enter"});
+    url.onkeydown = e => { if (e.key==="Enter" && url.value.trim()) setCover(url.value.trim()); };
+    pop.append(h("label",{},"Farbverlauf"),
+      h("div",{class:"gradpick"}, GRADIENTS.map((g,i)=>h("button",{style:`background:${g}`, title:"Verlauf "+(i+1), onclick:()=>setCover("gradient:"+i)}))),
+      h("label",{},"Eigenes Bild"),
+      h("button",{class:"item", onclick:()=>fileInp.click()},"Bild hochladen …"), fileInp, url,
+      p.cover ? [h("hr"), h("button",{class:"item danger", onclick:()=>setCover("")},"Cover entfernen")] : null);
+  };
+  page.parentElement?.querySelectorAll(":scope>.cover").forEach(x=>x.remove());
+  page.classList.toggle("has-cover", !!p.cover);
+  if (p.cover){
+    const cv = h("div",{class:"cover", style:coverCss(p.cover)},
+      h("div",{class:"cover-btns"},
+        h("button",{onclick:e=>coverMenu(e.currentTarget)},"Cover ändern"),
+        h("button",{onclick:()=>setCover("")},"Entfernen")));
+    // auf ganzen Seiten über die volle Breite, in der Seitenleiste innerhalb des Inhalts
+    if (inPeek || !page.parentElement) page.append(cv); else page.parentElement.insertBefore(cv, page);
+  }
+  page.append(h("div",{class:"page-actions"}, iconEl,
+    p.cover ? null : h("button",{class:"add-icon", onclick:e=>coverMenu(e.currentTarget)},"Cover hinzufügen")));
   const titleEl = h("h1",{class:"title", spellcheck:"false"}, p.title);
   try { titleEl.contentEditable = "plaintext-only"; } catch { titleEl.contentEditable = "true"; }
   if (titleEl.contentEditable !== "plaintext-only") titleEl.contentEditable = "true";
@@ -1065,7 +1284,7 @@ function renderPageInto(page, p, inPeek){
   PENDING.add(saveTitle);
   titleEl.oninput = saveTitle; titleEl.onblur = () => saveTitle.flush();
   page.append(titleEl);
-  if (p.kind==="row") page.append(renderProps(p, afterChange));
+  if (p.kind==="row" || p.kind==="template") page.append(renderProps(p, afterChange));
   page.append(renderDoc(p, p.kind==="database"));
   if (p.kind==="database"){ const host = h("div"); page.append(host); mountDatabase(host, p.id, p.id, {preloaded:p}); }
 }
@@ -1640,7 +1859,7 @@ function typeIcon(t){ return ({title:"Aa", text:"≡", number:"#", select:"◉",
 
 function renderProps(p, afterChange){
   const box = h("div",{class:"props"});
-  const db = {id:p.parent_id, schema:p.db_schema, rows:[]};
+  const db = {id:p.parent_id, schema:p.db_schema, rows:[], tpl:p.kind==="template"};
   for (const col of p.db_schema){
     if (col.type==="title") continue;
     const v = h("div",{class:"v"});
@@ -1663,6 +1882,7 @@ function renderCellValue(el, col, val){
     case "date": { const d = dateEl(val); if (d) el.append(d); break; }
     case "url": if (val) el.append(h("a",{href:safeUrl(val), target:"_blank", rel:"noopener"}, val.replace(/^https?:\/\/(www\.)?/,""))); break;
     case "email": if (val) el.append(h("a",{href:"mailto:"+val}, val)); break;
+    case "number": el.classList.add("num"); el.textContent = col.format ? (fmtNum(val, col.format) || val) : val; break;
     default:
       if (/\]\(/.test(val)) el.innerHTML = inline(val);
       else el.textContent = val;
@@ -1673,7 +1893,7 @@ function editCell(el, col, val, commit, db, redraw){
   if (el.querySelector("input:not(.cb),textarea")) return;
   if (col.type==="checkbox"){ commit(isOn(val)?"No":"Yes"); return; }
   if (col.type==="select" || col.type==="multi_select") return editTags(el, col, val, commit, db);
-  if (col.type==="date") return editDate(el, val, commit);
+  if (col.type==="date") return editDate(el, val, commit, !!db?.tpl);
   el.innerHTML = "";
   const multi = col.type==="text" || col.type==="relation" || col.type==="files";
   const inp = multi ? h("textarea",{rows:Math.min(8, Math.max(1, String(val).split("\n").length))}) : h("input",{type:"text", inputmode: col.type==="number"?"decimal":null});
@@ -1686,7 +1906,7 @@ function editCell(el, col, val, commit, db, redraw){
   el.append(inp); inp.focus(); inp.select?.();
 }
 
-function editDate(el, val, commit){
+function editDate(el, val, commit, inTemplate){
   const parts = String(val||"").split("→").map(s=>s.trim());
   const a = parseISO(parts[0]), b = parseISO(parts[1]);
   const pop = popover(el);
@@ -1696,7 +1916,8 @@ function editDate(el, val, commit){
   const quick = (label, days) => h("button",{class:"item", onclick:()=>{ const d=new Date(); d.setDate(d.getDate()+days); s.value=isoOf(d); e.value=""; apply(true); }}, label);
   pop.append(h("label",{},"Datum"), s, h("label",{},"Ende (optional)"), e,
     (!a && val) ? h("div",{class:"hint", style:"padding:0 8px"}, "Bisher: "+val) : null,
-    h("hr"), quick("Heute",0), quick("Morgen",1), quick("In einer Woche",7),
+    h("hr"), inTemplate ? h("button",{class:"item", onclick:()=>{ commit("@heute"); closePop(); }},"@heute – Tag des Anlegens") : null,
+    quick("Heute",0), quick("Morgen",1), quick("In einer Woche",7),
     h("button",{class:"item danger", onclick:()=>{ commit(""); closePop(); }},"Leeren"));
   s.focus();
 }
@@ -1751,35 +1972,56 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   }
   host.innerHTML = "";
   const hasSelect = p.schema.some(c=>c.type==="select");
-  const st = Object.assign({view: hasSelect?"board":"table", sort:null, dir:1, filter:"", group:null, hidden:[], cardProps:null, dateCol:null, zoom:"year"}, META.views[viewKey]||{});
-  const persist = () => { const {view,sort,dir,filter,group,hidden,cardProps,dateCol,zoom} = st; META.views[viewKey] = {view,sort,dir,filter,group,hidden,cardProps,dateCol,zoom}; saveMeta("views"); };
+  // Gespeicherte Ansichten: gehören zur Datenbank (META.dbviews). Welche davon an dieser Stelle
+  // gerade gezeigt wird, merkt sich jede Seite bzw. Einbettung selbst (META.views[viewKey]).
+  const VIEWTYPES = {board:"Board", table:"Tabelle", timeline:"Zeitleiste", calendar:"Kalender", list:"Liste", gallery:"Galerie"};
+  const uid = () => Math.random().toString(36).slice(2,10);
+  const normView = v => { v.name ||= VIEWTYPES[v.view] || "Ansicht"; v.filters ||= []; v.calc ||= {}; v.hidden ||= []; v.dir ||= 1; v.filter ??= ""; v.sort ??= null; v.group ??= null; v.cardProps ??= null; v.dateCol ??= null; v.zoom ||= "year"; return v; };
+  META.dbviews ||= {};
+  let views = META.dbviews[p.id];
+  const oldPlace = META.views[viewKey] || {};
+  if (!Array.isArray(views) || !views.length){
+    // bisherige Einstellungen (eine Ansicht je Stelle) in die fünf bekannten Reiter übernehmen
+    const old = {...(META.views[p.id]||{}), ...(oldPlace.active ? {} : oldPlace)};
+    const base = () => ({sort:old.sort??null, dir:old.dir||1, group:old.group??null, hidden:[...(old.hidden||[])], cardProps:old.cardProps ? [...old.cardProps] : null, dateCol:old.dateCol??null, zoom:old.zoom||"year"});
+    views = META.dbviews[p.id] = ["board","table","timeline","calendar","list"].map(k=>normView({id:uid(), view:k, ...base(), filter: k===old.view ? (old.filter||"") : ""}));
+  }
+  views.forEach(normView);
+  const place = {lock: !!oldPlace.lock,
+    active: (views.find(v=>v.id===oldPlace.active) || views.find(v=>v.view===(oldPlace.view || (hasSelect?"board":"table"))) || views[0]).id};
+  let st = views.find(v=>v.id===place.active);
+  const persist = () => { place.active = st.id; META.views[viewKey] = {active:st.id, lock:place.lock}; saveMeta("views"); saveMeta("dbviews"); };
+  const switchView = v => { st = v; filterInp.value = st.filter || ""; qaGroup = null; persist(); draw(); };
   const saveSchema = () => save(p.id,{schema:p.schema});
   const tcol = () => p.schema.find(c=>c.type==="title")?.name || "Name";
   let qaGroup = null, editRowId = null;
 
   const body = h("div");
-  const filterInp = h("input",{class:"filter", placeholder:"Filtern", value:st.filter});
+  const filterInp = h("input",{class:"filter", placeholder:"Suchen", value:st.filter});
   filterInp.oninput = debounce(()=>{ st.filter = filterInp.value; persist(); draw(); }, 200);
   const tabs = h("span",{class:"tabs"});
   const bar = h("div",{class:"dbbar"}, tabs, h("span",{class:"sp"}), filterInp,
-    h("button",{class:"btn", title:"Ansicht anpassen", onclick:e=>viewMenu(e.currentTarget)},"Ansicht"),
-    h("button",{class:"btn primary", onclick:()=>quickNew()},"Neu"));
+    h("button",{class:"btn", title:"Filter, Sortierung und Anzeige dieser Ansicht", onclick:e=>viewMenu(e.currentTarget)},"Ansicht"),
+    h("span",{class:"split"},
+      h("button",{class:"btn primary", onclick:()=>quickNew()},"Neu"),
+      h("button",{class:"btn primary caret", title:"Vorlagen", onclick:e=>templateMenu(e.currentTarget.parentElement)},"▾")));
   if (opt.embed) host.append(h("div",{class:"embed-h"}, h("a",{href:"#/p/"+p.id, title:"Als ganze Seite öffnen"}, (p.icon ? p.icon+" " : "")+(p.title||"Ohne Titel"))));
   host.append(bar, body);
 
   const inst = { p, reload: debounce(async () => {
-    try { const np = await api("GET", `/api/page/${dbId}`); p.rows = np.rows; p.schema = np.schema; p.title = np.title; draw(); } catch(e){}
+    try { const np = await api("GET", `/api/page/${dbId}`); p.rows = np.rows; p.schema = np.schema; p.title = np.title; p.templates = np.templates || []; draw(); } catch(e){}
   }, 300) };
   LIVE.push(inst);
 
   const sortedRows = () => {
     let rows = p.rows.slice().sort((a,b)=>(a.sort-b.sort) || String(a.title).localeCompare(String(b.title),"de"));
-    const q = st.filter.trim().toLowerCase();
+    const q = (st.filter||"").trim().toLowerCase();
     if (q) rows = rows.filter(r => (r.title+" "+Object.values(r.props).join(" ")).toLowerCase().includes(q));
+    for (const f of st.filters) rows = rows.filter(r => matchFilter(r, f, p.schema));
     if (st.sort){
       const col = p.schema.find(c=>c.name===st.sort);
       if (col){
-        const key = r => { const v = col.type==="title" ? r.title : (r.props[st.sort]||""); if (col.type==="number") return parseFloat(String(v).replace(/\./g,"").replace(",","."))||0; if (col.type==="date") return dateSortKey(v); if (col.type==="checkbox") return isOn(v)?1:0; return String(v).toLowerCase(); };
+        const key = r => { const v = col.type==="title" ? r.title : (r.props[st.sort]||""); if (col.type==="number"){ const n = parseNum(v); return isNaN(n) ? -Infinity : n; } if (col.type==="date") return dateSortKey(v); if (col.type==="checkbox") return isOn(v)?1:0; return String(v).toLowerCase(); };
         rows.sort((a,b)=>{ const x=key(a), y=key(b); return (x<y?-1:x>y?1:0)*st.dir; });
       }
     }
@@ -1788,22 +2030,63 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
 
   const draw = () => {
     tabs.innerHTML = "";
-    for (const [k,lb] of [["board","Board"],["table","Tabelle"],["timeline","Zeitleiste"],["calendar","Kalender"],["list","Liste"]]) tabs.append(h("button",{class:"tab"+(st.view===k?" on":""), onclick:()=>{st.view=k; persist(); draw();}}, lb));
+    for (const v of (place.lock ? [st] : views)){
+      const on = v===st;
+      tabs.append(h("button",{class:"tab"+(on?" on":""), title: on ? "Ansicht umbenennen, duplizieren, löschen" : "Zu dieser Ansicht wechseln",
+        onclick:e=>{ if (on) tabMenu(v, e.currentTarget); else switchView(v); }}, v.name,
+        v.filters.length ? h("i",{class:"fdot", title:v.filters.length+" Filter aktiv"}) : null));
+    }
+    if (!place.lock) tabs.append(h("button",{class:"tab add", title:"Ansicht hinzufügen", onclick:e=>addViewMenu(e.currentTarget)},"+"));
     const sl = body.querySelector(".board")?.scrollLeft, tl = body.querySelector(".tablewrap")?.scrollLeft;
     body.innerHTML = "";
-    body.append(({board:drawBoard, table:drawTable, timeline:drawTimeline, calendar:drawCalendar, list:drawList})[st.view]?.() || drawTable());
+    body.append(({board:drawBoard, table:drawTable, timeline:drawTimeline, calendar:drawCalendar, list:drawList, gallery:drawGallery})[st.view]?.() || drawTable());
     if (sl && body.querySelector(".board")) body.querySelector(".board").scrollLeft = sl;
     if (tl && body.querySelector(".tablewrap")) body.querySelector(".tablewrap").scrollLeft = tl;
     body.querySelector("textarea.qa")?.focus();
   };
 
-  const createRow = async (title, props={}) => {
+  // ---------------- Ansichten verwalten ----------------
+  const addViewMenu = anchor => {
+    const pop = popover(anchor);
+    pop.append(h("label",{},"Neue Ansicht"));
+    for (const [k,lb] of Object.entries(VIEWTYPES))
+      pop.append(h("button",{class:"item", onclick:()=>{ closePop(); const v = normView({id:uid(), view:k}); views.push(v); switchView(v); }}, lb));
+  };
+  const tabMenu = (v, anchor) => {
+    const pop = popover(anchor);
+    const name = h("input",{value:v.name});
+    const rename = () => { const n = name.value.trim(); if (n && n!==v.name){ v.name = n; persist(); draw(); } };
+    name.onkeydown = e => { if (e.key==="Enter"){ rename(); closePop(); } };
+    name.onblur = rename;
+    const layout = h("select",{}, Object.entries(VIEWTYPES).map(([k,lb])=>h("option",{value:k, selected:v.view===k}, lb)));
+    layout.onchange = () => { v.view = layout.value; persist(); closePop(); draw(); };
+    pop.append(h("label",{},"Name der Ansicht"), name, h("label",{},"Layout"), layout, h("hr"),
+      h("button",{class:"item", onclick:()=>{ closePop(); viewMenu(anchor); }},"Filter, Sortierung, Anzeige …"),
+      h("button",{class:"item", onclick:()=>{ closePop(); const c = normView(JSON.parse(JSON.stringify(v))); c.id = uid(); c.name = v.name+" (Kopie)"; views.splice(views.indexOf(v)+1, 0, c); switchView(c); }},"Duplizieren"),
+      opt.embed ? h("button",{class:"item", onclick:()=>{ closePop(); place.lock = !place.lock; persist(); draw(); }}, place.lock ? "Hier alle Ansichten zeigen" : "Hier nur diese Ansicht zeigen") : null,
+      views.length>1 ? [h("hr"), h("button",{class:"item danger", onclick:()=>{ if (!confirm(`Ansicht „${v.name}“ löschen? Die Einträge bleiben erhalten.`)) return;
+        closePop(); views.splice(views.indexOf(v),1); switchView(views[0]); }},"Ansicht löschen")] : null);
+    name.focus(); name.select();
+  };
+
+  // ---------------- Vorlagen ----------------
+  p.templates ||= [];
+  const defaultTpl = () => { const id = META.dbs[p.id]?.tpl; return p.templates.find(t=>t.id===id) || null; };
+  const setDefaultTpl = id => { META.dbs[p.id] = {...(META.dbs[p.id]||{}), tpl: id || null}; saveMeta("dbs"); };
+  const fromTemplate = async (tpl, title="", props={}) => {
+    const row = await api("POST", `/api/from-template/${tpl.id}`, {title, props});
+    p.rows.push(row);
+    return row;
+  };
+  const createRow = async (title, props={}, useTpl=true) => {
+    const tpl = useTpl ? defaultTpl() : null;
+    if (tpl) return fromTemplate(tpl, title, props);
     const full = {...props, [tcol()]: title};
     const ad = autoDateCol();                      // neue Einträge bekommen das heutige Datum
     if (ad && !full[ad.name]) full[ad.name] = isoOf(new Date());
     const r = await api("POST","/api/page",{kind:"row", parent_id:p.id, title, props:full});
     const maxSort = Math.max(0, ...p.rows.map(x=>x.sort||0)) + 1;
-    const row = {id:r.id, title, props:full, icon:"", sort:maxSort, has_content:false};
+    const row = {id:r.id, title, props:full, icon:"", cover:"", thumb:"", sort:maxSort, has_content:false};
     p.rows.push(row);
     return row;
   };
@@ -1811,6 +2094,48 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     if (st.view==="board"){ const gc = groupCol(); const first = gc && visibleGroups(gc)[0]; qaGroup = first ? first.key : ""; draw(); return; }
     if (st.view!=="table"){ const row = await createRow(""); draw(); return openPeek(row.id); }
     const row = await createRow(""); editRowId = row.id; draw();
+  };
+  const newFrom = async tpl => {   // Eintrag aus dem Vorlagen-Menü anlegen und rechts öffnen
+    closePop();
+    try { const row = tpl ? await fromTemplate(tpl) : await createRow("", {}, false); draw(); openPeek(row.id); }
+    catch(e){ toast(e.message); }
+  };
+  const newTemplate = async () => {
+    closePop();
+    const r = await api("POST","/api/page",{kind:"template", parent_id:p.id, title:""});
+    p.templates.push({id:r.id, title:"", icon:""});
+    openPeek(r.id);
+  };
+  const tplItemMenu = (t, anchor) => {
+    const pop = popover(anchor);
+    const isDef = defaultTpl()?.id === t.id;
+    pop.append(
+      h("button",{class:"item", onclick:()=>{ closePop(); openPeek(t.id); }},"Bearbeiten"),
+      h("button",{class:"item", onclick:()=>{ closePop(); setDefaultTpl(isDef ? null : t.id); toast(isDef ? "Keine Standardvorlage mehr" : "„"+(t.title||"Ohne Titel")+"“ ist jetzt Standard"); }}, isDef ? "Nicht mehr Standard" : "Als Standard festlegen"),
+      h("button",{class:"item", onclick:async()=>{ closePop(); const r = await api("POST",`/api/duplicate/${t.id}`); inst.reload(); openPeek(r.id); }},"Duplizieren"),
+      h("hr"),
+      h("button",{class:"item danger", onclick:async()=>{ closePop(); await api("DELETE",`/api/page/${t.id}`); if (isDef) setDefaultTpl(null);
+        p.templates = p.templates.filter(x=>x.id!==t.id);
+        toast("Vorlage gelöscht","Rückgängig", async()=>{ await api("POST",`/api/restore/${t.id}`); inst.reload(); }); }},"Löschen"));
+  };
+  const templateMenu = anchor => {
+    const pop = popover(anchor);
+    pop.classList.add("tplpop");
+    const def = defaultTpl();
+    pop.append(h("label",{},"Vorlagen für „"+(p.title||"Ohne Titel")+"“"));
+    for (const t of p.templates){
+      pop.append(h("div",{class:"tplrow"},
+        h("button",{class:"item", onclick:()=>newFrom(t)},
+          h("span",{class:"tt"}, (t.icon ? t.icon+" " : "")+(t.title || "Ohne Titel")),
+          def?.id===t.id ? h("span",{class:"tdef"},"Standard") : null),
+        h("button",{class:"tmore", title:"Vorlage bearbeiten …", onclick:e=>{ e.stopPropagation(); tplItemMenu(t, e.currentTarget); }},"⋯")));
+    }
+    pop.append(
+      h("div",{class:"tplrow"}, h("button",{class:"item", onclick:()=>newFrom(null)}, h("span",{class:"tt"},"Leerer Eintrag"),
+        !def ? h("span",{class:"tdef"},"Standard") : null)),
+      h("hr"),
+      h("button",{class:"item", onclick:newTemplate},"+ Neue Vorlage"),
+      def ? h("button",{class:"item", onclick:()=>{ closePop(); setDefaultTpl(null); toast("„Neu“ legt wieder leere Einträge an"); }},"Leeren Eintrag als Standard") : null);
   };
 
   // ---------------- Datum: gemeinsame Helfer für Zeitleiste und Kalender ----------------
@@ -1952,6 +2277,24 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     if (!rows.length) box.append(h("div",{class:"hint", style:"padding:18px 0"},"Noch keine Einträge."));
     return h("div",{}, box, h("div",{class:"newrow", onclick:quickNew},"＋ Neu"));
   };
+  // ---------------- Galerie ----------------
+  const drawGallery = () => {
+    const rows = sortedRows();
+    const shown = st.cardProps || p.schema.filter(c=>["select","multi_select","date"].includes(c.type)).map(c=>c.name);
+    const g = h("div",{class:"gallery g-"+(st.gsize||"m")});
+    for (const r of rows){
+      const img = coverCss(r.cover || r.thumb);
+      const meta = h("div",{class:"gm"});
+      for (const name of shown){ const x = p.schema.find(c=>c.name===name), v = r.props[name]; if (!x || !v || x.type==="title" || x.type==="checkbox") continue; const sp = h("span",{}); renderCellValue(sp, x, v); meta.append(sp); }
+      const card = h("div",{class:"gcard", onclick:()=>openPeek(r.id)},
+        h("div",{class:"gcover"+(img?"":" noimg"), style:img}, img ? null : h("span",{}, r.icon || "")),
+        h("div",{class:"gbody"}, h("div",{class:"gt"}, (img && r.icon ? r.icon+" " : "")+(r.title||"Ohne Titel")), meta.childNodes.length ? meta : null));
+      card.oncontextmenu = ev => { ev.preventDefault(); rowMenu(r, ev); };
+      g.append(card);
+    }
+    g.append(h("div",{class:"gcard gnew", onclick:quickNew},"＋ Neu"));
+    return h("div",{}, g, h("div",{class:"hint", style:"padding:10px 0 0"}, rows.length===p.rows.length ? `${rows.length} Einträge` : `${rows.length} von ${p.rows.length} Einträgen`));
+  };
   const removeRow = async r => {
     await api("DELETE",`/api/page/${r.id}`); p.rows = p.rows.filter(x=>x.id!==r.id); draw();
     toast("„"+(r.title||"Ohne Titel")+"“ gelöscht", "Rückgängig", async()=>{ await api("POST",`/api/restore/${r.id}`); inst.reload(); });
@@ -2000,6 +2343,18 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       tb.append(row);
     }
     t.append(tb);
+    // Fußzeile mit Berechnungen (Summe, Anzahl, % angehakt …) über die gerade sichtbaren Einträge
+    const fr = h("tr");
+    for (const col of p.schema){
+      const key = st.calc[col.name] || "", lb = (calcsFor(col).find(c=>c[0]===key)||[])[1];
+      fr.append(h("td",{class:"calc"+(key?" on":"")+(col.type==="checkbox"?" narrow":""), title:"Berechnung wählen", onclick:e=>{
+        const pop = popover(e.currentTarget);
+        pop.append(h("label",{},"Berechnung für „"+col.name+"“"));
+        for (const [k,l] of calcsFor(col)) pop.append(h("button",{class:"item", onclick:()=>{ closePop(); if (k) st.calc[col.name] = k; else delete st.calc[col.name]; persist(); draw(); }}, l, k===key ? " ✓" : ""));
+      }}, key ? [h("span",{class:"cl"}, lb), " ", h("span",{class:"cv"}, calcValue(rows, col, key))] : h("span",{class:"cl"},"Berechnen")));
+    }
+    fr.append(h("td"));
+    t.append(h("tfoot",{}, fr));
     tw.append(t);
     return h("div",{}, tw, h("div",{class:"newrow", onclick:quickNew},"＋ Neu"),
       h("div",{class:"hint", style:"padding:2px 8px"}, rows.length===p.rows.length ? `${rows.length} Einträge` : `${rows.length} von ${p.rows.length} Einträgen`));
@@ -2194,8 +2549,48 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     name.focus(); name.select();
   };
 
+  const filterEditor = () => {
+    const box = h("div",{class:"filters"});
+    const redraw = () => {
+      box.innerHTML = "";
+      st.filters.forEach((f, i) => {
+        const col = p.schema.find(c=>c.name===f.prop) || p.schema[0];
+        const ops = opsFor(col.type);
+        if (!ops.some(o=>o[0]===f.op)) f.op = ops[0][0];
+        const propSel = h("select",{}, p.schema.map(c=>h("option",{value:c.name, selected:c.name===col.name}, c.name)));
+        const opSel = h("select",{}, ops.map(([k,l])=>h("option",{value:k, selected:k===f.op}, l)));
+        const row = h("div",{class:"frow"}, propSel, opSel,
+          h("button",{class:"fx", title:"Filter entfernen", onclick:()=>{ st.filters.splice(i,1); persist(); draw(); redraw(); }},"×"));
+        propSel.onchange = () => { f.prop = propSel.value; f.op = ""; f.value = ""; persist(); draw(); redraw(); };
+        opSel.onchange = () => { f.op = opSel.value; persist(); draw(); redraw(); };
+        if (["contains","not_contains","eq","gt","lt"].includes(f.op)){
+          const inp = h("input",{value: Array.isArray(f.value) ? "" : (f.value||""), placeholder:"Wert"});
+          inp.oninput = debounce(()=>{ f.value = inp.value; persist(); draw(); }, 250);
+          row.append(inp);
+        } else if (f.op==="any" || f.op==="none"){
+          const cur = new Set(Array.isArray(f.value) ? f.value : []);
+          const opts = h("div",{class:"fopts"});
+          for (const o of colOptions(p, col)){
+            const cb = h("input",{type:"checkbox", checked:cur.has(o.name)});
+            cb.onchange = () => { cb.checked ? cur.add(o.name) : cur.delete(o.name); f.value = [...cur]; persist(); draw(); };
+            opts.append(h("label",{class:"chk"}, cb, tagEl(col, o.name)));
+          }
+          row.append(opts);
+        }
+        box.append(row);
+      });
+      box.append(h("button",{class:"item", onclick:()=>{ const c = p.schema.find(c=>c.type==="select") || p.schema.find(c=>c.type==="multi_select") || p.schema[0];
+        st.filters.push({prop:c.name, op:opsFor(c.type)[0][0], value:""}); persist(); draw(); redraw(); }},"+ Filter hinzufügen"));
+      if (st.filters.length>1) box.append(h("div",{class:"hint", style:"padding:0 8px"},"Alle Filter müssen zutreffen."));
+    };
+    redraw();
+    return box;
+  };
+
   const viewMenu = anchor => {
     const pop = popover(anchor);
+    pop.classList.add("viewpop");
+    pop.append(h("label",{},"Filter"), filterEditor(), h("hr"));
     const sortSel = h("select",{}, h("option",{value:""}, st.view==="board" ? "Manuell (Karten ziehen)" : "Manuell"), p.schema.map(c=>h("option",{value:c.name, selected:st.sort===c.name}, c.name)));
     sortSel.onchange = () => { st.sort = sortSel.value || null; persist(); draw(); };
     const dirSel = h("select",{}, h("option",{value:"1", selected:st.dir>0},"Aufsteigend"), h("option",{value:"-1", selected:st.dir<0},"Absteigend"));
@@ -2219,6 +2614,20 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
           cb.onchange = () => { st.hidden = cb.checked ? st.hidden.filter(x=>x!==gr.key) : [...st.hidden, gr.key]; persist(); draw(); };
           pop.append(h("label",{class:"chk"}, cb, gr.label));
         }
+      }
+    }
+    if (st.view==="list" || st.view==="gallery"){
+      if (st.view==="gallery"){
+        const gs = h("select",{}, [["s","Klein"],["m","Mittel"],["l","Groß"]].map(([k,l])=>h("option",{value:k, selected:(st.gsize||"m")===k}, l)));
+        gs.onchange = () => { st.gsize = gs.value; persist(); draw(); };
+        pop.append(h("label",{},"Kartengröße"), gs);
+      }
+      pop.append(h("label",{}, st.view==="gallery" ? "Auf den Karten anzeigen" : "In der Liste anzeigen"));
+      const shown = new Set(st.cardProps || p.schema.filter(c=>["select","multi_select","date"].includes(c.type)).map(c=>c.name));
+      for (const c of p.schema.filter(c=>c.type!=="title" && c.type!=="checkbox")){
+        const cb = h("input",{type:"checkbox", checked:shown.has(c.name)});
+        cb.onchange = () => { cb.checked ? shown.add(c.name) : shown.delete(c.name); st.cardProps = p.schema.map(x=>x.name).filter(n=>shown.has(n)); persist(); draw(); };
+        pop.append(h("label",{class:"chk"}, cb, c.name));
       }
     }
     if (dateCols().length){
@@ -2257,18 +2666,29 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
         if (nn !== col.name){
           const res = await api("POST",`/api/db/${p.id}/op`,{op:"rename_column", from:col.name, to:nn});
           for (const r of p.rows) if (col.name in r.props){ r.props[nn] = r.props[col.name]; delete r.props[col.name]; }
-          if (st.sort===col.name) st.sort = nn; if (st.group===col.name) st.group = nn;
-          if (st.cardProps) st.cardProps = st.cardProps.map(x=>x===col.name?nn:x);
+          for (const v of views){
+            if (v.sort===col.name) v.sort = nn; if (v.group===col.name) v.group = nn; if (v.dateCol===col.name) v.dateCol = nn;
+            if (v.cardProps) v.cardProps = v.cardProps.map(x=>x===col.name?nn:x);
+            for (const f of v.filters) if (f.prop===col.name) f.prop = nn;
+            if (col.name in v.calc){ v.calc[nn] = v.calc[col.name]; delete v.calc[col.name]; }
+          }
           persist(); p.schema = res.schema;
         }
         const c2 = p.schema[ci];
-        if (c2.type !== type.value){ c2.type = type.value; if (["select","multi_select"].includes(c2.type)) colOptions(p, c2); await saveSchema(); }
+        const fmt = type.value==="number" ? fmtSel.value : "";
+        if (c2.type !== type.value || (c2.format||"") !== fmt){
+          c2.type = type.value; if (fmt) c2.format = fmt; else delete c2.format;
+          if (["select","multi_select"].includes(c2.type)) colOptions(p, c2); await saveSchema(); }
       } catch(e){ toast(e.message); }
       closePop(); draw();
     };
     name.onkeydown = e => { if (e.key==="Enter") apply(); };
+    const fmtSel = h("select",{}, Object.entries(NUMFORMATS).map(([k,v])=>h("option",{value:k, selected:(col.format||"")===k}, v)));
+    const fmtWrap = h("div",{style: col.type==="number" ? "" : "display:none"}, h("label",{},"Zahlenformat"), fmtSel);
+    type.onchange = () => { fmtWrap.style.display = type.value==="number" ? "" : "none"; };
+    fmtSel.onchange = () => apply();
     const mv = async d => { [p.schema[ci+d],p.schema[ci]]=[p.schema[ci],p.schema[ci+d]]; await saveSchema(); closePop(); draw(); };
-    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type,
+    pop.append(h("label",{},"Name"), name, h("label",{},"Typ"), type, fmtWrap,
       h("button",{class:"item", style:"color:var(--accent)", onclick:apply},"Übernehmen"), h("hr"),
       h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=1; persist(); closePop(); draw();}},"↑ Aufsteigend sortieren"),
       h("button",{class:"item", onclick:()=>{st.sort=col.name; st.dir=-1; persist(); closePop(); draw();}},"↓ Absteigend sortieren"),
@@ -2312,6 +2732,7 @@ let POP = null;
 function popover(anchor, x, y){
   closePop();
   const pop = h("div",{class:"pop"});
+  pop.append = (...a) => Element.prototype.append.apply(pop, a.flat(3).filter(x => x != null && x !== false));
   document.body.append(pop);
   const r = anchor ? anchor.getBoundingClientRect() : {left:x, bottom:y, top:y};
   POP = pop;

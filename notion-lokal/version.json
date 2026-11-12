@@ -1,5 +1,5 @@
 {
-  "version": "2026.11.12.2",
-  "notes": "Neue Ansichten: Zeitleiste (Monat, Quartal, Jahr), Kalender und Liste. Neue Einträge bekommen automatisch das heutige Datum. Dazu der neue Editor und die neue Gestaltung.",
+  "version": "2026.11.12.3",
+  "notes": "Gespeicherte Ansichten mit Filtern, Summen und Euro-Format in der Tabelle, Galerie-Ansicht, Vorlagen für neue Einträge und Cover für Seiten.",
   "files": ["app.py", "static/index.html", "README.md", "version.json"]
 }

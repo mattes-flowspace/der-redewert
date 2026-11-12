@@ -3,7 +3,7 @@
 Eine lokale, Notion-ähnliche Datenbank für deinen eigenen Rechner. Alle Daten bleiben auf deiner Festplatte, es gibt keine Cloud und kein Konto.
 
 - **Seiten** mit Unterseiten, Markdown, Bildern, Callouts, Checklisten und Tabellen
-- **Datenbanken** mit Tabellen- und Board-Ansicht (Kanban), Spaltentypen (Auswahl, Mehrfachauswahl, Datum, Checkbox, URL …), Sortieren und Filtern
+- **Datenbanken** mit Board, Tabelle, Zeitleiste, Kalender, Liste und Galerie, gespeicherten Ansichten mit Filtern, Summen und Euro-Format, Vorlagen und Cover
 - **Volltextsuche** (Strg/Cmd + K), Papierkorb, Seiten verschieben per Drag & Drop
 - **Import** von Notion-Exporten (Markdown & CSV), auch mehrteilige ZIPs
 - **Export** jederzeit zurück nach Markdown + CSV, damit du nie wieder an ein Programm gebunden bist
@@ -105,7 +105,11 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
 
 ## Ansichten einer Datenbank
 
-Jede Datenbank lässt sich über die Reiter auf fünf Arten zeigen. Die Wahl wird pro Stelle gespeichert, an der die Datenbank eingebettet ist.
+Jede Datenbank hat **gespeicherte Ansichten**, die als Reiter über ihr stehen. Jede Ansicht merkt sich Layout, Filter, Sortierung und Anzeige. Welche Ansicht gerade offen ist, wird pro Stelle gespeichert, an der die Datenbank eingebettet ist.
+
+- **Neue Ansicht:** „+“ rechts neben den Reitern.
+- **Umbenennen, Layout wechseln, duplizieren, löschen:** auf den aktiven Reiter klicken. In eingebetteten Datenbanken lässt sich dort auch festlegen, dass an dieser Stelle nur diese eine Ansicht erscheint.
+- **Filter:** „Ansicht“ → „+ Filter hinzufügen“, z. B. „Status ist eines von To-do, In Arbeit“ oder „Datum diese Woche“. Mehrere Filter müssen alle zutreffen. Ein Punkt am Reiter zeigt, dass Filter aktiv sind.
 
 | Ansicht | Wofür |
 |---|---|
@@ -114,10 +118,30 @@ Jede Datenbank lässt sich über die Reiter auf fünf Arten zeigen. Die Wahl wir
 | **Zeitleiste** | Einträge als Balken über die Zeit. Umschalten zwischen Monat, Quartal und Jahr. Balken ziehen verschiebt den Termin, der rechte Rand ändert das Ende |
 | **Kalender** | Monatsraster. „+“ an einem Tag legt dort einen Eintrag an, Einträge lassen sich auf einen anderen Tag ziehen |
 | **Liste** | kompakte Zeilen zum schnellen Überfliegen |
+| **Galerie** | Karten mit Bild: das Cover des Eintrags oder das erste Bild im Inhalt. Kartengröße unter „Ansicht“ |
 
 Zeitleiste und Kalender nutzen eine Eigenschaft vom Typ „Datum“. Gibt es mehrere, wählst du sie unter „Ansicht“.
 
 **Automatisches Datum:** Neue Einträge bekommen das heutige Datum. Unter „Ansicht“ → „Datum bei neuen Einträgen“ stellst du das pro Datenbank um oder ab.
+
+## Zahlen, Euro und Summen
+
+- **Zahlenformat:** in der Tabelle auf die Überschrift einer Zahlen-Spalte klicken → „Zahlenformat“: Zahl (1.234,5), Euro (1.234,50 €) oder Prozent. Eingaben wie `1234,5`, `1.234,50 €` oder `1234.5` werden erkannt.
+- **Berechnungen:** Unter jeder Tabellenspalte erscheint beim Darüberfahren „Berechnen“: Summe, Durchschnitt, Minimum, Maximum, Anzahl, % ausgefüllt, bei Checkboxen % angehakt. Gerechnet wird mit den Einträgen, die Filter und Suche gerade zeigen.
+
+## Vorlagen
+
+Jede Datenbank kann Vorlagen für neue Einträge haben, z. B. „Bug-Report“ oder „Meeting-Notiz“.
+
+- **Vorlage anlegen:** Pfeil „▾“ neben „Neu“ → „+ Neue Vorlage“. Sie öffnet sich rechts. Icon, Cover, Eigenschaften und Inhalt so einstellen, wie neue Einträge aussehen sollen.
+- **Eintrag aus Vorlage:** „▾“ → Vorlage anklicken. Bilder der Vorlage werden mitkopiert.
+- **Standardvorlage:** „▾“ → „⋯“ neben der Vorlage → „Als Standard festlegen“. Dann nutzen auch „Neu“, die Schnelleingabe im Board und „+“ im Kalender diese Vorlage.
+- **Heutiges Datum:** `@heute` in einer Eigenschaft oder im Text wird beim Anlegen durch das aktuelle Datum ersetzt. In Datumsfeldern einer Vorlage gibt es dafür den Punkt „@heute – Tag des Anlegens“.
+- Vorlagen erscheinen nicht in den Ansichten, in der Suche oder im Markdown-Export. Sie liegen aber in `daten/notion.sqlite3` und damit in jeder Sicherung.
+
+## Cover
+
+Über dem Titel jeder Seite und jedes Eintrags steht „Cover hinzufügen“: einen Farbverlauf wählen, ein Bild hochladen oder einen Bild-Link einfügen. Fährst du über das Cover, erscheinen „Cover ändern“ und „Entfernen“. Die Galerie zeigt das Cover als Kartenbild.
 
 ## Bedienung
 
@@ -145,7 +169,8 @@ Zeitleiste und Kalender nutzen eine Eigenschaft vom Typ „Datum“. Gibt es meh
 Diese Einschränkungen kommen vom Notion-Export selbst:
 
 - **Seiten-Icons und Titelbilder:** Notion exportiert sie im Markdown-Format nicht. Icons kannst du lokal neu setzen.
-- **Gespeicherte Ansichten, Filter, Formeln und Rollups:** Formeln und Rollups kommen als fester Text-Wert an.
+- **Gespeicherte Ansichten, Filter und Vorlagen** aus Notion. Lege sie lokal einmal neu an, danach bleiben sie erhalten.
+- **Formeln und Rollups** kommen als fester Text-Wert an.
 - **Verknüpfungen (Relations)** werden als klickbare Links übernommen, sind aber keine „echten“ Relationen mehr.
 - **Spaltentypen** werden aus den Werten erraten. Ein Klick auf die Spaltenüberschrift korrigiert sie.
 - **Kommentare und Versionsverlauf** sind im Export nicht enthalten.
