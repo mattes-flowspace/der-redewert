@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.12.5",
-  "notes": "Verknüpfungen zwischen Datenbanken mit Gegenstück, Rollups und Formeln. Updates überschreiben selbst geänderte Programmdateien nicht mehr ohne Nachfrage und heben die letzten fünf Versionen auf.",
+  "version": "2026.11.12.6",
+  "notes": "Seitenverlauf: frühere Fassungen jeder Seite vergleichen und wiederherstellen. Tabellen lassen sich gruppieren, mit Zwischensummen je Gruppe. Das Windows-Startskript startet keine zweite Instanz mehr.",
   "files": [
     "app.py",
     "static/index.html",
@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "be55e688fe5a87eaa196dae9d1967fcebe522f1518dfa133cd1bb1f8ff718c52",
-    "static/index.html": "afd3ab4a0fd241f7509954b9284ce121095f5202932859f8c5bedb45be659ce8",
-    "README.md": "d4fca9ee1398961c651fa9caddf2f41befbe365e12a11860b2b8182861819bbe"
+    "app.py": "5e06c34cf0ae6e901279c2b494dcd8b8debaffda75215e3761578066e5af2ccb",
+    "static/index.html": "71e21dd15db9bd6b4b0778bbe290385d856ad253d0cd6b93afa403cb58e95561",
+    "README.md": "480f40878663a19d824944b1a2af1a5c90e4d556ba1994e5228a0e8034e7acf7"
   }
 }

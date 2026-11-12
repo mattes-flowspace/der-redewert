@@ -63,6 +63,16 @@ python3 app.py export ./export # alles als Markdown + CSV (lesbar mit jedem Edit
 
 Ein Export als ZIP geht auch über **„Export“** in der Seitenleiste.
 
+### Seitenverlauf
+
+Die App merkt sich frühere Fassungen jeder Seite und jedes Datenbank-Eintrags: Titel, Icon, Inhalt und Eigenschaften.
+
+- **Öffnen:** auf einer Seite „•••“ → „🕘 Seitenverlauf“, in der Seitenleiste eines Eintrags „Verlauf“.
+- **Vergleichen:** Links stehen die Fassungen mit Datum. Rechts zeigt „Änderungen“, was beim Wiederherstellen zurückkommt (grün) und was wegfällt (rot). „Vorschau“ zeigt die Fassung so, wie sie damals aussah.
+- **Wiederherstellen:** „Diese Fassung wiederherstellen“. Der jetzige Stand wird vorher selbst als Fassung gesichert, du kannst also jederzeit zurück.
+- **Wie oft:** Beim Bearbeiten sichert die App höchstens alle 10 Minuten den vorherigen Stand. Je Seite bleiben die letzten 50 Fassungen erhalten. Endgültig gelöschte Seiten verlieren auch ihren Verlauf.
+- Nicht im Verlauf: Spalten und Ansichten einer Datenbank. Dafür gibt es die täglichen Sicherungen in `daten/sicherungen/`.
+
 ## Updates
 
 Die App prüft beim Öffnen, ob im GitHub-Repository eine neuere Version liegt. Dann erscheint unten in der Seitenleiste **„⬆️ Update … installieren“**. Ein Klick lädt die neuen Programmdateien, ersetzt die alten und startet die App neu. Manuell prüfst du mit „⟳ Nach Updates suchen“ oder im Terminal mit `python3 app.py update`.
@@ -112,11 +122,12 @@ Jede Datenbank hat **gespeicherte Ansichten**, die als Reiter über ihr stehen. 
 - **Neue Ansicht:** „+“ rechts neben den Reitern.
 - **Umbenennen, Layout wechseln, duplizieren, löschen:** auf den aktiven Reiter klicken. In eingebetteten Datenbanken lässt sich dort auch festlegen, dass an dieser Stelle nur diese eine Ansicht erscheint.
 - **Filter:** „Ansicht“ → „+ Filter hinzufügen“, z. B. „Status ist eines von To-do, In Arbeit“ oder „Datum diese Woche“. Mehrere Filter müssen alle zutreffen. Ein Punkt am Reiter zeigt, dass Filter aktiv sind.
+- **Gruppieren (Tabelle):** „Ansicht“ → „Gruppieren nach“, z. B. nach Status, Projekt, Tags oder Datum. Auswahl-Spalten folgen der Reihenfolge ihrer Optionen, Datumsspalten werden nach Monat gruppiert, Einträge mit mehreren Tags oder Projekten stehen in jeder passenden Gruppe. Ein Klick auf den Gruppenkopf klappt die Gruppe zu, „＋“ daneben legt einen Eintrag direkt in dieser Gruppe an. Berechnungen aus der Fußzeile (z. B. Summe Budget) erscheinen zusätzlich unter jeder Gruppe.
 
 | Ansicht | Wofür |
 |---|---|
 | **Board** | Karten in Spalten nach Status, per Ziehen verschieben |
-| **Tabelle** | alle Eigenschaften nebeneinander, direkt in den Zellen bearbeiten |
+| **Tabelle** | alle Eigenschaften nebeneinander, direkt in den Zellen bearbeiten, optional gruppiert mit Zwischensummen |
 | **Zeitleiste** | Einträge als Balken über die Zeit. Umschalten zwischen Monat, Quartal und Jahr. Balken ziehen verschiebt den Termin, der rechte Rand ändert das Ende |
 | **Kalender** | Monatsraster. „+“ an einem Tag legt dort einen Eintrag an, Einträge lassen sich auf einen anderen Tag ziehen |
 | **Liste** | kompakte Zeilen zum schnellen Überfliegen |

@@ -75,9 +75,60 @@ CREATE TABLE IF NOT EXISTS pages (
 CREATE INDEX IF NOT EXISTS idx_pages_parent ON pages(parent_id);
 CREATE INDEX IF NOT EXISTS idx_pages_kind ON pages(kind);
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS versions (           -- Seitenverlauf: frühere Fassungen einer Seite
+    id      INTEGER PRIMARY KEY AUTOINCREMENT,
+    page_id TEXT NOT NULL,
+    ts      TEXT NOT NULL,
+    title   TEXT NOT NULL DEFAULT '',
+    icon    TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL DEFAULT '',
+    props   TEXT NOT NULL DEFAULT '{}',
+    reason  TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_versions_page ON versions(page_id, id);
 """
 
 _write_lock = threading.Lock()
+
+HISTORY_GAP_S = 600    # höchstens alle 10 Minuten eine neue Fassung je Seite (Autospeichern)
+HISTORY_KEEP = 50      # so viele Fassungen bleiben je Seite erhalten
+
+
+def snapshot(con, pid, change=None, reason="", force=False):
+    """Den aktuellen Stand einer Seite als Fassung ablegen, bevor er überschrieben wird.
+
+    change: die geplante Änderung (dict). Nur wenn sie Titel, Icon, Inhalt oder
+    Eigenschaften wirklich ändert, wird gesichert. Ohne force höchstens alle
+    HISTORY_GAP_S Sekunden, damit Autospeichern nicht hunderte Fassungen erzeugt."""
+    r = con.execute("SELECT kind,title,icon,content,props FROM pages WHERE id=?", (pid,)).fetchone()
+    if not r:
+        return False
+    cur = {"title": r["title"], "icon": r["icon"], "content": r["content"],
+           "props": json.loads(r["props"] or "{}")}
+    if change is not None and not any(k in change and change[k] != cur[k] for k in cur):
+        return False
+    if not (cur["title"] or cur["content"].strip() or any(str(v).strip() for v in cur["props"].values())):
+        return False                     # leere, gerade angelegte Seite
+    last = con.execute("SELECT ts,title,icon,content,props FROM versions WHERE page_id=? ORDER BY id DESC LIMIT 1",
+                       (pid,)).fetchone()
+    if last:
+        same = (last["title"], last["icon"], last["content"], json.loads(last["props"] or "{}")) == \
+            (cur["title"], cur["icon"], cur["content"], cur["props"])
+        if same:
+            return False
+        if not force:
+            try:
+                age = (dt.datetime.now() - dt.datetime.fromisoformat(last["ts"])).total_seconds()
+            except ValueError:
+                age = HISTORY_GAP_S
+            if 0 <= age < HISTORY_GAP_S:
+                return False
+    con.execute("INSERT INTO versions (page_id,ts,title,icon,content,props,reason) VALUES (?,?,?,?,?,?,?)",
+                (pid, now(), cur["title"], cur["icon"], cur["content"],
+                 json.dumps(cur["props"], ensure_ascii=False), reason))
+    con.execute("DELETE FROM versions WHERE page_id=? AND id NOT IN "
+                "(SELECT id FROM versions WHERE page_id=? ORDER BY id DESC LIMIT ?)", (pid, pid, HISTORY_KEEP))
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -1265,6 +1316,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_tree()
             if path.startswith("/api/page/"):
                 return self.api_get_page(path.split("/")[3])
+            if path.startswith("/api/history/"):
+                parts = path.split("/")
+                return self.api_history(parts[3], parts[4] if len(parts) > 4 and parts[4] else None)
             if path == "/api/search":
                 return self.api_search((q.get("q") or [""])[0])
             if path == "/api/trash":
@@ -1310,6 +1364,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_create(self._jbody())
             if url.path.startswith("/api/restore/"):
                 return self.api_restore(url.path.split("/")[3])
+            if url.path.startswith("/api/history/"):
+                parts = url.path.split("/")
+                return self.api_history_restore(parts[3], parts[4] if len(parts) > 4 else "")
             if url.path == "/api/upload":
                 return self.api_upload((q.get("page") or ["allgemein"])[0], (q.get("name") or ["datei"])[0])
             if url.path == "/api/import":
@@ -1462,6 +1519,7 @@ class Handler(BaseHTTPRequestHandler):
             vals.append(json.dumps(b["schema"], ensure_ascii=False))
         if not fields:
             return None
+        snapshot(con, pid, {k: b[k] for k in ("title", "icon", "content", "props") if k in b})
         fields.append("updated=?")
         vals.append(now())
         if b.get("parent_id"):
@@ -1657,6 +1715,7 @@ class Handler(BaseHTTPRequestHandler):
             marks = ",".join("?" * len(ids))
             if hard:
                 con.execute(f"DELETE FROM pages WHERE id IN ({marks})", ids)
+                con.execute(f"DELETE FROM versions WHERE page_id IN ({marks})", ids)
                 for i in ids:
                     shutil.rmtree(os.path.join(FILES_DIR, i), ignore_errors=True)
             else:
@@ -1678,6 +1737,36 @@ class Handler(BaseHTTPRequestHandler):
                 par = con.execute("SELECT deleted FROM pages WHERE id=?", (r["parent_id"],)).fetchone()
                 if not par or par["deleted"]:
                     con.execute("UPDATE pages SET parent_id=NULL WHERE id=?", (pid,))
+            con.commit()
+        self._json({"ok": True})
+
+    def api_history(self, pid, vid):
+        con = connect()
+        if vid:
+            r = con.execute("SELECT * FROM versions WHERE page_id=? AND id=?", (pid, vid)).fetchone()
+            if not r:
+                return self._err(404, "Fassung nicht gefunden")
+            d = dict(r)
+            d["props"] = json.loads(d["props"] or "{}")
+            return self._json(d)
+        rows = con.execute("SELECT id,ts,title,icon,length(content) AS chars,reason FROM versions "
+                           "WHERE page_id=? ORDER BY id DESC", (pid,)).fetchall()
+        self._json([dict(r) for r in rows])
+
+    def api_history_restore(self, pid, vid):
+        with _write_lock:
+            con = connect()
+            v = con.execute("SELECT * FROM versions WHERE page_id=? AND id=?", (pid, vid)).fetchone()
+            if not v:
+                return self._err(404, "Fassung nicht gefunden")
+            # den jetzigen Stand sichern, damit auch das Wiederherstellen rückgängig gemacht werden kann
+            snapshot(con, pid, reason="vor dem Wiederherstellen", force=True)
+            b = {"title": v["title"], "icon": v["icon"], "content": v["content"],
+                 "props": json.loads(v["props"] or "{}")}
+            err = self._apply_update(con, pid, b)
+            if err:
+                con.rollback()
+                return self._err(400, err)
             con.commit()
         self._json({"ok": True})
 

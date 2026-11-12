@@ -571,6 +571,41 @@ textarea.editor{font:13.5px/1.7 var(--mono);padding:18px}
 .num{font-variant-numeric:tabular-nums}
 table.db td .cell.num{text-align:right}
 table.db tfoot td{border-bottom:0}
+table.db tr.grp td{border-right:0;padding:14px 4px 4px;background:none;max-width:none}
+table.db tr.grp:first-child td{padding-top:4px}
+.grp-t{display:inline-flex;align-items:center;gap:8px;padding:3px 6px;border-radius:4px;font-weight:500}
+.grp-t:hover,.grp-add:hover{background:var(--hover)}
+.grp-a{display:inline-block;width:12px;color:var(--muted);font-size:11px}
+.grp-n{color:var(--muted);font-weight:400;font-size:13px}
+.grp-add{color:var(--muted);padding:3px 8px;border-radius:4px;margin-left:4px;opacity:0}
+table.db tr.grp:hover .grp-add{opacity:1}
+table.db tr.grpcalc td{border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);padding:3px 8px;text-align:right;white-space:nowrap}
+table.db tr.grpcalc td .cv{color:var(--text)}
+.histdlg{width:min(1040px,95vw)!important;max-height:84vh!important}
+.hist{display:flex;flex-direction:column;min-height:0;flex:1}
+.hist-head{display:flex;align-items:baseline;gap:12px;padding:16px 20px 10px;border-bottom:1px solid var(--line)}
+.hist-head h2{margin:0;font-size:18px}
+.hist-cols{display:grid;grid-template-columns:250px 1fr;min-height:0;flex:1;overflow:hidden}
+.hist-list{overflow:auto;border-right:1px solid var(--line);padding:6px}
+.hist-list button{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:5px;line-height:1.35}
+.hist-list button:hover{background:var(--hover)}
+.hist-list button.on{background:var(--t-blue)}
+.hist-list .hl-d{font-weight:500}
+.hist-list .hl-s{font-size:12px;color:var(--muted)}
+.hist-view{overflow:auto;padding:14px 20px 20px;min-width:0}
+.hist-bar{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.hist-bar .sp{flex:1}
+.hist-diff{font-family:var(--mono,monospace);font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word;border:1px solid var(--line);border-radius:6px;padding:6px 0}
+.hist-diff div{padding:0 10px}
+.hist-diff .add{background:var(--t-green)}
+.hist-diff .del{background:var(--t-red);text-decoration:line-through;text-decoration-color:rgba(0,0,0,.25)}
+.hist-diff .gap{color:var(--muted);font-style:italic;font-family:var(--sans,sans-serif)}
+.hist-props{border-collapse:collapse;margin:0 0 12px;font-size:13px}
+.hist-props td{padding:3px 10px 3px 0;vertical-align:top}
+.hist-props td:first-child{color:var(--muted);white-space:nowrap}
+.hist-props .old{background:var(--t-green);padding:0 3px;border-radius:3px}
+.hist-props .new{background:var(--t-red);padding:0 3px;border-radius:3px;text-decoration:line-through}
+@media (max-width:700px){.hist-cols{grid-template-columns:1fr;overflow:auto}.hist-list{border-right:0;border-bottom:1px solid var(--line);max-height:30vh}}
 table.db td.calc{padding:8px 10px 8px 0;text-align:right;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);cursor:pointer;white-space:nowrap}
 table.db td.calc:not(.on) .cl{opacity:0;transition:opacity .12s}
 table.db tfoot tr:hover td.calc .cl{opacity:1}
@@ -2385,7 +2420,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   // gerade gezeigt wird, merkt sich jede Seite bzw. Einbettung selbst (META.views[viewKey]).
   const VIEWTYPES = {board:"Board", table:"Tabelle", timeline:"Zeitleiste", calendar:"Kalender", list:"Liste", gallery:"Galerie"};
   const uid = () => Math.random().toString(36).slice(2,10);
-  const normView = v => { v.name ||= VIEWTYPES[v.view] || "Ansicht"; v.filters ||= []; v.calc ||= {}; v.hidden ||= []; v.dir ||= 1; v.filter ??= ""; v.sort ??= null; v.group ??= null; v.cardProps ??= null; v.dateCol ??= null; v.zoom ||= "year"; return v; };
+  const normView = v => { v.name ||= VIEWTYPES[v.view] || "Ansicht"; v.filters ||= []; v.calc ||= {}; v.hidden ||= []; v.dir ||= 1; v.filter ??= ""; v.sort ??= null; v.group ??= null; v.cardProps ??= null; v.dateCol ??= null; v.zoom ||= "year"; v.tgroup ??= null; v.tcollapsed ||= []; return v; };
   META.dbviews ||= {};
   let views = META.dbviews[p.id];
   const oldPlace = META.views[viewKey] || {};
@@ -2722,8 +2757,49 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   };
 
   // ---------------- Tabelle ----------------
+  // Gruppen für die Tabelle: Auswahl nach Reihenfolge der Optionen, Datum nach Monat, sonst nach Wert
+  const MONTHS = ["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+  const tableGroups = (rows, col) => {
+    const et = effType(col, p.schema, p.rows[0]), map = new Map();
+    const add = (key, label, r, ord) => { let g = map.get(key); if (!g) map.set(key, g = {key, label, ord, rows:[]}); if (!g.rows.includes(r)) g.rows.push(r); };
+    const opts = (col.type==="select" || col.type==="multi_select") ? colOptions(p, col).map(o=>o.name) : null;
+    for (const r of rows){
+      if (opts){
+        const toks = col.type==="multi_select" ? relIds(r.props[col.name]) : [String(r.props[col.name]||"").trim()].filter(Boolean);
+        if (!toks.length) add("", "", r, Infinity);
+        for (const t of toks){ const i = opts.indexOf(t); add(t, t, r, i<0 ? 1e6 : i); }
+      } else if (isRel(col)){
+        const ls = linkedRows(r, col);
+        if (!ls.length) add("", "", r, Infinity);
+        for (const x of ls) add(x.id, x.title || "Ohne Titel", r, String(x.title||"").toLowerCase());
+      } else if (col.type==="checkbox" || et==="checkbox"){
+        const on = isOn(cellRaw(r, col, p.schema)); add(on ? "Yes" : "No", on ? "✓ Ja" : "Nein", r, on ? 0 : 1);
+      } else if (col.type==="date" || et==="date"){
+        const d = parseISO(String(cellRaw(r, col, p.schema)).split("→")[0]);
+        if (!d) add("", "", r, Infinity);
+        else { const k = d.iso.slice(0,7); add(k, MONTHS[d.d.getMonth()]+" "+d.d.getFullYear(), r, k); }
+      } else {
+        const v = cellRaw(r, col, p.schema).trim();
+        if (!v) add("", "", r, Infinity);
+        else add(v, v, r, et==="number" ? parseNum(v) : v.toLowerCase());
+      }
+    }
+    const desc = st.sort===col.name && st.dir<0;
+    return [...map.values()].sort((a,b)=>{
+      if (a.ord===Infinity || b.ord===Infinity) return (a.ord===Infinity) - (b.ord===Infinity);
+      const c = typeof a.ord==="number" && typeof b.ord==="number" ? a.ord-b.ord : String(a.ord).localeCompare(String(b.ord),"de",{numeric:true});
+      return desc ? -c : c;
+    });
+  };
+  // Welchen Wert bekommt ein neuer Eintrag, der in einer Gruppe angelegt wird?
+  const groupValue = (col, key) => {
+    if (col.type==="title" || col.type==="date" || isCalc(col) || (isRel(col) && col.mirror)) return undefined;
+    if (col.type==="multi_select" || col.type==="select" || col.type==="checkbox" || isRel(col)) return key;
+    return ["text","number","url","email"].includes(col.type) ? key : undefined;
+  };
   const drawTable = () => {
     const rows = sortedRows();
+    const gcol = st.tgroup ? p.schema.find(c=>c.name===st.tgroup) : null;
     const tw = h("div",{class:"tablewrap"});
     const t = h("table",{class:"db"});
     const tr = h("tr");
@@ -2733,7 +2809,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     tr.append(h("th",{title:"Spalte hinzufügen", style:"width:36px;text-align:center", onclick:e=>addColumn(e.currentTarget)},"＋"));
     t.append(h("thead",{},tr));
     const tb = h("tbody");
-    for (const r of rows){
+    const mkRow = r => {
       const row = h("tr");
       for (const col of p.schema){
         const cell = h("div",{class:"cell"});
@@ -2752,8 +2828,38 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       }
       row.append(h("td",{style:"min-width:36px;text-align:center"}, h("button",{style:"color:var(--muted);padding:6px 8px", title:"Mehr", onclick:e=>{ const b=e.currentTarget.getBoundingClientRect(); rowMenu(r,{clientX:b.left-200,clientY:b.bottom}); }},"⋯")));
       row.oncontextmenu = e => { if (e.target.closest("input,textarea")) return; e.preventDefault(); rowMenu(r, e); };
-      tb.append(row);
-    }
+      return row;
+    };
+    const calcRow = (rs, cls) => {   // Berechnungen je Gruppe (gleiche Auswahl wie in der Fußzeile)
+      const fr = h("tr",{class:cls});
+      for (const col of p.schema){
+        const key = st.calc[col.name] || "", lb = key && (calcsFor(col, p.schema, p.rows[0]).find(c=>c[0]===key)||[])[1];
+        fr.append(h("td",{class:col.type==="checkbox"?"narrow":""}, key ? [h("span",{class:"cl"}, lb), " ", h("span",{class:"cv"}, calcValue(rs, col, key, p.schema))] : null));
+      }
+      fr.append(h("td"));
+      return fr;
+    };
+    if (gcol){
+      const coll = new Set(st.tcollapsed);
+      const hasCalc = p.schema.some(c=>st.calc[c.name]);
+      for (const g of tableGroups(rows, gcol)){
+        const closed = coll.has(g.key);
+        const label = !g.key ? h("span",{style:"color:var(--muted)"}, "Ohne " + gcol.name)
+          : (gcol.type==="select" || gcol.type==="multi_select") ? tagEl(gcol, g.label) : h("span",{}, g.label);
+        const gv = groupValue(gcol, g.key);
+        tb.append(h("tr",{class:"grp"}, h("td",{colspan:String(p.schema.length+1)},
+          h("button",{class:"grp-t", title: closed ? "Aufklappen" : "Zuklappen", onclick:()=>{
+            st.tcollapsed = closed ? st.tcollapsed.filter(k=>k!==g.key) : [...st.tcollapsed, g.key]; persist(); draw(); }},
+            h("span",{class:"grp-a"}, closed ? "▶" : "▼"), label, h("span",{class:"grp-n"}, String(g.rows.length))),
+          gv!==undefined ? h("button",{class:"grp-add", title:"Neuer Eintrag in dieser Gruppe", onclick:async()=>{
+            const row = await createRow("", {[gcol.name]: gv}); editRowId = row.id;
+            if (closed) st.tcollapsed = st.tcollapsed.filter(k=>k!==g.key);
+            persist(); draw(); }},"＋") : null)));
+        if (closed) continue;
+        for (const r of g.rows) tb.append(mkRow(r));
+        if (hasCalc) tb.append(calcRow(g.rows, "grpcalc"));
+      }
+    } else for (const r of rows) tb.append(mkRow(r));
     t.append(tb);
     // Fußzeile mit Berechnungen (Summe, Anzahl, % angehakt …) über die gerade sichtbaren Einträge
     const fr = h("tr");
@@ -3009,6 +3115,13 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     const dirSel = h("select",{}, h("option",{value:"1", selected:st.dir>0},"Aufsteigend"), h("option",{value:"-1", selected:st.dir<0},"Absteigend"));
     dirSel.onchange = () => { st.dir = +dirSel.value; persist(); draw(); };
     pop.append(h("label",{},"Sortieren nach"), sortSel, dirSel);
+    if (st.view==="table"){
+      const g = h("select",{}, h("option",{value:""},"Keine Gruppierung"),
+        p.schema.filter(c=>c.type!=="title" && c.type!=="files").map(c=>h("option",{value:c.name, selected:st.tgroup===c.name}, c.name)));
+      g.onchange = () => { st.tgroup = g.value || null; st.tcollapsed = []; persist(); draw(); };
+      pop.append(h("label",{},"Gruppieren nach"), g,
+        h("div",{class:"hint", style:"padding:2px 0 0;margin:0"},"Gruppen lassen sich auf- und zuklappen. Berechnungen aus der Fußzeile erscheinen auch je Gruppe."));
+    }
     if (st.view==="board"){
       const col = groupCol();
       if (col){
@@ -3204,7 +3317,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
           const res = await api("POST",`/api/db/${p.id}/op`,{op:"rename_column", from:col.name, to:nn});
           for (const r of p.rows) if (col.name in r.props){ r.props[nn] = r.props[col.name]; delete r.props[col.name]; }
           for (const v of views){
-            if (v.sort===col.name) v.sort = nn; if (v.group===col.name) v.group = nn; if (v.dateCol===col.name) v.dateCol = nn;
+            if (v.sort===col.name) v.sort = nn; if (v.group===col.name) v.group = nn; if (v.tgroup===col.name) v.tgroup = nn; if (v.dateCol===col.name) v.dateCol = nn;
             if (v.cardProps) v.cardProps = v.cardProps.map(x=>x===col.name?nn:x);
             for (const f of v.filters) if (f.prop===col.name) f.prop = nn;
             if (col.name in v.calc){ v.calc[nn] = v.calc[col.name]; delete v.calc[col.name]; }
@@ -3263,6 +3376,7 @@ async function openPeek(id){
   el.append(h("div",{class:"ph-bar"},
     h("button",{title:"Schließen (Esc)", onclick:closePeek},"Schließen"),
     h("button",{onclick:()=>{ closePeek(); location.hash="#/p/"+p.id; }},"Als Seite öffnen"),
+    h("button",{title:"Frühere Fassungen ansehen und wiederherstellen", onclick:()=>openHistory(p, true)},"Verlauf"),
     h("span",{class:"sp"}),
     h("button",{title:"Löschen", onclick:async()=>{ await api("DELETE",`/api/page/${p.id}`); closePeek(); notifyDb(p.parent_id);
       toast("„"+(p.title||"Ohne Titel")+"“ gelöscht","Rückgängig", async()=>{ await api("POST",`/api/restore/${p.id}`); notifyDb(p.parent_id); }); }},"Löschen")), body);
@@ -3272,6 +3386,119 @@ async function openPeek(id){
 }
 function closePeek(){ if (!PEEK) return; flushAll(); const dbId = PEEK.parent_id; PEEK = null; $("#peek").classList.remove("on"); $("#peek").innerHTML=""; notifyDb(dbId); }
 document.addEventListener("mousedown", e => { if (PEEK && !e.target.closest("#peek, .pop, .overlay, #toast, .cardx, .open, #lightbox")) closePeek(); });
+
+// ===========================================================================
+// Seitenverlauf: frühere Fassungen ansehen, vergleichen, wiederherstellen
+// ===========================================================================
+function lineDiff(oldText, newText){   // Zeilenvergleich (LCS) -> [{t:" "|"-"|"+", s}]
+  const A = String(oldText||"").split("\n"), B = String(newText||"").split("\n");
+  let pre = 0; while (pre<A.length && pre<B.length && A[pre]===B[pre]) pre++;
+  let suf = 0; while (suf<A.length-pre && suf<B.length-pre && A[A.length-1-suf]===B[B.length-1-suf]) suf++;
+  const a = A.slice(pre, A.length-suf), b = B.slice(pre, B.length-suf), n = a.length, m = b.length;
+  const out = A.slice(0, pre).map(s=>({t:" ", s}));
+  if (n*m > 3e6){ a.forEach(s=>out.push({t:"-", s})); b.forEach(s=>out.push({t:"+", s})); }
+  else {
+    const L = Array.from({length:n+1}, ()=>new Uint32Array(m+1));
+    for (let i=n-1; i>=0; i--) for (let j=m-1; j>=0; j--) L[i][j] = a[i]===b[j] ? L[i+1][j+1]+1 : Math.max(L[i+1][j], L[i][j+1]);
+    let i = 0, j = 0;
+    while (i<n && j<m){ if (a[i]===b[j]){ out.push({t:" ", s:a[i]}); i++; j++; } else if (L[i+1][j] >= L[i][j+1]) out.push({t:"-", s:a[i++]}); else out.push({t:"+", s:b[j++]}); }
+    while (i<n) out.push({t:"-", s:a[i++]}); while (j<m) out.push({t:"+", s:b[j++]});
+  }
+  return out.concat(A.slice(A.length-suf).map(s=>({t:" ", s})));
+}
+function relTime(ts){
+  const d = new Date(ts), s = (Date.now()-d.getTime())/1000;
+  if (s < 90) return "gerade eben";
+  if (s < 3600) return `vor ${Math.round(s/60)} Min.`;
+  if (s < 86400) return `vor ${Math.round(s/3600)} Std.`;
+  if (s < 86400*7){ const n = Math.round(s/86400); return n===1 ? "gestern" : `vor ${n} Tagen`; }
+  return d.toLocaleDateString("de-DE",{day:"numeric", month:"short", year:"numeric"});
+}
+async function openHistory(p, inPeek){
+  flushAll(); await new Promise(r=>setTimeout(r, 200));      // offene Änderungen erst speichern
+  let list, cur;
+  try { [list, cur] = await Promise.all([api("GET",`/api/history/${p.id}`), api("GET",`/api/page/${p.id}`)]); }
+  catch(e){ toast(e.message); return; }
+  const schema = cur.db_schema || [];
+  const left = h("div",{class:"hist-list"}), right = h("div",{class:"hist-view"});
+  const body = h("div",{class:"hist"},
+    h("div",{class:"hist-head"}, h("h2",{},"🕘 Seitenverlauf"), h("span",{class:"hint", style:"margin:0"}, (cur.icon ? cur.icon+" " : "") + (cur.title||"Ohne Titel"))),
+    h("div",{class:"hist-cols"}, left, right));
+  const ov = dialog(body);
+  ov.querySelector(".dialog").classList.add("histdlg");
+  if (!list.length){
+    left.append(h("div",{class:"hint", style:"padding:10px"},"Noch keine früheren Fassungen."));
+    right.append(h("p",{class:"hint"},"Sobald du diese Seite änderst, merkt sich die App den vorherigen Stand: beim Bearbeiten höchstens alle 10 Minuten eine Fassung, die letzten 50 je Seite bleiben erhalten."));
+    return;
+  }
+  const propText = (col, v) => {
+    if (isRel(col) && !col.mirror){ const t = DBC[col.db]; const by = t ? rowsById(t) : null;
+      return relIds(v).map(id=>by?.get(id)?.title || "(gelöscht)").join(", "); }
+    return String(v ?? "");
+  };
+  const stored = schema.filter(c=>c.type!=="title" && !isCalc(c) && !(isRel(c) && c.mirror));
+  let mode = "diff";
+  const show = async (v, btn) => {
+    left.querySelectorAll(".on").forEach(x=>x.classList.remove("on")); btn.classList.add("on");
+    right.innerHTML = ""; right.append(h("div",{class:"hint"},"Lädt …"));
+    let f; try { f = await api("GET",`/api/history/${p.id}/${v.id}`); } catch(e){ right.innerHTML = ""; right.append(h("div",{class:"hint"}, e.message)); return; }
+    const render = () => {
+      right.innerHTML = "";
+      const tab = (k, lb) => h("button",{class:"btn"+(mode===k?" primary":""), onclick:()=>{ mode = k; render(); }}, lb);
+      right.append(h("div",{class:"hist-bar"}, tab("diff","Änderungen"), tab("view","Vorschau"), h("span",{class:"sp"}),
+        h("button",{class:"btn primary", onclick:async()=>{
+          if (!confirm("Diese Fassung wiederherstellen?\n\nDer jetzige Stand bleibt im Verlauf erhalten, du kannst also jederzeit zurück.")) return;
+          try { await api("POST",`/api/history/${p.id}/${v.id}`); } catch(e){ toast(e.message); return; }
+          ov.close(); toast("Fassung wiederhergestellt. Der vorherige Stand liegt im Verlauf.");
+          await loadTree();
+          if (inPeek){ openPeek(p.id); notifyDb(p.parent_id); } else openPage(p.id);
+        }},"Diese Fassung wiederherstellen")));
+      const changedProps = stored.filter(c => String(f.props?.[c.name] ?? "") !== String(cur.props?.[c.name] ?? ""));
+      if (mode==="diff"){
+        right.append(h("p",{class:"hint", style:"margin:0 0 10px"},
+          h("span",{style:"background:var(--t-green);padding:0 4px;border-radius:3px"},"Grün"), " kommt beim Wiederherstellen zurück, ",
+          h("span",{style:"background:var(--t-red);padding:0 4px;border-radius:3px"},"Rot"), " fällt weg."));
+        const tbl = h("table",{class:"hist-props"});
+        if (f.title !== cur.title) tbl.append(h("tr",{}, h("td",{},"Titel"), h("td",{}, h("span",{class:"old"}, f.title||"Ohne Titel"), " ", h("span",{class:"new"}, cur.title||"Ohne Titel"))));
+        if (f.icon !== cur.icon) tbl.append(h("tr",{}, h("td",{},"Icon"), h("td",{}, h("span",{class:"old"}, f.icon||"–"), " ", h("span",{class:"new"}, cur.icon||"–"))));
+        for (const c of changedProps){
+          const o = propText(c, f.props?.[c.name]), n = propText(c, cur.props?.[c.name]);
+          tbl.append(h("tr",{}, h("td",{}, c.name), h("td",{}, o ? h("span",{class:"old"}, o) : h("span",{class:"hint", style:"margin:0"},"leer"), " ", n ? h("span",{class:"new"}, n) : null)));
+        }
+        if (tbl.childNodes.length) right.append(tbl);
+        const d = lineDiff(f.content, cur.content);
+        if (!d.some(x=>x.t!==" ")){
+          if (!tbl.childNodes.length) right.append(h("p",{class:"hint"},"Diese Fassung entspricht dem jetzigen Stand."));
+          else right.append(h("p",{class:"hint"},"Der Inhalt ist unverändert."));
+          return;
+        }
+        const box = h("div",{class:"hist-diff"});
+        // unveränderte Abschnitte einklappen, 2 Zeilen Kontext
+        const keep = d.map((x,i)=> x.t!==" " || d.slice(Math.max(0,i-2), i+3).some(y=>y.t!==" "));
+        for (let i=0; i<d.length; i++){
+          if (!keep[i]){ let j = i; while (j<d.length && !keep[j]) j++; box.append(h("div",{class:"gap"}, `… ${j-i} unveränderte Zeile${j-i===1?"":"n"}`)); i = j-1; continue; }
+          const x = d[i];
+          box.append(h("div",{class: x.t==="-" ? "add" : x.t==="+" ? "del" : ""}, x.s || "\u00a0"));
+        }
+        right.append(box);
+      } else {
+        right.append(h("h1",{class:"title", style:"margin:0 0 8px;font-size:26px"}, (f.icon ? f.icon+" " : "") + (f.title||"Ohne Titel")));
+        const vals = stored.filter(c=>String(f.props?.[c.name] ?? "").trim());
+        if (vals.length) right.append(h("table",{class:"hist-props"}, vals.map(c=>h("tr",{}, h("td",{}, c.name), h("td",{}, propText(c, f.props[c.name]))))));
+        right.append(h("div",{class:"doc", html: md(f.content)}));
+      }
+    };
+    render();
+  };
+  for (const v of list){
+    const d = new Date(v.ts);
+    const btn = h("button",{onclick:()=>show(v, btn)},
+      h("div",{class:"hl-d"}, d.toLocaleString("de-DE",{weekday:"short", day:"numeric", month:"short", hour:"2-digit", minute:"2-digit"})),
+      h("div",{class:"hl-s"}, relTime(v.ts) + (v.reason ? " · " + v.reason : "") + " · " + (v.chars||0).toLocaleString("de-DE") + " Zeichen"));
+    left.append(btn);
+  }
+  show(list[0], left.firstChild);
+}
 
 // ===========================================================================
 // Popover / Dialoge
@@ -3399,6 +3626,7 @@ function moreMenu(e){
     p.kind!=="row" ? h("button",{class:"item", onclick:()=>{closePop(); pickPage("Verschieben nach …", async n=>{ try{ await api("PUT",`/api/page/${p.id}`,{parent_id:n.id}); await loadTree(); openPage(p.id); toast("Verschoben"); }catch(err){ toast(err.message); } }, n=>n.kind==="page" && n.id!==p.id,
         {label:"⬆ Auf die oberste Ebene", fn: async()=>{ await api("PUT",`/api/page/${p.id}`,{parent_id:null}); await loadTree(); openPage(p.id); }});}},"↪ Verschieben nach …") : null,
     h("button",{class:"item", onclick:async()=>{closePop(); const r = await api("POST",`/api/duplicate/${p.id}`); await loadTree(); go(r.id);}},"⧉ Duplizieren"),
+    h("button",{class:"item", onclick:()=>{closePop(); openHistory(p, false);}},"🕘 Seitenverlauf"),
     h("button",{class:"item", onclick:()=>{closePop(); navigator.clipboard?.writeText(`[${p.title}](#/p/${p.id})`); toast("Link kopiert – im Editor einfügen");}},"🔗 Link zu dieser Seite kopieren"),
     h("div",{class:"hint", style:"padding:4px 8px;white-space:pre-line"}, "Erstellt: "+p.created.replace("T"," ")+"\nGeändert: "+p.updated.replace("T"," ")),
     h("hr"),
