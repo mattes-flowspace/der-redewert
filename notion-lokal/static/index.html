@@ -627,6 +627,19 @@ table.db td.calc .cv{color:var(--text);font-size:14px;letter-spacing:0;text-tran
   .cover-btns{opacity:1}
   .viewpop{max-width:92vw}
 }
+/* Passwortschutz */
+#login{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+.loginbox{width:min(340px,100%);display:flex;flex-direction:column;gap:12px}
+.lg-title{font-size:22px;font-weight:600;letter-spacing:-.014em}
+.lg-title::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-right:10px}
+.loginbox input,.pwbox input{width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:9px 2px;font-size:15px;outline:0;border-radius:0;color:var(--text)}
+.loginbox input:focus,.pwbox input:focus{border-bottom-color:var(--accent)}
+.loginbox .btn{align-self:flex-start;margin-top:6px}
+.hint.err{color:var(--danger);min-height:16px;margin:0}
+.pwbox{display:flex;flex-direction:column;gap:10px}
+.pwbox h2{margin:0}
+.pwrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:4px}
+.btn.danger{color:var(--danger)}
 </style>
 </head>
 <body>
@@ -641,6 +654,7 @@ table.db td.calc .cv{color:var(--text);font-size:14px;letter-spacing:0;text-tran
     <button class="side-btn" id="btnExport">Export</button>
     <button class="side-btn" id="btnTrash">Papierkorb</button>
     <button class="side-btn" id="btnUpdate">Nach Updates suchen</button>
+    <button class="side-btn" id="btnPass">Passwort</button>
     <button class="side-btn" id="btnTheme">Darstellung: Automatisch</button>
   </footer>
 </nav>
@@ -681,6 +695,7 @@ async function api(method, url, body, raw=false) {
   catch(e){ $("#offline").style.display = "block"; throw new Error("Keine Verbindung zum lokalen Server"); }
   $("#offline").style.display = "none";
   const j = await r.json().catch(()=>({}));
+  if (r.status === 401 && !url.startsWith("/api/auth")){ showLogin(); throw new Error("Bitte anmelden"); }
   if (r.status === 423 && j.lock) showLock(j.lock);
   if (!r.ok) throw new Error(j.error || r.statusText);
   return j;
@@ -2899,6 +2914,48 @@ async function installUpdate(u){
   ov.close(); toast("Update eingespielt. Bitte die App einmal neu starten.");
 }
 $("#btnUpdate").onclick = () => checkUpdate(true);
+
+// ===========================================================================
+// Passwortschutz
+// ===========================================================================
+function showLogin(){
+  if ($("#login")) return;
+  closePop(); document.querySelectorAll(".overlay").forEach(o=>o.remove());
+  const pw = h("input",{type:"password", autocomplete:"current-password", placeholder:"Passwort"});
+  const msg = h("div",{class:"hint err"});
+  const btn = h("button",{class:"btn primary", type:"submit"},"Anmelden");
+  const form = h("form",{class:"loginbox", onsubmit:async e=>{ e.preventDefault(); if (!pw.value) return;
+    btn.disabled = true; msg.textContent = "";
+    try { await api("POST","/api/auth/login",{password:pw.value}); location.reload(); }
+    catch(err){ msg.textContent = err.message; btn.disabled = false; pw.select(); } }},
+    h("div",{class:"lg-title"},"Notion Lokal"), h("div",{class:"hint"},"Diese Daten sind mit einem Passwort geschützt."), pw, msg, btn);
+  document.body.append(h("div",{id:"login"}, form));
+  setTimeout(()=>pw.focus(), 30);
+}
+async function openPassword(){
+  let s; try { s = await api("GET","/api/auth"); } catch(e){ return toast(e.message); }
+  const inp = ph => h("input",{type:"password", placeholder:ph, autocomplete:"new-password"});
+  const cur = inp("Aktuelles Passwort"), n1 = inp(s.enabled ? "Neues Passwort" : "Passwort (mindestens 6 Zeichen)"), n2 = inp("Passwort wiederholen");
+  const msg = h("div",{class:"hint err"});
+  const send = async (body, done) => { msg.textContent = ""; try { await api("POST","/api/auth/set", body); ov.close(); toast(done); } catch(e){ msg.textContent = e.message; } };
+  const setPw = () => { if (n1.value.length < 6) return msg.textContent = "Das Passwort braucht mindestens 6 Zeichen.";
+    if (n1.value !== n2.value) return msg.textContent = "Die beiden Eingaben stimmen nicht überein.";
+    send({current:cur.value, new:n1.value}, s.enabled ? "Passwort geändert" : "Passwortschutz ist aktiv"); };
+  n2.onkeydown = e => { if (e.key==="Enter") setPw(); };
+  const ov = dialog(h("div",{class:"body pwbox"},
+    h("h2",{}, s.enabled ? "Passwort ändern" : "Passwortschutz einrichten"),
+    h("p",{class:"hint"}, s.enabled ? "Der Passwortschutz ist aktiv. Nach 30 Tagen oder nach dem Abmelden wird das Passwort neu abgefragt."
+      : "Danach fragt die App an jedem Gerät nach dem Passwort, bevor sie Seiten, Datenbanken oder Dateien zeigt."),
+    s.enabled ? cur : null, n1, n2, msg,
+    h("div",{class:"pwrow"},
+      h("button",{class:"btn primary", onclick:setPw}, s.enabled ? "Passwort ändern" : "Passwort setzen"),
+      s.enabled ? h("button",{class:"btn", onclick:async()=>{ try { await api("POST","/api/auth/logout"); } catch(e){} location.reload(); }},"Abmelden") : null,
+      s.enabled ? h("button",{class:"btn danger", onclick:()=>{ if (!cur.value) return msg.textContent = "Gib zum Entfernen das aktuelle Passwort ein.";
+        send({current:cur.value, new:""}, "Passwortschutz entfernt"); }},"Schutz entfernen") : null),
+    h("p",{class:"hint"},"Wichtig: Das Passwort schützt den Zugriff über die App. Die Datei daten/notion.sqlite3 wird nicht verschlüsselt. Wer den Datenordner öffnen kann, kann die Inhalte auch ohne Passwort lesen. Passwort vergessen? Im Terminal „python3 app.py passwort-entfernen“ hebt den Schutz auf.")));
+  setTimeout(()=>(s.enabled ? cur : n1).focus(), 30);
+}
+$("#btnPass").onclick = openPassword;
 $("#btnTheme").onclick = () => { META.theme = ({auto:"light", light:"dark", dark:"auto"})[META.theme||"auto"]; saveMeta("theme"); applyTheme(); };
 $("#btnFav").onclick = () => { if (!CURRENT) return; const id = CURRENT.id; const on = META.favorites.includes(id);
   META.favorites = on ? META.favorites.filter(x=>x!==id) : [...META.favorites, id]; saveMeta("favorites"); $("#btnFav").textContent = on ? "☆" : "★"; renderTree(); };
@@ -2923,7 +2980,7 @@ try { if (localStorage.getItem("nl_side")==="0") document.body.classList.add("si
   for (const k of ["favorites","expanded"]) if (!Array.isArray(META[k])) META[k] = [];
   for (const k of ["wide","views","closed","dbs"]) if (!META[k] || typeof META[k]!=="object") META[k] = {};
   applyTheme();
-  await loadTree();
+  try { await loadTree(); } catch(e){ return; }   // z. B. nicht angemeldet: Anmeldebildschirm steht schon
   route();
   checkLock();
   checkUpdate(false);

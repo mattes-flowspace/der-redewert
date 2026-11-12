@@ -1,5 +1,5 @@
 {
-  "version": "2026.11.12.3",
-  "notes": "Gespeicherte Ansichten mit Filtern, Summen und Euro-Format in der Tabelle, Galerie-Ansicht, Vorlagen für neue Einträge und Cover für Seiten.",
+  "version": "2026.11.12.4",
+  "notes": "Passwortschutz: Unter Passwort in der Seitenleiste ein Passwort festlegen, dann fragt die App vor dem Anzeigen der Inhalte danach.",
   "files": ["app.py", "static/index.html", "README.md", "version.json"]
 }

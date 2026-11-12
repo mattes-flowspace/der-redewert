@@ -12,11 +12,13 @@ Benutzung:
     python3 app.py export ./ordner      # Alles als Markdown + CSV exportieren
     python3 app.py backup               # ZIP-Sicherung des Datenordners anlegen
     python3 app.py update               # neueste Version von GitHub einspielen
+    python3 app.py passwort-entfernen   # Passwortschutz aufheben (Passwort vergessen)
 """
 
 import csv
 import datetime as dt
 import hashlib
+import hmac
 import io
 import json
 import mimetypes
@@ -27,6 +29,7 @@ import subprocess
 import urllib.request
 import time
 import re
+import secrets
 import shutil
 import sqlite3
 import sys
@@ -959,6 +962,70 @@ def _restart_soon():
 
 
 # ---------------------------------------------------------------------------
+# Passwortschutz der Oberfläche
+#
+# Schützt den Zugriff über den Browser (z. B. im WLAN oder an einem gemeinsam
+# genutzten Rechner). Die Datei daten/notion.sqlite3 selbst wird NICHT
+# verschlüsselt: Wer den Datenordner lesen kann, kommt auch ohne Passwort an
+# die Inhalte.
+# ---------------------------------------------------------------------------
+
+AUTH_KEY = "_zugang"          # meta-Schlüssel; alles mit "_" am Anfang bleibt für die Oberfläche unsichtbar
+AUTH_COOKIE = "nl_sitzung"
+AUTH_DAYS = 30
+AUTH_ITER = 300_000
+_auth_fails = []              # Zeitpunkte fehlgeschlagener Anmeldungen (Bremse gegen Durchprobieren)
+
+
+def auth_load(con=None):
+    con = con or connect()
+    r = con.execute("SELECT value FROM meta WHERE key=?", (AUTH_KEY,)).fetchone()
+    try:
+        a = json.loads(r["value"]) if r else None
+    except ValueError:
+        a = None
+    return a if a and a.get("hash") else None
+
+
+def _pw_hash(pw, salt, it):
+    return hashlib.pbkdf2_hmac("sha256", pw.encode("utf-8"), bytes.fromhex(salt), int(it)).hex()
+
+
+def auth_set(pw):
+    """Passwort setzen oder (leer) entfernen. Ein neues Geheimnis meldet alle bisherigen Sitzungen ab."""
+    with _write_lock:
+        con = connect()
+        if not pw:
+            con.execute("DELETE FROM meta WHERE key=?", (AUTH_KEY,))
+            con.commit()
+            return None
+        salt = secrets.token_hex(16)
+        a = {"salt": salt, "iter": AUTH_ITER, "hash": _pw_hash(pw, salt, AUTH_ITER), "secret": secrets.token_hex(32)}
+        con.execute("INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (AUTH_KEY, json.dumps(a)))
+        con.commit()
+        return a
+
+
+def auth_check(a, pw):
+    return hmac.compare_digest(_pw_hash(pw or "", a["salt"], a.get("iter", AUTH_ITER)), a["hash"])
+
+
+def session_make(a):
+    exp = str(int(time.time()) + AUTH_DAYS * 86400)
+    sig = hmac.new(bytes.fromhex(a["secret"]), exp.encode(), "sha256").hexdigest()
+    return f"{exp}.{sig}"
+
+
+def session_ok(a, tok):
+    exp, _, sig = (tok or "").partition(".")
+    if not exp.isdigit() or int(exp) < time.time():
+        return False
+    good = hmac.new(bytes.fromhex(a["secret"]), exp.encode(), "sha256").hexdigest()
+    return hmac.compare_digest(good, sig)
+
+
+# ---------------------------------------------------------------------------
 # HTTP-Server + JSON-API
 # ---------------------------------------------------------------------------
 
@@ -969,12 +1036,14 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     # --- Hilfsfunktionen ---
-    def _json(self, obj, status=200):
+    def _json(self, obj, status=200, headers=None):
         body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-store")
+        for k, v in (headers or {}).items():
+            self.send_header(k, v)
         self.end_headers()
         self.wfile.write(body)
 
@@ -1003,6 +1072,61 @@ class Handler(BaseHTTPRequestHandler):
         with open(path, "rb") as fh:
             shutil.copyfileobj(fh, self.wfile)
 
+    # --- Passwortschutz ---
+    def _session(self):
+        for part in (self.headers.get("Cookie") or "").split(";"):
+            k, _, v = part.strip().partition("=")
+            if k == AUTH_COOKIE:
+                return v
+        return ""
+
+    def _authed(self, a=None):
+        a = a if a is not None else auth_load()
+        return a is None or session_ok(a, self._session())
+
+    def _gate(self, path):
+        """True, wenn die Anfrage durch darf. Geschützt sind alle Daten (/api, /dateien), nicht die leere Oberfläche."""
+        if not (path.startswith("/api/") or path.startswith("/dateien/")) or path.startswith("/api/auth"):
+            return True
+        if self._authed():
+            return True
+        self._err(401, "Bitte anmelden")
+        return False
+
+    def _cookie(self, tok):
+        age = AUTH_DAYS * 86400 if tok else 0
+        return {"Set-Cookie": f"{AUTH_COOKIE}={tok}; Path=/; Max-Age={age}; HttpOnly; SameSite=Strict"}
+
+    def api_auth(self, sub, b):
+        a = auth_load()
+        if sub == "login":
+            if a is None:
+                return self._json({"enabled": False, "ok": True})
+            now_ts = time.time()
+            _auth_fails[:] = [t for t in _auth_fails if now_ts - t < 300]
+            if len(_auth_fails) >= 8:
+                return self._err(429, "Zu viele Fehlversuche. Bitte ein paar Minuten warten.")
+            if not auth_check(a, b.get("password")):
+                _auth_fails.append(now_ts)
+                time.sleep(0.6)
+                return self._err(403, "Falsches Passwort")
+            _auth_fails.clear()
+            return self._json({"enabled": True, "ok": True}, headers=self._cookie(session_make(a)))
+        if sub == "logout":
+            return self._json({"enabled": a is not None, "ok": a is None}, headers=self._cookie(""))
+        if sub == "set":
+            if not self._authed(a):
+                return self._err(401, "Bitte anmelden")
+            if a is not None and not auth_check(a, b.get("current")):
+                time.sleep(0.6)
+                return self._err(403, "Das aktuelle Passwort stimmt nicht")
+            new = b.get("new") or ""
+            if new and len(new) < 6:
+                return self._err(400, "Das Passwort braucht mindestens 6 Zeichen")
+            a2 = auth_set(new)
+            return self._json({"enabled": a2 is not None, "ok": True}, headers=self._cookie(session_make(a2) if a2 else ""))
+        return self._err(404, "Unbekannter Pfad")
+
     def _check_host(self):
         # Schutz vor DNS-Rebinding: lokal nur unter localhost/127.0.0.1 antworten
         if HOST not in ("127.0.0.1", "localhost", "::1"):
@@ -1022,7 +1146,7 @@ class Handler(BaseHTTPRequestHandler):
             self._err(403, "Fremder Ursprung")
             return False
         # Schreiben nur, solange dieser Rechner die Sperre hält
-        if not self.path.startswith("/api/lock"):
+        if not self.path.startswith(("/api/lock", "/api/auth/login", "/api/auth/logout")):
             other = foreign_lock()
             if other is not None or not OWNS_LOCK:
                 if other is None:
@@ -1039,7 +1163,12 @@ class Handler(BaseHTTPRequestHandler):
         url = urllib.parse.urlparse(self.path)
         path = urllib.parse.unquote(url.path)
         q = urllib.parse.parse_qs(url.query)
+        if not self._gate(path):
+            return
         try:
+            if path == "/api/auth":
+                a = auth_load()
+                return self._json({"enabled": a is not None, "ok": self._authed(a)})
             if path in ("/", "/index.html"):
                 return self._file(os.path.join(STATIC_DIR, "index.html"))
             if path.startswith("/static/"):
@@ -1064,7 +1193,8 @@ class Handler(BaseHTTPRequestHandler):
                                    "latest": (info or {}).get("version"), "notes": (info or {}).get("notes", "")})
             if path == "/api/meta":
                 con = connect()
-                return self._json({r["key"]: json.loads(r["value"]) for r in con.execute("SELECT * FROM meta")})
+                return self._json({r["key"]: json.loads(r["value"]) for r in con.execute("SELECT * FROM meta")
+                                   if not r["key"].startswith("_")})
             if path == "/api/export.zip":
                 data = export_zip_bytes(connect())
                 self.send_response(200)
@@ -1084,7 +1214,11 @@ class Handler(BaseHTTPRequestHandler):
             return
         url = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(url.query)
+        if not self._gate(url.path):
+            return
         try:
+            if url.path.startswith("/api/auth/"):
+                return self.api_auth(url.path.split("/")[3], self._jbody())
             if url.path == "/api/page":
                 return self.api_create(self._jbody())
             if url.path.startswith("/api/restore/"):
@@ -1118,11 +1252,15 @@ class Handler(BaseHTTPRequestHandler):
         if not self._check_origin():
             return
         url = urllib.parse.urlparse(self.path)
+        if not self._gate(url.path):
+            return
         try:
             if url.path.startswith("/api/page/"):
                 return self.api_update(url.path.split("/")[3], self._jbody())
             if url.path.startswith("/api/meta/"):
                 key = urllib.parse.unquote(url.path.split("/")[3])
+                if key.startswith("_"):
+                    return self._err(403, "Geschützter Schlüssel")
                 with _write_lock:
                     con = connect()
                     con.execute("INSERT INTO meta(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value",
@@ -1138,6 +1276,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         url = urllib.parse.urlparse(self.path)
         q = urllib.parse.parse_qs(url.query)
+        if not self._gate(url.path):
+            return
         try:
             if url.path.startswith("/api/page/"):
                 return self.api_delete(url.path.split("/")[3], (q.get("endgueltig") or ["0"])[0] == "1")
@@ -1584,6 +1724,9 @@ def main(argv):
         print(f"{n} Seiten nach {dest} exportiert.")
     elif cmd == "backup":
         print("Sicherung erstellt:", backup())
+    elif cmd == "passwort-entfernen":
+        auth_set("")
+        print("Passwortschutz aufgehoben. In der App kannst du unter „Passwort“ ein neues setzen.")
     elif cmd == "update":
         res = apply_update()
         print(f"Aktualisiert auf {res['version']}." if res["updated"] else f"Bereits aktuell ({res['version']}).")

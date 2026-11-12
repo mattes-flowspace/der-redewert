@@ -143,6 +143,18 @@ Jede Datenbank kann Vorlagen für neue Einträge haben, z. B. „Bug-Report“ o
 
 Über dem Titel jeder Seite und jedes Eintrags steht „Cover hinzufügen“: einen Farbverlauf wählen, ein Bild hochladen oder einen Bild-Link einfügen. Fährst du über das Cover, erscheinen „Cover ändern“ und „Entfernen“. Die Galerie zeigt das Cover als Kartenbild.
 
+## Passwortschutz
+
+Unter **„Passwort“** in der Seitenleiste legst du ein Passwort fest (mindestens 6 Zeichen). Danach zeigt die App Seiten, Datenbanken, Suche, Dateien und Export erst nach der Anmeldung.
+
+- Die Anmeldung gilt 30 Tage pro Browser. „Passwort“ → „Abmelden“ beendet sie sofort.
+- Das Passwort liegt im Datenordner und gilt damit an PC und Mac gleichermaßen. Gespeichert wird nur ein Prüfwert, nicht das Passwort selbst.
+- Ein neues Passwort meldet alle anderen Browser ab.
+- Nach 8 Fehlversuchen ist die Anmeldung für ein paar Minuten gesperrt.
+- **Passwort vergessen:** Im Terminal im Programmordner `python3 app.py passwort-entfernen` ausführen (Windows: `py app.py passwort-entfernen`).
+
+**Grenzen:** Das Passwort schützt den Zugriff über die App, z. B. wenn jemand anderes deinen Rechner benutzt oder die App im WLAN erreichbar ist. Die Datei `daten/notion.sqlite3` und der Ordner `daten/dateien/` werden **nicht verschlüsselt**. Wer den Datenordner öffnen kann, kann die Inhalte auch ohne Passwort lesen. Dagegen hilft nur eine verschlüsselte Festplatte (BitLocker, FileVault).
+
 ## Bedienung
 
 | Aktion | So geht's |
@@ -180,4 +192,4 @@ Diese Einschränkungen kommen vom Notion-Export selbst:
 - `app.py`: Python-Server (nur Standardbibliothek), SQLite-Datenbank, Import und Export
 - `static/index.html`: komplette Oberfläche ohne externe Bibliotheken, funktioniert offline
 - Einstellbar per Umgebungsvariablen: `NOTION_LOKAL_PORT`, `NOTION_LOKAL_DATEN` (anderer Datenordner)
-- Zugriff vom Handy im eigenen WLAN: mit `NOTION_LOKAL_HOST=0.0.0.0` starten und am Handy `http://<IP-des-Rechners>:8765` öffnen. Achtung: Es gibt kein Passwort, also nur im eigenen Heimnetz verwenden.
+- Zugriff vom Handy im eigenen WLAN: mit `NOTION_LOKAL_HOST=0.0.0.0` starten und am Handy `http://<IP-des-Rechners>:8765` öffnen. Richte dafür vorher den Passwortschutz ein (siehe oben) und nutze das nur im eigenen Heimnetz: Die Verbindung ist nicht verschlüsselt.
