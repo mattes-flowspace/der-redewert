@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.13.2",
-  "notes": "Fototagebuch: alle Bilder eines Jahres als Kollage (PNG) speichern, lückenlos oder als Kalender. Fototagebücher erscheinen nicht mehr in „Heute“.",
+  "version": "2026.11.13.3",
+  "notes": "Fototagebuch: Zoom aus dem Jahr heraus auf alle Jahre deines Lebens, jedes Jahr als Kachel aus farbigen Tagespunkten.",
   "files": [
     "app.py",
     "static/index.html",
@@ -9,7 +9,7 @@
   ],
   "sha256": {
     "app.py": "3d95589de99c3a8e455673ae96f1aa271352df1ed4e82a09af6eeb116f63d004",
-    "static/index.html": "5a6df79b9ad507a7c0e3aed5a431f83123dc88235419ee08d6e9714036b73148",
-    "README.md": "305846c7376bc33090c905c2972ddc1f9c335be53836a32ba004be0967e35de0"
+    "static/index.html": "d9189258f399c36f5d1448776579c876a48d9cafee65db660a2f7a97bc5d747b",
+    "README.md": "392764c0addd43c7156304ed7523958ab389da1987bbf753a49b435dc7c5aa1d"
   }
 }

@@ -143,6 +143,7 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
   - **Kachelgröße:** 120, 240 oder 400 Pixel. 400 Pixel nimmt die großen Originale und eignet sich für den Druck.
   - **Abstand und Hintergrund:** ohne, schmal oder breit; Weiß, Papier oder Schwarz.
   Die Größe des fertigen Bildes steht im Dialog. Ein volles Jahr mit 240 Pixeln ergibt etwa 4.600 × 4.600 Pixel.
+- **Zoom auf dein ganzes Leben:** „Leben“ links in der Leiste (oder Strg + Mausrad nach unten, oder Taste −) zoomt aus dem Jahr heraus. Dann siehst du jedes Jahr deines Lebens als kleine Kachel, zehn Jahre pro Zeile, standardmäßig bis zum Alter von 100. Jede Kachel ist ein winziger Kalender: 12 Zeilen für die Monate, 31 Punkte für die Tage. Ein Tag mit Foto erscheint in der mittleren Farbe dieses Fotos, vergangene Tage ohne Foto grau, kommende Tage blass, heute in Orange. Ein Klick auf eine Kachel (oder Strg + Mausrad nach oben, oder Taste +) zoomt in dieses Jahr hinein. Beim ersten Mal fragt die Ansicht nach deinem Geburtsjahr. Geburtsjahr und Lebensjahre änderst du unter „Ansicht“.
 - Fototagebücher erscheinen nicht in „Heute“. Wer das möchte, schaltet es dort unter „Welche Datenbanken erscheinen hier?“ ein.
 - Das Fotojahr ist eine normale Ansicht: Über „+“ neben den Reitern kannst du es jeder Datenbank mit Datumsspalte hinzufügen. Unter „Ansicht“ wählst du Datums- und Textspalte.
 - iPhone-Fotos im HEIC-Format kann der Browser unter Windows nicht lesen. Exportiere sie vorher als JPG.
