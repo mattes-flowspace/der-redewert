@@ -2974,7 +2974,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   };
   const removeDayImage = async iso => {
     const r = dayMap().get(iso); if (!r) return;
-    r.cover = ""; r.thumb = ""; delete r.props._vorschau;
+    r.cover = ""; r.thumb = ""; delete r.props._vorschau; delete r.props._farbe;
     await save(r.id, {cover:"", props:r.props});
   };
   const setDaySentence = async (iso, text) => {
@@ -3193,7 +3193,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   }, {passive:false});
   const zoomKeys = e => {
     if (!host.isConnected){ document.removeEventListener("keydown", zoomKeys); return; }
-    if (st.view!=="year" || dayBox || e.ctrlKey || e.metaKey || e.altKey || e.target.closest?.("input,textarea,select,[contenteditable]") || document.querySelector(".overlay")) return;
+    if (st.view!=="year" || dayBox || document.querySelector(".pyhost")!==host || e.ctrlKey || e.metaKey || e.altKey || e.target.closest?.("input,textarea,select,[contenteditable]") || document.querySelector(".overlay")) return;
     if ((e.key==="-" || e.key==="_") && st.zoom!=="life"){ e.preventDefault(); zoomTo("life"); }
     else if ((e.key==="+" || e.key==="=") && st.zoom==="life"){ e.preventDefault(); zoomTo("year", st.year || new Date().getFullYear()); }
   };
@@ -3246,7 +3246,6 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     }
     const b = +st.birth, span = +st.life || 100, e = b + span - 1;
     const age = cy - b, total = Object.values(byYear).reduce((a, m)=>a + m.size, 0);
-    const livedDays = diffDays(new Date(b,0,1), today) + 1;
     const head = h("div",{class:"pl-head"},
       h("span",{}, "Jahr ", h("b",{}, String(age+1)), ` von ${span}`),
       h("span",{}, h("b",{}, total.toLocaleString("de-DE")), " Tage mit Bild"),

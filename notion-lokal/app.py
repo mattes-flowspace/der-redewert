@@ -342,7 +342,10 @@ def recur_due(cfg, today):
         days = {int(x) for x in (cfg.get("days") or []) if str(x).isdigit()} or {since.isoweekday()}
         d = next((today - dt.timedelta(k) for k in range(7) if (today - dt.timedelta(k)).isoweekday() in days), None)
     elif freq == "monthly":
-        want = max(1, min(31, int(cfg.get("mday") or 1)))
+        try:
+            want = max(1, min(31, int(cfg.get("mday") or 1)))
+        except (TypeError, ValueError):
+            want = 1
 
         def in_month(y, m):
             last = (dt.date(y + (m == 12), m % 12 + 1, 1) - dt.timedelta(1)).day
@@ -378,13 +381,18 @@ def run_recurring(today=None):
         for tid, c in cfg.items():
             if not isinstance(c, dict):
                 continue
-            d = recur_due(c, today)
-            if not d or done.get(tid, "") >= d.isoformat():
+            try:                         # eine kaputte Vorlage soll die anderen nicht aufhalten
+                d = recur_due(c, today)
+                if not d or done.get(tid, "") >= d.isoformat():
+                    continue
+                t = con.execute("SELECT title FROM pages WHERE id=? AND kind='template' AND deleted=0",
+                                (tid,)).fetchone()
+                if not t:
+                    continue
+                create_from_template(con, tid, recur_title(t["title"], d), day=d, date_col=c.get("dateCol") or "")
+            except Exception as e:  # noqa: BLE001
+                print("Wiederkehrender Eintrag übersprungen:", tid, e)
                 continue
-            t = con.execute("SELECT title FROM pages WHERE id=? AND kind='template' AND deleted=0", (tid,)).fetchone()
-            if not t:
-                continue
-            create_from_template(con, tid, recur_title(t["title"], d), day=d, date_col=c.get("dateCol") or "")
             done[tid] = d.isoformat()
             made += 1
         if made:

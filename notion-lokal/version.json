@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.13.4",
-  "notes": "Neuer Name: Notion Lokal heißt jetzt Flowtiz, das Fototagebuch heißt Lebensfluss. Deine Daten und Ordner bleiben unverändert.",
+  "version": "2026.11.13.5",
+  "notes": "Fehlerkorrekturen: wiederkehrende Einträge laufen weiter, auch wenn eine Vorlage fehlerhaft eingestellt ist; Lebensfluss-Zoom reagiert nur noch in der sichtbaren Ansicht.",
   "files": [
     "app.py",
     "static/index.html",
@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "1bd3a89fe94759278ddf59a9ccff471f03eb4d0e03b61833a723284db680200b",
-    "static/index.html": "f5568f18e87699b02b21d552c4d31110330095fa601168592930c1c657e613f5",
+    "app.py": "c98f3c8f8867fbc6c94115bb6e3256e373f958e9a779c08e5a3d3645d6fc03fa",
+    "static/index.html": "5aed52097bb87ffc2e56353e6b05cda1471699054afea3217ebd139efb680fc1",
     "README.md": "d6bffe1228f1d4d98bb6f576c5848a655607d6790e61ec8a4dbfc95e77aa9bfe"
   }
 }
