@@ -728,6 +728,72 @@ button.subtg:hover{background:var(--hover)}
 .ag-set td{padding:5px 8px 5px 0;border-bottom:1px solid var(--line);vertical-align:middle}
 .ag-set select{font:inherit;padding:2px 4px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--text)}
 @media (max-width:700px){.ag-db{display:none}}
+/* Fotojahr: 365 Kacheln */
+.py-bar{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;padding:4px 0 10px}
+.py-years{display:flex;align-items:stretch;border:1px solid var(--line);border-radius:3px;max-width:100%;overflow-x:auto}
+.py-years button{padding:5px 10px;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;min-width:54px;flex:none}
+.py-years button:last-child{border-right:0}
+.py-years button:hover{background:var(--hover)}
+.py-years .py-arr{min-width:30px;color:var(--muted);font-size:16px}
+.py-yn{font-family:var(--mono);font-size:13px}
+.py-yc{font-size:10.5px;color:var(--muted);font-family:var(--mono)}
+.py-years .py-y.on{background:var(--text);color:var(--bg)}
+.py-y.on .py-yc{color:inherit;opacity:.65}
+.py-stat{font-family:var(--mono);font-size:12.5px;color:var(--muted);white-space:nowrap}
+.py-stat b{color:var(--text);font-weight:600}
+.py-sw{display:inline-flex;align-items:center;gap:8px;font-size:13px;padding:4px 2px;white-space:nowrap}
+.py-knob{width:30px;height:16px;border-radius:8px;background:var(--line);position:relative;transition:background .15s;flex:none}
+.py-knob::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--bg);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .15s}
+.py-sw.on .py-knob{background:var(--accent)}
+.py-sw.on .py-knob::after{left:16px}
+.py-seg{display:inline-flex;border:1px solid var(--line);border-radius:3px;overflow:hidden}
+.py-seg button{padding:3px 9px;font-family:var(--mono);font-size:12px;border-right:1px solid var(--line)}
+.py-seg button:last-child{border-right:0}
+.py-seg button.on{background:var(--text);color:var(--bg)}
+.py-prog{height:2px;background:var(--line);margin:0 0 6px}
+.py-prog i{display:block;height:100%;background:var(--accent)}
+.py-m{display:grid;grid-template-columns:118px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.py-ml{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.py-mn{font-family:var(--mono);font-size:24px;font-weight:500;line-height:1}
+.py-mc{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.py-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--ts,68px),1fr));gap:4px;align-content:start}
+.ts-s{--ts:36px}.ts-m{--ts:68px}.ts-l{--ts:124px}
+.py-t{position:relative;aspect-ratio:1;border:1px solid var(--line);border-radius:2px;background:var(--side);overflow:hidden;padding:0;display:block;min-width:0;cursor:pointer}
+.py-t.we{background:var(--hover)}
+.py-t img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.py-t .py-d{position:absolute;top:3px;left:4px;font-family:var(--mono);font-size:10.5px;color:var(--muted);line-height:1;z-index:1}
+.py-t.has .py-d{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.7)}
+.py-t.fut{opacity:.45}
+.py-t.today{outline:2px solid var(--accent);outline-offset:1px}
+.py-t:hover{border-color:var(--text)}
+.py-t:not(.has):hover::after{content:"+";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:300;color:var(--muted)}
+.py-t.over{outline:2px dashed var(--accent);outline-offset:1px}
+.py-t .py-s{position:absolute;left:0;right:0;bottom:0;padding:3px 5px;font-size:10.5px;line-height:1.25;color:#fff;background:linear-gradient(transparent,rgba(0,0,0,.72));display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;text-align:left;z-index:1}
+.py-t:not(.has) .py-s{color:var(--text);background:none;top:15px;bottom:auto}
+.ts-s .py-s{display:none}
+.pyhost:fullscreen{background:var(--bg);overflow:auto;padding:28px 40px}
+.pyhost:fullscreen>.dbbar,.pyhost:fullscreen>.embed-h,.pyhost.pyfs>.dbbar,.pyhost.pyfs>.embed-h{display:none}
+.pyhost.pyfs{position:fixed;inset:0;z-index:75;background:var(--bg);overflow:auto;padding:28px 40px}
+/* Fotojahr: Tagesansicht */
+.pyd{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;padding:16px 22px 20px;gap:12px}
+.pyd-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pyd-date{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.pyd-date b{font-size:17px;font-weight:600}
+.pyd-n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.pyd .btn.on{background:var(--text);color:var(--bg)}
+.pyd-mid{flex:1;min-height:0;display:flex;align-items:stretch;gap:10px}
+.pyd-nav{width:48px;flex:none;font-size:30px;font-weight:300;color:var(--muted);border-radius:3px}
+.pyd-nav:hover{background:var(--hover);color:var(--text)}
+.pyd-stage{flex:1;min-width:0;min-height:0;display:flex;align-items:center;justify-content:center}
+.pyd-stage img{max-width:100%;max-height:100%;object-fit:contain;box-shadow:0 1px 2px rgba(0,0,0,.08),0 8px 28px rgba(0,0,0,.14)}
+.pyd-stage.over{outline:2px dashed var(--accent);outline-offset:-8px}
+.pyd-drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:48px 64px;border:1px dashed var(--line);border-radius:3px;color:var(--muted)}
+.pyd-drop:hover{border-color:var(--text);color:var(--text)}
+.pyd-plus{font-size:36px;font-weight:300;line-height:1}
+.pyd-bot{display:flex;justify-content:center}
+.pyd-s{width:min(720px,100%);font:inherit;font-size:16px;text-align:center;padding:8px 10px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);outline:none}
+.pyd-s:focus{border-bottom-color:var(--accent)}
+@media (max-width:700px){.py-m{grid-template-columns:1fr;gap:8px}.py-ml{flex-direction:row;align-items:baseline;gap:8px}.pyd-nav{width:30px}.pyhost:fullscreen{padding:16px}}
 </style>
 </head>
 <body>
@@ -739,6 +805,7 @@ button.subtg:hover{background:var(--hover)}
   <footer>
     <button class="side-btn" id="btnNewPage">Neue Seite</button>
     <button class="side-btn" id="btnNewDb">Neue Datenbank</button>
+    <button class="side-btn" id="btnNewPhoto">Neues Fototagebuch</button>
     <button class="side-btn" id="btnImport">Notion importieren</button>
     <button class="side-btn" id="btnExport">Export</button>
     <button class="side-btn" id="btnTrash">Papierkorb</button>
@@ -2484,9 +2551,9 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   const hasSelect = p.schema.some(c=>c.type==="select");
   // Gespeicherte Ansichten: gehören zur Datenbank (META.dbviews). Welche davon an dieser Stelle
   // gerade gezeigt wird, merkt sich jede Seite bzw. Einbettung selbst (META.views[viewKey]).
-  const VIEWTYPES = {board:"Board", table:"Tabelle", timeline:"Zeitleiste", calendar:"Kalender", list:"Liste", gallery:"Galerie"};
+  const VIEWTYPES = {board:"Board", table:"Tabelle", timeline:"Zeitleiste", calendar:"Kalender", list:"Liste", gallery:"Galerie", year:"Fotojahr"};
   const uid = () => Math.random().toString(36).slice(2,10);
-  const normView = v => { v.name ||= VIEWTYPES[v.view] || "Ansicht"; v.filters ||= []; v.calc ||= {}; v.hidden ||= []; v.dir ||= 1; v.filter ??= ""; v.sort ??= null; v.group ??= null; v.cardProps ??= null; v.dateCol ??= null; v.zoom ||= "year"; v.tgroup ??= null; v.tcollapsed ||= []; v.subOpen ||= []; return v; };
+  const normView = v => { v.name ||= VIEWTYPES[v.view] || "Ansicht"; v.filters ||= []; v.calc ||= {}; v.hidden ||= []; v.dir ||= 1; v.filter ??= ""; v.sort ??= null; v.group ??= null; v.cardProps ??= null; v.dateCol ??= null; v.zoom ||= "year"; v.tgroup ??= null; v.tcollapsed ||= []; v.subOpen ||= []; v.year ??= null; v.tsize ||= "m"; v.sentences ??= false; v.textCol ??= null; return v; };
   META.dbviews ||= {};
   let views = META.dbviews[p.id];
   const oldPlace = META.views[viewKey] || {};
@@ -2569,7 +2636,8 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     if (!place.lock) tabs.append(h("button",{class:"tab add", title:"Ansicht hinzufügen", onclick:e=>addViewMenu(e.currentTarget)},"+"));
     const sl = body.querySelector(".board")?.scrollLeft, tl = body.querySelector(".tablewrap")?.scrollLeft;
     body.innerHTML = "";
-    body.append(({board:drawBoard, table:drawTable, timeline:drawTimeline, calendar:drawCalendar, list:drawList, gallery:drawGallery})[st.view]?.() || drawTable());
+    if (st.view!=="year") host.classList.remove("pyhost", "pyfs");
+    body.append(({board:drawBoard, table:drawTable, timeline:drawTimeline, calendar:drawCalendar, list:drawList, gallery:drawGallery, year:drawYear})[st.view]?.() || drawTable());
     if (sl && body.querySelector(".board")) body.querySelector(".board").scrollLeft = sl;
     if (tl && body.querySelector(".tablewrap")) body.querySelector(".tablewrap").scrollLeft = tl;
     body.querySelector("textarea.qa")?.focus();
@@ -2838,6 +2906,218 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       subCol() ? h("button",{class:"item", onclick:()=>{ closePop(); addSub(r); }},"↳ Unteraufgabe hinzufügen") : null,
       h("hr"),
       h("button",{class:"item danger", onclick:()=>{ closePop(); removeRow(r); }},"🗑 Löschen"));
+  };
+
+  // ---------------- Fotojahr: 365 Kacheln, ein Bild und ein Satz pro Tag ----------------
+  const textCol = () => p.schema.find(c=>c.name===st.textCol && (c.type==="text" || c.type==="title"))
+    || p.schema.find(c=>c.type==="text" && /satz|notiz|text|tagebuch|eintrag|note|caption/i.test(c.name))
+    || p.schema.find(c=>c.type==="text") || null;
+  const imgOf = r => r ? (r.cover && !/^gradient:/.test(r.cover) ? r.cover : (r.thumb || "")) : "";
+  const thumbOf = r => (r?.props?._vorschau && r.cover && !/^gradient:/.test(r.cover)) ? r.props._vorschau : imgOf(r);
+  const sentenceOf = (r, tc) => !r || !tc ? "" : String(tc.type==="title" ? (r.title||"") : (r.props?.[tc.name]||"")).trim();
+  const dayMap = () => {             // Tag -> Eintrag (bei mehreren gewinnt der mit Bild)
+    const col = dateCol(), m = new Map(); if (!col) return m;
+    for (const r of p.rows){ const a = parseISO(String(r.props[col.name]||"").split("→")[0]); if (!a) continue;
+      const k = isoOf(a.d), prev = m.get(k); if (!prev || (!imgOf(prev) && imgOf(r))) m.set(k, r); }
+    return m;
+  };
+  const photoDays = y => [...dayMap()].filter(([k, r])=>k.startsWith(String(y)) && imgOf(r)).map(([k])=>k).sort();
+  const dayTitle = iso => parseISO(iso).d.toLocaleDateString("de-DE",{weekday:"short", day:"numeric", month:"long", year:"numeric"});
+  const rowFor = async (iso, extra={}) => {
+    const col = dateCol(); let r = dayMap().get(iso);
+    if (!r) r = await createRow(dayTitle(iso), {[col.name]: iso, ...extra}, false);
+    return r;
+  };
+  const setDayImage = async (iso, file) => {
+    if (!dateCol()) return null;
+    let big, small;
+    try { big = await shrinkImage(file, 2000); small = await shrinkImage(file, 480); }
+    catch(e){ toast("Dieses Bildformat kann der Browser nicht lesen (z. B. HEIC vom iPhone). Bitte als JPG speichern."); return null; }
+    try {
+      const r = await rowFor(iso);
+      const url = await uploadFile(r.id, new File([big], `foto-${iso}.jpg`, {type:"image/jpeg"}));
+      const turl = await uploadFile(r.id, new File([small], `foto-${iso}-klein.jpg`, {type:"image/jpeg"}));
+      r.cover = url; r.props._vorschau = turl;
+      await save(r.id, {cover:url, props:r.props});
+      return r;
+    } catch(e){ toast(e.message); return null; }
+  };
+  const removeDayImage = async iso => {
+    const r = dayMap().get(iso); if (!r) return;
+    r.cover = ""; r.thumb = ""; delete r.props._vorschau;
+    await save(r.id, {cover:"", props:r.props});
+  };
+  const setDaySentence = async (iso, text) => {
+    const tc = textCol(); if (!tc || !dateCol()) return;
+    const r = dayMap().get(iso);
+    if (!r){ if (!text) return; const nr = await rowFor(iso, tc.type==="title" ? {} : {[tc.name]: text}); if (tc.type==="title"){ nr.title = text; nr.props[tc.name] = text; await save(nr.id, {title:text}); } return; }
+    if (tc.type==="title"){ r.title = text; r.props[tc.name] = text; await save(r.id, {title:text}); }
+    else { r.props[tc.name] = text; await save(r.id, {props:r.props}); }
+  };
+  // Echtes Vollbild des Browsers; wo das nicht geht (eingebettete Fenster), füllt die Ansicht das ganze Fenster
+  const fsKey = e => { if (e.key==="Escape" && host.classList.contains("pyfs") && !dayBox){ e.preventDefault(); toggleFs(); } };
+  const toggleFs = () => {
+    if (document.fullscreenElement || host.classList.contains("pyfs")){
+      if (document.fullscreenElement) document.exitFullscreen?.();
+      host.classList.remove("pyfs"); document.removeEventListener("keydown", fsKey, true); return;
+    }
+    host.classList.add("pyhost");
+    let ok = false;
+    const fallback = () => { if (ok || document.fullscreenElement) return; ok = true; host.classList.add("pyfs"); document.addEventListener("keydown", fsKey, true); };
+    try { const pr = host.requestFullscreen?.(); if (pr) pr.then(()=>{ ok = true; host.classList.remove("pyfs"); }).catch(fallback); else fallback(); }
+    catch { fallback(); }
+    setTimeout(fallback, 400);
+  };
+  const put = (el, ...kids) => el.append(...kids.flat().filter(x=>x!=null && x!==false));
+
+  // Tagesansicht (liegt im Datenbank-Container, damit sie auch im Vollbild sichtbar ist)
+  let dayBox = null, slide = null, daySaver = null;
+  const stopSlide = () => { if (slide){ clearInterval(slide); slide = null; } };
+  const closeDay = () => {
+    stopSlide(); if (daySaver){ daySaver.flush(); PENDING.delete(daySaver); daySaver = null; }
+    dayBox?.remove(); dayBox = null;
+    document.removeEventListener("keydown", dayKeys, true); document.removeEventListener("paste", dayPaste, true);
+    draw();
+  };
+  const step = n => {
+    if (!dayBox) return;
+    const cur = dayBox.dataset.iso;
+    if (slide){ const ds = photoDays(+cur.slice(0,4)); if (!ds.length) return; const i = ds.indexOf(cur); dayBox.dataset.iso = ds[((i<0 ? 0 : i)+n+ds.length) % ds.length]; }
+    else dayBox.dataset.iso = isoOf(plusDays(parseISO(cur).d, n));
+    const ny = +dayBox.dataset.iso.slice(0,4);
+    if (ny !== (st.year || new Date().getFullYear())){ st.year = ny; persist(); }
+    renderDay();
+  };
+  const startSlide = () => {
+    if (!dayBox) return;
+    const ds = photoDays(+dayBox.dataset.iso.slice(0,4));
+    if (!ds.length){ toast("In diesem Jahr gibt es noch keine Bilder."); return; }
+    if (!ds.includes(dayBox.dataset.iso)) dayBox.dataset.iso = ds.find(k=>k > dayBox.dataset.iso) || ds[0];
+    stopSlide();
+    slide = setInterval(()=>{ if (!dayBox || document.activeElement?.classList.contains("pyd-s")) return; step(1); }, 4000);
+    renderDay();
+  };
+  function dayKeys(e){
+    if (!dayBox) return;
+    if (e.key==="Escape" && !document.fullscreenElement){ e.preventDefault(); e.stopPropagation(); closeDay(); return; }
+    if (e.target.closest?.("input,textarea,[contenteditable]")) return;
+    if (e.key==="ArrowLeft"){ e.preventDefault(); step(-1); }
+    else if (e.key==="ArrowRight"){ e.preventDefault(); step(1); }
+    else if (e.key==="f" || e.key==="F"){ e.preventDefault(); toggleFs(); }
+    else if (e.key===" "){ e.preventDefault(); slide ? (stopSlide(), renderDay()) : startSlide(); }
+  }
+  async function dayPaste(e){
+    if (!dayBox || e.target.closest?.("input,textarea")) return;
+    const f = [...(e.clipboardData?.files||[])].find(f=>f.type.startsWith("image/"));
+    if (!f) return;
+    e.preventDefault();
+    const iso = dayBox.dataset.iso;
+    if (await setDayImage(iso, f) && dayBox && dayBox.dataset.iso===iso) renderDay();
+  }
+  const openDay = (iso, play=false) => {
+    if (!dateCol()) return;
+    if (!dayBox){
+      dayBox = h("div",{class:"pyd"}); host.append(dayBox);
+      document.addEventListener("keydown", dayKeys, true); document.addEventListener("paste", dayPaste, true);
+    }
+    dayBox.dataset.iso = iso;
+    if (play) startSlide(); else renderDay();
+  };
+  const renderDay = () => {
+    if (!dayBox) return;
+    if (daySaver){ daySaver.flush(); PENDING.delete(daySaver); daySaver = null; }
+    const iso = dayBox.dataset.iso, d = parseISO(iso).d, tc = textCol();
+    const r = dayMap().get(iso), img = imgOf(r);
+    const y = d.getFullYear(), doy = diffDays(new Date(y,0,1), d)+1, ylen = diffDays(new Date(y,0,1), new Date(y+1,0,1));
+    const fileInp = h("input",{type:"file", accept:"image/*", style:"display:none"});
+    const upload = async f => { if (!f) return; const r2 = await setDayImage(iso, f); if (r2 && dayBox && dayBox.dataset.iso===iso) renderDay(); };
+    fileInp.onchange = () => upload(fileInp.files[0]);
+    const stage = h("div",{class:"pyd-stage"});
+    if (img) stage.append(h("img",{src:img, alt:dayTitle(iso)}));
+    else stage.append(h("button",{class:"pyd-drop", onclick:()=>fileInp.click()},
+      h("span",{class:"pyd-plus"},"+"), h("span",{},"Bild für diesen Tag hinzufügen"),
+      h("span",{class:"hint", style:"margin:0"},"Klicken, ein Foto hierher ziehen oder mit Strg+V einfügen")));
+    stage.ondragover = e => { if ([...e.dataTransfer.types].includes("Files")){ e.preventDefault(); stage.classList.add("over"); } };
+    stage.ondragleave = () => stage.classList.remove("over");
+    stage.ondrop = e => { e.preventDefault(); stage.classList.remove("over"); upload([...e.dataTransfer.files].find(f=>f.type.startsWith("image/") || /\.(heic|heif)$/i.test(f.name))); };
+    let sentence = null;
+    if (st.sentences && tc){
+      sentence = h("input",{class:"pyd-s", value:sentenceOf(r, tc), maxlength:"300", placeholder:"Ein Satz zu diesem Tag …"});
+      daySaver = debounce(()=>setDaySentence(iso, sentence.value.trim()), 600);
+      PENDING.add(daySaver);
+      sentence.oninput = daySaver;
+      sentence.onkeydown = e => { if (e.key==="Enter"){ e.preventDefault(); sentence.blur(); } if (e.key==="Escape"){ e.stopPropagation(); sentence.blur(); } };
+      sentence.onblur = () => daySaver?.flush();
+    }
+    dayBox.innerHTML = "";
+    const top = h("div",{class:"pyd-top"});
+    put(top,
+        h("div",{class:"pyd-date"}, h("b",{}, d.toLocaleDateString("de-DE",{weekday:"long", day:"numeric", month:"long", year:"numeric"})), h("span",{class:"pyd-n"}, `Tag ${doy} / ${ylen}`)),
+        h("span",{class:"sp"}),
+        img ? h("button",{class:"btn", onclick:()=>fileInp.click()},"Bild ersetzen") : null,
+        img ? h("button",{class:"btn", onclick:async()=>{ if (!confirm("Bild von diesem Tag entfernen? Der Satz bleibt erhalten.")) return; await removeDayImage(iso); renderDay(); }},"Entfernen") : null,
+        h("button",{class:"btn"+(slide?" on":""), title:"Diashow der Bilder dieses Jahres (Leertaste)", onclick:()=>{ if (slide){ stopSlide(); renderDay(); } else startSlide(); }}, slide ? "❚❚ Pause" : "▶ Diashow"),
+        h("button",{class:"btn", title:"Vollbild (F)", onclick:toggleFs},"⛶ Vollbild"),
+        h("button",{class:"btn", title:"Schließen (Esc)", onclick:closeDay},"✕"));
+    put(dayBox, top,
+      h("div",{class:"pyd-mid"},
+        h("button",{class:"pyd-nav", title:slide ? "Vorheriges Bild (←)" : "Vorheriger Tag (←)", onclick:()=>step(-1)},"‹"), stage,
+        h("button",{class:"pyd-nav", title:slide ? "Nächstes Bild (→)" : "Nächster Tag (→)", onclick:()=>step(1)},"›")),
+      sentence ? h("div",{class:"pyd-bot"}, sentence) : null,
+      fileInp);
+  };
+  const drawYear = () => {
+    host.classList.add("pyhost");
+    const col = dateCol();
+    if (!col) return h("div",{class:"hint", style:"padding:20px"},"Für das Fotojahr braucht die Datenbank eine Eigenschaft vom Typ „Datum“. ",
+      h("button",{class:"btn", style:"text-decoration:underline", onclick:async()=>{ p.schema.push({name:"Datum", type:"date"}); await saveSchema(); draw(); }},"Datumsspalte anlegen"));
+    const tc = textCol(), map = dayMap(), today = midnight(new Date());
+    const y = st.year || today.getFullYear();
+    const counts = {};
+    for (const [k, r] of map) if (imgOf(r)) counts[+k.slice(0,4)] = (counts[+k.slice(0,4)]||0) + 1;
+    const ys = Object.keys(counts).map(Number).concat([today.getFullYear(), y]);
+    const y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const setYear = n => { st.year = n; persist(); draw(); };
+    const years = h("div",{class:"py-years"}, h("button",{class:"py-arr", title:"Vorheriges Jahr", onclick:()=>setYear(y-1)},"‹"));
+    for (let k=y0; k<=y1; k++) years.append(h("button",{class:"py-y"+(k===y?" on":""), title:(counts[k]||0)+" Bilder in "+k, onclick:()=>setYear(k)},
+      h("span",{class:"py-yn"}, String(k)), h("span",{class:"py-yc"}, counts[k] ? String(counts[k]) : "–")));
+    years.append(h("button",{class:"py-arr", title:"Nächstes Jahr", onclick:()=>setYear(y+1)},"›"));
+    const ylen = diffDays(new Date(y,0,1), new Date(y+1,0,1)), filled = counts[y] || 0;
+    const sw = h("button",{class:"py-sw"+(st.sentences?" on":""), role:"switch", "aria-checked":String(!!st.sentences),
+      title:"Einen Satz pro Tag schreiben und auf den Kacheln zeigen", onclick:async()=>{
+        if (!st.sentences && !textCol()){ p.schema.push({name:"Satz", type:"text"}); await saveSchema(); st.textCol = "Satz"; }
+        st.sentences = !st.sentences; persist(); draw(); }}, h("span",{class:"py-knob"}), "Satz pro Tag");
+    const size = h("span",{class:"py-seg", title:"Kachelgröße"}, [["s","S"],["m","M"],["l","L"]].map(([k,l])=>
+      h("button",{class:(st.tsize||"m")===k ? "on" : "", onclick:()=>{ st.tsize = k; persist(); draw(); }}, l)));
+    const bar = h("div",{class:"py-bar"}, years, h("span",{class:"sp"}),
+      h("span",{class:"py-stat", title:"Tage mit Bild"}, h("b",{}, String(filled)), ` / ${ylen}`), sw, size,
+      h("button",{class:"btn", title:"Diashow der Bilder dieses Jahres", onclick:()=>{ const ds = photoDays(y); if (!ds.length) return toast("In "+y+" gibt es noch keine Bilder."); openDay(ds[0], true); }},"▶ Diashow"),
+      h("button",{class:"btn", title:"Vollbild", onclick:toggleFs},"⛶ Vollbild"));
+    const prog = h("div",{class:"py-prog", title:Math.round(filled/ylen*100)+" % des Jahres"}, h("i",{style:`width:${(filled/ylen*100).toFixed(2)}%`}));
+    const months = h("div",{class:"py-months ts-"+(st.tsize||"m")});
+    for (let m=0; m<12; m++){
+      const n = new Date(y, m+1, 0).getDate(), grid = h("div",{class:"py-grid"});
+      let mc = 0;
+      for (let d=1; d<=n; d++){
+        const dt = new Date(y, m, d), iso = isoOf(dt), r = map.get(iso), th = thumbOf(r);
+        const sx = st.sentences ? sentenceOf(r, tc) : "", wd = dt.getDay();
+        if (th) mc++;
+        const t = h("button",{class:"py-t"+(th?" has":"")+(+dt===+today?" today":"")+(dt>today?" fut":"")+(wd===0||wd===6?" we":""),
+          title:dt.toLocaleDateString("de-DE",{weekday:"long", day:"numeric", month:"long"}) + (sx ? " – "+sx : ""), onclick:()=>openDay(iso)},
+          th ? h("img",{src:th, alt:"", loading:"lazy", draggable:"false"}) : null,
+          h("span",{class:"py-d"}, String(d)),
+          sx ? h("span",{class:"py-s"}, sx) : null);
+        t.ondragover = e => { if ([...e.dataTransfer.types].includes("Files")){ e.preventDefault(); t.classList.add("over"); } };
+        t.ondragleave = () => t.classList.remove("over");
+        t.ondrop = async e => { e.preventDefault(); t.classList.remove("over");
+          const f = [...e.dataTransfer.files].find(f=>f.type.startsWith("image/") || /\.(heic|heif)$/i.test(f.name));
+          if (f && await setDayImage(iso, f)) draw(); };
+        grid.append(t);
+      }
+      months.append(h("section",{class:"py-m"},
+        h("div",{class:"py-ml"}, h("span",{class:"py-mn"}, String(m+1).padStart(2,"0")), h("span",{}, MONTHS[m]), h("span",{class:"py-mc"}, mc ? mc+" / "+n : "")), grid));
+    }
+    return h("div",{class:"py"}, bar, prog, months);
   };
 
   // ---------------- Tabelle ----------------
@@ -3219,6 +3499,15 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     const dirSel = h("select",{}, h("option",{value:"1", selected:st.dir>0},"Aufsteigend"), h("option",{value:"-1", selected:st.dir<0},"Absteigend"));
     dirSel.onchange = () => { st.dir = +dirSel.value; persist(); draw(); };
     pop.append(h("label",{},"Sortieren nach"), sortSel, dirSel);
+    if (st.view==="year"){
+      const tcs = p.schema.filter(c=>c.type==="text" || c.type==="title");
+      if (tcs.length){
+        const ts = h("select",{}, tcs.map(c=>h("option",{value:c.name, selected:textCol()?.name===c.name}, c.name)));
+        ts.onchange = () => { st.textCol = ts.value; persist(); draw(); };
+        pop.append(h("label",{},"„Satz pro Tag“ steht in"), ts);
+      }
+      pop.append(h("div",{class:"hint", style:"padding:4px 0 0;margin:0"},"Fotos werden beim Hochladen verkleinert (höchstens 2000 Pixel) und als Cover des Tages gespeichert, dazu eine kleine Vorschau für die Kacheln."));
+    }
     if (st.view==="table"){
       const g = h("select",{}, h("option",{value:""},"Keine Gruppierung"),
         p.schema.filter(c=>c.type!=="title" && c.type!=="files").map(c=>h("option",{value:c.name, selected:st.tgroup===c.name}, c.name)));
@@ -3261,7 +3550,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       }
     }
     if (dateCols().length){
-      if (["timeline","calendar"].includes(st.view) && dateCols().length > 1){
+      if (["timeline","calendar","year"].includes(st.view) && dateCols().length > 1){
         const ds = h("select",{}, dateCols().map(c=>h("option",{value:c.name, selected:c.name===dateCol().name}, c.name)));
         ds.onchange = () => { st.dateCol = ds.value; persist(); draw(); };
         pop.append(h("label",{},"Datum für diese Ansicht"), ds);
@@ -3491,6 +3780,37 @@ async function openPeek(id){
 }
 function closePeek(){ if (!PEEK) return; flushAll(); const dbId = PEEK.parent_id; PEEK = null; $("#peek").classList.remove("on"); $("#peek").innerHTML=""; notifyDb(dbId); }
 document.addEventListener("mousedown", e => { if (PEEK && !e.target.closest("#peek, .pop, .overlay, #toast, .cardx, .open, #lightbox")) closePeek(); });
+
+// ===========================================================================
+// Fototagebuch
+// ===========================================================================
+// Bild verkleinern und als JPEG neu speichern (Handyfotos haben oft 5–10 MB)
+async function shrinkImage(file, max){
+  const bmp = await createImageBitmap(file);
+  const sc = Math.min(1, max/Math.max(bmp.width, bmp.height));
+  const w = Math.max(1, Math.round(bmp.width*sc)), ht = Math.max(1, Math.round(bmp.height*sc));
+  const cv = document.createElement("canvas"); cv.width = w; cv.height = ht;
+  const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0,0,w,ht); cx.drawImage(bmp, 0, 0, w, ht);
+  bmp.close?.();
+  const blob = await new Promise(res=>cv.toBlob(res, "image/jpeg", max > 1000 ? 0.86 : 0.8));
+  if (!blob) throw new Error("Bild konnte nicht umgewandelt werden");
+  return blob;
+}
+async function newPhotoDiary(){
+  try {
+    const r = await api("POST","/api/page",{kind:"database", parent_id:null, title:"Fototagebuch", icon:"📷",
+      schema:[{name:"Name", type:"title"}, {name:"Datum", type:"date"}, {name:"Satz", type:"text"}]});
+    const uid = () => Math.random().toString(36).slice(2,10), yv = uid();
+    META.dbviews ||= {};
+    META.dbviews[r.id] = [{id:yv, view:"year", name:"Fotojahr", dateCol:"Datum", textCol:"Satz", sentences:true},
+      {id:uid(), view:"gallery", name:"Galerie", sort:"Datum", dir:-1}, {id:uid(), view:"table", name:"Tabelle", sort:"Datum", dir:-1}];
+    META.views[r.id] = {active:yv};
+    META.dbs[r.id] = {...(META.dbs[r.id]||{}), autoDate:"Datum"};
+    saveMeta("dbviews"); saveMeta("views"); saveMeta("dbs");
+    await loadTree(); go(r.id);
+    toast("Fototagebuch angelegt: Kachel anklicken oder ein Foto darauf ziehen");
+  } catch(e){ toast(e.message); }
+}
 
 // ===========================================================================
 // Wiederkehrende Einträge (Einstellung an der Vorlage, angelegt vom Server)
@@ -3919,6 +4239,7 @@ $("#btnNewDb").onclick = () => newPage(null, "database");
 $("#btnMore").onclick = moreMenu;
 $("#homeBtn").onclick = () => { closePeek(); if (META.home==="heute") openToday(); else if (META.home && NODE[META.home]) go(META.home); else location.hash = "#/alle"; };
 $("#btnToday").onclick = openToday;
+$("#btnNewPhoto").onclick = newPhotoDiary;
 // ---- Updates ----------------------------------------------------------------
 async function checkUpdate(manual){
   const btn = $("#btnUpdate");

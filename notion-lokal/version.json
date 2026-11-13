@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.12.7",
-  "notes": "Neue Seite „Heute“ mit Überfälligem, Heutigem und den nächsten 7 Tagen aus allen Datenbanken. Wiederkehrende Einträge aus Vorlagen (täglich, wöchentlich, monatlich). Unteraufgaben mit Fortschrittsbalken.",
+  "version": "2026.11.13.1",
+  "notes": "Fototagebuch: 365 Kacheln mit einem Bild und einem Satz pro Tag, Jahresleiste, Tagesansicht, Diashow und Vollbild.",
   "files": [
     "app.py",
     "static/index.html",
@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "53fed1e062b1391bba4e7d3779e68b327da9f061c20ba3c32a2c35f58879c79b",
-    "static/index.html": "cdd39713c6470cb112aaede65b55d25cfe85cb092417dc2978b0e5249133f042",
-    "README.md": "c2c5c772b92b38e9a8a1d60d3716af3eb5fa5bbc4fd0ba974ad8173e95ff3dac"
+    "app.py": "3d95589de99c3a8e455673ae96f1aa271352df1ed4e82a09af6eeb116f63d004",
+    "static/index.html": "f801bf6978f1535eb89719b10919456ee435ee697dbf5f8094705bcd0a250756",
+    "README.md": "a0e4a03c83e0fabb61c80d80eb37ec284d97322ec470388a9f3b321e3abf4701"
   }
 }

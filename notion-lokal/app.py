@@ -1009,10 +1009,14 @@ def export_all(con, dest):
                 vals += [(k, v) for k, v in p["props"].items() if k not in known]
             else:
                 vals = list(p["props"].items())
-            head += "".join(f"{k}: {v}\n" for k, v in vals if v) + "\n"
+            # interne Felder (z. B. _vorschau des Fototagebuchs) nicht exportieren
+            head += "".join(f"{k}: {v}\n" for k, v in vals if v and not str(k).startswith("_")) + "\n"
+            cover = p.get("cover") or ""
+            if cover.startswith("/dateien/"):
+                head += f"![]({cover})\n\n"
         if p["kind"] != "database" or p["content"].strip():
             with open(base + ".md", "w", encoding="utf-8") as fh:
-                fh.write(head + fix_links(p["content"], depth))
+                fh.write(fix_links(head + p["content"], depth))
         if children:
             os.makedirs(base, exist_ok=True)
             for c in children:

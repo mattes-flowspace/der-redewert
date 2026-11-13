@@ -127,6 +127,20 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
 - **Welche Datenbanken:** ganz unten aufklappen. Dort schaltest du Datenbanken ab und wählst die Datumsspalte. Von selbst nimmt die App eine Spalte wie „Fällig“, „Deadline“ oder „Termin“, sonst die erste Datumsspalte, aber nie „Erstellt“ oder „Zuletzt bearbeitet“.
 - **Was als erledigt gilt:** eine angehakte Checkbox namens „Erledigt“ oder „Done“ oder ein Status wie „Fertig“, „Erledigt“, „Done“ oder „Abgeschlossen“. Datenbanken ohne so eine Spalte (z. B. ein Tagebuch) erscheinen bei „Heute“ und „Nächste 7 Tage“, aber nie bei „Überfällig“.
 
+## Fototagebuch
+
+**„Neues Fototagebuch“** in der Seitenleiste legt eine Datenbank mit Datum und Satz an und öffnet sie in der Ansicht **„Fotojahr“**: 365 Kacheln, nach Monaten geordnet, eine pro Tag.
+
+- **Bild hinzufügen:** Kachel anklicken und „Bild für diesen Tag hinzufügen“ wählen, ein Foto direkt auf eine Kachel ziehen oder in der Tagesansicht mit Strg+V einfügen. Fotos werden beim Hochladen auf höchstens 2000 Pixel verkleinert, dazu entsteht eine kleine Vorschau für die Kacheln. So bleibt der Dropbox-Ordner schlank.
+- **Satz pro Tag:** Der Schalter „Satz pro Tag“ blendet unter dem Bild ein Feld für einen Satz ein und zeigt die Sätze auch auf den Kacheln. Ein Satz geht auch ohne Bild.
+- **Tagesansicht:** Ein Klick auf eine Kachel zeigt das Bild groß. Mit ‹ › oder den Pfeiltasten blätterst du von Tag zu Tag, „Bild ersetzen“ und „Entfernen“ stehen oben.
+- **Jahre:** Die Leiste oben zeigt alle Jahre mit Bildern und wie viele es jeweils sind. ‹ › blättert auch in Jahre ohne Bilder. Rechts daneben steht, wie viele Tage des Jahres schon ein Bild haben, die dünne Linie darunter zeigt den Anteil.
+- **Diashow:** „▶ Diashow“ zeigt alle Bilder des Jahres nacheinander, alle 4 Sekunden das nächste. Leertaste hält an und startet wieder.
+- **Vollbild:** „⛶ Vollbild“ (in der Tagesansicht auch Taste F) zeigt das Fotojahr bildschirmfüllend, Esc beendet es.
+- **Kachelgröße:** S, M oder L.
+- Das Fotojahr ist eine normale Ansicht: Über „+“ neben den Reitern kannst du es jeder Datenbank mit Datumsspalte hinzufügen. Unter „Ansicht“ wählst du Datums- und Textspalte.
+- iPhone-Fotos im HEIC-Format kann der Browser unter Windows nicht lesen. Exportiere sie vorher als JPG.
+
 ## Ansichten einer Datenbank
 
 Jede Datenbank hat **gespeicherte Ansichten**, die als Reiter über ihr stehen. Jede Ansicht merkt sich Layout, Filter, Sortierung und Anzeige. Welche Ansicht gerade offen ist, wird pro Stelle gespeichert, an der die Datenbank eingebettet ist.
@@ -143,6 +157,7 @@ Jede Datenbank hat **gespeicherte Ansichten**, die als Reiter über ihr stehen. 
 | **Zeitleiste** | Einträge als Balken über die Zeit. Umschalten zwischen Monat, Quartal und Jahr. Balken ziehen verschiebt den Termin, der rechte Rand ändert das Ende |
 | **Kalender** | Monatsraster. „+“ an einem Tag legt dort einen Eintrag an, Einträge lassen sich auf einen anderen Tag ziehen |
 | **Liste** | kompakte Zeilen zum schnellen Überfliegen |
+| **Fotojahr** | 365 Kacheln, ein Bild und ein Satz pro Tag, mit Jahresleiste, Diashow und Vollbild (siehe „Fototagebuch“) |
 | **Galerie** | Karten mit Bild: das Cover des Eintrags oder das erste Bild im Inhalt. Kartengröße unter „Ansicht“ |
 
 Zeitleiste und Kalender nutzen eine Eigenschaft vom Typ „Datum“. Gibt es mehrere, wählst du sie unter „Ansicht“.
