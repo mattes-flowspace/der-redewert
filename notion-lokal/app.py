@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Notion Lokal – eine lokale, Notion-ähnliche Datenbank.
+Flowtiz – lokale Notizen, Aufgaben und Datenbanken (früher „Notion Lokal“).
 
 * Keine Installation nötig: nur Python 3.9+ (Standardbibliothek).
 * Alle Daten liegen lokal im Ordner ./daten (SQLite-Datei + Dateianhänge).
@@ -1009,7 +1009,7 @@ def export_all(con, dest):
                 vals += [(k, v) for k, v in p["props"].items() if k not in known]
             else:
                 vals = list(p["props"].items())
-            # interne Felder (z. B. _vorschau des Fototagebuchs) nicht exportieren
+            # interne Felder (z. B. _vorschau des Lebensflusses) nicht exportieren
             head += "".join(f"{k}: {v}\n" for k, v in vals if v and not str(k).startswith("_")) + "\n"
             cover = p.get("cover") or ""
             if cover.startswith("/dateien/"):
@@ -1030,7 +1030,7 @@ def export_all(con, dest):
 
 
 def export_zip_bytes(con):
-    tmp = tempfile.mkdtemp(prefix="notion-lokal-export-")
+    tmp = tempfile.mkdtemp(prefix="flowtiz-export-")
     try:
         export_all(con, os.path.join(tmp, "export"))
         out = os.path.join(tmp, "export.zip")
@@ -1309,7 +1309,7 @@ def session_ok(a, tok):
 # ---------------------------------------------------------------------------
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "NotionLokal/1.0"
+    server_version = "Flowtiz/1.0"
 
     def log_message(self, fmt, *args):
         pass
@@ -1431,7 +1431,7 @@ class Handler(BaseHTTPRequestHandler):
                 if other is None:
                     take_lock()      # Sperrdatei fehlt (z. B. gelöscht) -> neu anlegen
                 else:
-                    self._json({"error": f"Notion Lokal ist auf „{other['host']}“ geöffnet", "lock": lock_status()}, 423)
+                    self._json({"error": f"Flowtiz ist auf „{other['host']}“ geöffnet", "lock": lock_status()}, 423)
                     return False
         return True
 
@@ -1486,7 +1486,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_header("Content-Type", "application/zip")
                 self.send_header("Content-Length", str(len(data)))
                 self.send_header("Content-Disposition",
-                                 f'attachment; filename="notion-lokal-export-{dt.date.today()}.zip"')
+                                 f'attachment; filename="flowtiz-export-{dt.date.today()}.zip"')
                 self.end_headers()
                 self.wfile.write(data)
                 return
@@ -1984,7 +1984,7 @@ def serve(open_browser=True):
     try:
         httpd = HTTPD = ThreadingHTTPServer((HOST, PORT), Handler)
     except OSError:
-        print(f"Notion Lokal läuft auf diesem Rechner bereits: {url}")
+        print(f"Flowtiz läuft auf diesem Rechner bereits: {url}")
         if open_browser and not os.environ.get("NOTION_LOKAL_NO_BROWSER"):
             webbrowser.open(url)
         return
@@ -1994,7 +1994,7 @@ def serve(open_browser=True):
     if other is None:
         _backup_loop()
     _recur_loop()
-    print(f"Notion Lokal {local_version()} läuft auf {url}")
+    print(f"Flowtiz {local_version()} läuft auf {url}")
     print(f"Daten liegen in: {DATA_DIR}")
     if other:
         print(f"ACHTUNG: Die App ist noch auf „{other['host']}“ geöffnet (letzte Aktivität vor "

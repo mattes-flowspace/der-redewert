@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.13.3",
-  "notes": "Fototagebuch: Zoom aus dem Jahr heraus auf alle Jahre deines Lebens, jedes Jahr als Kachel aus farbigen Tagespunkten.",
+  "version": "2026.11.13.4",
+  "notes": "Neuer Name: Notion Lokal heißt jetzt Flowtiz, das Fototagebuch heißt Lebensfluss. Deine Daten und Ordner bleiben unverändert.",
   "files": [
     "app.py",
     "static/index.html",
@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "3d95589de99c3a8e455673ae96f1aa271352df1ed4e82a09af6eeb116f63d004",
-    "static/index.html": "d9189258f399c36f5d1448776579c876a48d9cafee65db660a2f7a97bc5d747b",
-    "README.md": "392764c0addd43c7156304ed7523958ab389da1987bbf753a49b435dc7c5aa1d"
+    "app.py": "1bd3a89fe94759278ddf59a9ccff471f03eb4d0e03b61833a723284db680200b",
+    "static/index.html": "f5568f18e87699b02b21d552c4d31110330095fa601168592930c1c657e613f5",
+    "README.md": "d6bffe1228f1d4d98bb6f576c5848a655607d6790e61ec8a4dbfc95e77aa9bfe"
   }
 }

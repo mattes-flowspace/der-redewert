@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Notion Lokal</title>
+<title>Flowtiz</title>
 <style>
 :root{
   --bg:#ffffff; --side:#f7f7f5; --text:#37352f; --muted:#787774; --line:#e9e9e7;
@@ -827,14 +827,14 @@ button.subtg:hover{background:var(--hover)}
 </head>
 <body>
 <nav id="side">
-  <header><span class="home" id="homeBtn" title="Startseite">Notion Lokal</span></header>
+  <header><span class="home" id="homeBtn" title="Startseite">Flowtiz</span></header>
   <button class="side-btn" id="btnSearch">Suchen <kbd>Strg K</kbd></button>
   <button class="side-btn" id="btnToday">☀️ Heute</button>
   <div id="tree"></div>
   <footer>
     <button class="side-btn" id="btnNewPage">Neue Seite</button>
     <button class="side-btn" id="btnNewDb">Neue Datenbank</button>
-    <button class="side-btn" id="btnNewPhoto">Neues Fototagebuch</button>
+    <button class="side-btn" id="btnNewPhoto">Neuer Lebensfluss</button>
     <button class="side-btn" id="btnImport">Notion importieren</button>
     <button class="side-btn" id="btnExport">Export</button>
     <button class="side-btn" id="btnTrash">Papierkorb</button>
@@ -844,7 +844,7 @@ button.subtg:hover{background:var(--hover)}
   </footer>
 </nav>
 <main id="main">
-  <div id="offline">⚠️ Keine Verbindung zu Notion Lokal. Läuft das Programm noch? Änderungen werden gerade nicht gespeichert.</div>
+  <div id="offline">⚠️ Keine Verbindung zu Flowtiz. Läuft das Programm noch? Änderungen werden gerade nicht gespeichert.</div>
   <div id="lockbar"></div>
   <div id="topbar"><button id="menuBtn" title="Seitenleiste ein-/ausblenden">☰</button><span id="crumbs"></span><span class="sp"></span><span id="status"></span><button id="btnFav" title="Favorit">☆</button><button id="btnMore" title="Mehr">•••</button></div>
   <div id="view"></div>
@@ -893,7 +893,7 @@ function showLock(l){
   const wasLocked = LOCKED; LOCKED = !!l.other;
   if (l.other){
     const mins = Math.round(l.other.age/60);
-    bar.append(`🔒 Notion Lokal ist noch auf „${l.other.host}“ geöffnet (letzte Aktivität ${mins<1?"gerade eben":"vor "+mins+" Min"}). Änderungen hier werden nicht gespeichert. Beende die App dort und warte, bis Dropbox fertig synchronisiert hat. `,
+    bar.append(`🔒 Flowtiz ist noch auf „${l.other.host}“ geöffnet (letzte Aktivität ${mins<1?"gerade eben":"vor "+mins+" Min"}). Änderungen hier werden nicht gespeichert. Beende die App dort und warte, bis Dropbox fertig synchronisiert hat. `,
       h("button",{onclick:async()=>{ if (!l.other.stale && !confirm(`Wirklich hier weiterarbeiten? Wenn auf „${l.other.host}“ noch ungesicherte oder nicht synchronisierte Änderungen liegen, können sie verloren gehen.`)) return;
         showLock(await api("POST","/api/lock/takeover")); await loadTree(); route(); }},"Trotzdem hier weiterarbeiten"));
   } else if (l.conflicts && l.conflicts.length){
@@ -1817,7 +1817,7 @@ async function openPage(id){
   renderTree(); renderCrumbs(p);
   $("#btnFav").style.display=""; $("#btnMore").style.display="";
   $("#btnFav").textContent = META.favorites.includes(p.id) ? "★" : "☆";
-  document.title = (p.title || "Ohne Titel") + " – Notion Lokal";
+  document.title = (p.title || "Ohne Titel") + " – Flowtiz";
   const v = $("#view"); v.innerHTML = "";
   if (p.deleted) v.append(h("div",{style:"background:var(--t-red);padding:8px 16px;font-size:14px;text-align:center"},"Diese Seite liegt im Papierkorb. ",
     h("button",{class:"btn", style:"text-decoration:underline", onclick:async()=>{await api("POST",`/api/restore/${p.id}`); await loadTree(); openPage(p.id);}},"Wiederherstellen")));
@@ -3159,7 +3159,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       const blob = await new Promise(res => cv.toBlob(res, "image/png"));
       cv.width = cv.height = 0;
       if (!blob){ btnGo.disabled = false; prog.textContent = ""; toast("Das PNG konnte nicht erstellt werden. Bitte kleinere Kacheln wählen."); return; }
-      const a = h("a",{href:URL.createObjectURL(blob), download:`${safeFile(p.title||"Fototagebuch")} ${y}.png`});
+      const a = h("a",{href:URL.createObjectURL(blob), download:`${safeFile(p.title||"Lebensfluss")} ${y}.png`});
       document.body.append(a); a.click(); a.remove();
       setTimeout(()=>URL.revokeObjectURL(a.href), 60000);
       ov.close();
@@ -4000,7 +4000,7 @@ function closePeek(){ if (!PEEK) return; flushAll(); const dbId = PEEK.parent_id
 document.addEventListener("mousedown", e => { if (PEEK && !e.target.closest("#peek, .pop, .overlay, #toast, .cardx, .open, #lightbox")) closePeek(); });
 
 // ===========================================================================
-// Fototagebuch
+// Lebensfluss (Fototagebuch)
 // ===========================================================================
 // Bild verkleinern und als JPEG neu speichern (Handyfotos haben oft 5–10 MB)
 const safeFile = s => String(s).replace(/[<>:"/\\|?*\x00-\x1f]/g, "").trim() || "Export";
@@ -4029,7 +4029,7 @@ async function shrinkImage(file, max){
 }
 async function newPhotoDiary(){
   try {
-    const r = await api("POST","/api/page",{kind:"database", parent_id:null, title:"Fototagebuch", icon:"📷",
+    const r = await api("POST","/api/page",{kind:"database", parent_id:null, title:"Lebensfluss", icon:"📷",
       schema:[{name:"Name", type:"title"}, {name:"Datum", type:"date"}, {name:"Satz", type:"text"}]});
     const uid = () => Math.random().toString(36).slice(2,10), yv = uid();
     META.dbviews ||= {};
@@ -4039,7 +4039,7 @@ async function newPhotoDiary(){
     META.dbs[r.id] = {...(META.dbs[r.id]||{}), autoDate:"Datum"};
     saveMeta("dbviews"); saveMeta("views"); saveMeta("dbs");
     await loadTree(); go(r.id);
-    toast("Fototagebuch angelegt: Kachel anklicken oder ein Foto darauf ziehen");
+    toast("Lebensfluss angelegt: Kachel anklicken oder ein Foto darauf ziehen");
   } catch(e){ toast(e.message); }
 }
 
@@ -4110,7 +4110,7 @@ async function renderToday(){
   CURRENT = null; renderTree();
   const cr = $("#crumbs"); cr.innerHTML = ""; cr.append(h("span",{class:"crumb"},"☀️ Heute"));
   $("#btnFav").style.display="none"; $("#btnMore").style.display="none";
-  document.title = "Heute – Notion Lokal";
+  document.title = "Heute – Flowtiz";
   let dbs;
   try { dbs = await api("GET","/api/agenda"); } catch(e){ toast(e.message); return; }
   if (token !== TODAY_TOKEN) return;
@@ -4521,7 +4521,7 @@ function showLogin(){
     btn.disabled = true; msg.textContent = "";
     try { await api("POST","/api/auth/login",{password:pw.value}); location.reload(); }
     catch(err){ msg.textContent = err.message; btn.disabled = false; pw.select(); } }},
-    h("div",{class:"lg-title"},"Notion Lokal"), h("div",{class:"hint"},"Diese Daten sind mit einem Passwort geschützt."), pw, msg, btn);
+    h("div",{class:"lg-title"},"Flowtiz"), h("div",{class:"hint"},"Diese Daten sind mit einem Passwort geschützt."), pw, msg, btn);
   document.body.append(h("div",{id:"login"}, form));
   setTimeout(()=>pw.focus(), 30);
 }
