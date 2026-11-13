@@ -774,6 +774,11 @@ button.subtg:hover{background:var(--hover)}
 .pyhost:fullscreen{background:var(--bg);overflow:auto;padding:28px 40px}
 .pyhost:fullscreen>.dbbar,.pyhost:fullscreen>.embed-h,.pyhost.pyfs>.dbbar,.pyhost.pyfs>.embed-h{display:none}
 .pyhost.pyfs{position:fixed;inset:0;z-index:75;background:var(--bg);overflow:auto;padding:28px 40px}
+.pyx{display:grid;grid-template-columns:auto 1fr;gap:10px 14px;align-items:center;margin:14px 0 6px}
+.pyx label{color:var(--muted);font-size:13.5px}
+.pyx select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--text)}
+.pyx-act{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:16px}
+.pyx-act .hint{margin:0 auto 0 0}
 /* Fotojahr: Tagesansicht */
 .pyd{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;padding:16px 22px 20px;gap:12px}
 .pyd-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -3066,6 +3071,76 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       sentence ? h("div",{class:"pyd-bot"}, sentence) : null,
       fileInp);
   };
+  // Kollage: alle Bilder eines Jahres als ein PNG, ohne Beschriftung
+  const exportCollage = y => {
+    const ds = photoDays(y);
+    if (!ds.length) return toast("In "+y+" gibt es noch keine Bilder.");
+    const opt = {mode:"packed", tile:"240", gap:"4", bg:"#ffffff", ...(st.collage||{})};
+    const dims = () => {
+      const t = +opt.tile, g = +opt.gap, n = ds.length;
+      const cols = opt.mode==="calendar" ? 31 : Math.ceil(Math.sqrt(n));
+      const rows = opt.mode==="calendar" ? 12 : Math.ceil(n/cols);
+      return {t, g, cols, rows, w: cols*t + (cols+1)*g, ht: rows*t + (rows+1)*g};
+    };
+    const infoEl = h("p",{class:"hint", style:"margin:0"});
+    const info = () => { const d = dims(); infoEl.textContent = `${ds.length} Bilder · ${d.w.toLocaleString("de-DE")} × ${d.ht.toLocaleString("de-DE")} Pixel`; };
+    const sel = (key, label, choices) => {
+      const el = h("select",{}, choices.map(([v,l])=>h("option",{value:v, selected:String(opt[key])===v}, l)));
+      el.onchange = () => { opt[key] = el.value; info(); };
+      return [h("label",{}, label), el];
+    };
+    const prog = h("span",{class:"hint", style:"margin:0 auto 0 0"});
+    const btnGo = h("button",{class:"btn primary"},"PNG speichern");
+    const body = h("div",{class:"body"},
+      h("h2",{}, "Kollage "+y+" als PNG"),
+      h("p",{class:"hint", style:"margin:0"},"Nur die Bilder, ohne Datum und Text. Jedes Bild wird mittig quadratisch zugeschnitten."),
+      h("div",{class:"pyx"},
+        sel("mode","Anordnung",[["packed","Nur Tage mit Bild, lückenlos"],["calendar","Kalender: 12 Monate × 31 Tage, leere Tage bleiben frei"]]),
+        sel("tile","Kachelgröße",[["120","Klein (120 px)"],["240","Mittel (240 px)"],["400","Groß (400 px, für den Druck)"]]),
+        sel("gap","Abstand",[["0","Ohne"],["4","Schmal"],["12","Breit"]]),
+        sel("bg","Hintergrund",[["#ffffff","Weiß"],["#f4f2ed","Papier"],["#161615","Schwarz"]])),
+      infoEl,
+      h("div",{class:"pyx-act"}, prog, h("button",{class:"btn", onclick:()=>ov.close()},"Abbrechen"), btnGo));
+    const ov = dialog(body);
+    info();
+    btnGo.onclick = async () => {
+      st.collage = {...opt}; persist();
+      const {t, g, cols, w, ht} = dims();
+      if (w*ht > 120e6){ toast("Das Bild wäre zu groß. Bitte kleinere Kacheln wählen."); return; }
+      btnGo.disabled = true;
+      const cv = document.createElement("canvas"); cv.width = w; cv.height = ht;
+      const cx = cv.getContext("2d");
+      cx.fillStyle = opt.bg; cx.fillRect(0, 0, w, ht);
+      cx.imageSmoothingQuality = "high";
+      const map = dayMap();
+      const jobs = ds.map((iso, i) => {
+        const r = map.get(iso), d = parseISO(iso).d;
+        const c = opt.mode==="calendar" ? d.getDate()-1 : i % cols, rw = opt.mode==="calendar" ? d.getMonth() : Math.floor(i/cols);
+        return {src: t > 300 ? imgOf(r) : thumbOf(r), x: g + c*(t+g), y: g + rw*(t+g)};
+      });
+      const load = src => new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+      let k = 0, done = 0, missing = 0;
+      const worker = async () => {
+        while (k < jobs.length){
+          const j = jobs[k++], im = await load(j.src);
+          if (im){ const sz = Math.min(im.naturalWidth, im.naturalHeight);
+            cx.drawImage(im, (im.naturalWidth-sz)/2, (im.naturalHeight-sz)/2, sz, sz, j.x, j.y, t, t); }
+          else missing++;
+          prog.textContent = `Bilder werden zusammengesetzt … ${++done} / ${jobs.length}`;
+        }
+      };
+      await Promise.all(Array.from({length:6}, worker));
+      prog.textContent = "PNG wird erstellt …";
+      const blob = await new Promise(res => cv.toBlob(res, "image/png"));
+      cv.width = cv.height = 0;
+      if (!blob){ btnGo.disabled = false; prog.textContent = ""; toast("Das PNG konnte nicht erstellt werden. Bitte kleinere Kacheln wählen."); return; }
+      const a = h("a",{href:URL.createObjectURL(blob), download:`${safeFile(p.title||"Fototagebuch")} ${y}.png`});
+      document.body.append(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href), 60000);
+      ov.close();
+      toast(`Kollage ${y} gespeichert (${(blob.size/1048576).toFixed(1).replace(".",",")} MB)` + (missing ? `, ${missing} Bild${missing===1?"":"er"} nicht gefunden` : ""));
+    };
+  };
   const drawYear = () => {
     host.classList.add("pyhost");
     const col = dateCol();
@@ -3091,6 +3166,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       h("button",{class:(st.tsize||"m")===k ? "on" : "", onclick:()=>{ st.tsize = k; persist(); draw(); }}, l)));
     const bar = h("div",{class:"py-bar"}, years, h("span",{class:"sp"}),
       h("span",{class:"py-stat", title:"Tage mit Bild"}, h("b",{}, String(filled)), ` / ${ylen}`), sw, size,
+      h("button",{class:"btn", title:"Alle Bilder dieses Jahres als Kollage (PNG) speichern", onclick:()=>exportCollage(y)},"⤓ PNG"),
       h("button",{class:"btn", title:"Diashow der Bilder dieses Jahres", onclick:()=>{ const ds = photoDays(y); if (!ds.length) return toast("In "+y+" gibt es noch keine Bilder."); openDay(ds[0], true); }},"▶ Diashow"),
       h("button",{class:"btn", title:"Vollbild", onclick:toggleFs},"⛶ Vollbild"));
     const prog = h("div",{class:"py-prog", title:Math.round(filled/ylen*100)+" % des Jahres"}, h("i",{style:`width:${(filled/ylen*100).toFixed(2)}%`}));
@@ -3785,6 +3861,7 @@ document.addEventListener("mousedown", e => { if (PEEK && !e.target.closest("#pe
 // Fototagebuch
 // ===========================================================================
 // Bild verkleinern und als JPEG neu speichern (Handyfotos haben oft 5–10 MB)
+const safeFile = s => String(s).replace(/[<>:"/\\|?*\x00-\x1f]/g, "").trim() || "Export";
 async function shrinkImage(file, max){
   const bmp = await createImageBitmap(file);
   const sc = Math.min(1, max/Math.max(bmp.width, bmp.height));
@@ -3863,6 +3940,8 @@ function recurEditor(p){
 // ===========================================================================
 const DATE_SKIP_RE = /erstellt|created|geändert|bearbeitet|edited|letzte|last/i;
 const DATE_DUE_RE = /fällig|faellig|due|deadline|frist|termin/i;
+// Fototagebücher (Datenbanken mit Ansicht „Fotojahr“) sind keine Aufgaben: standardmäßig nicht in „Heute“
+const agendaOff = (d, cfg) => cfg?.off ?? (META.dbviews?.[d.id] || []).some(v=>v.view==="year");
 function agendaCol(d, cfg){
   const dates = d.schema.filter(c=>c.type==="date");
   return dates.find(c=>c.name===cfg?.col)
@@ -3886,7 +3965,7 @@ async function renderToday(){
   const over = [], now = [], week = [];
   for (const d of dbs){
     const cfg = META.agenda[d.id] || {};
-    if (cfg.off) continue;
+    if (agendaOff(d, cfg)) continue;
     const col = agendaCol(d, cfg); if (!col) continue;
     const dc = doneCol(d.schema);
     for (const r of d.rows){
@@ -3966,7 +4045,7 @@ async function renderToday(){
     const tbl = h("table");
     for (const d of dbs){
       const cfg = META.agenda[d.id] || {}, col = agendaCol(d, cfg), dc = doneCol(d.schema);
-      const on = h("input",{type:"checkbox", checked:!cfg.off});
+      const on = h("input",{type:"checkbox", checked:!agendaOff(d, cfg)});
       on.onchange = () => { META.agenda[d.id] = {...cfg, off:!on.checked}; saveMeta("agenda"); renderToday(); };
       const sel = h("select",{}, d.schema.filter(c=>c.type==="date").map(c=>h("option",{value:c.name, selected:col && c.name===col.name}, c.name)));
       sel.onchange = () => { META.agenda[d.id] = {...cfg, col:sel.value}; saveMeta("agenda"); renderToday(); };

@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.13.1",
-  "notes": "Fototagebuch: 365 Kacheln mit einem Bild und einem Satz pro Tag, Jahresleiste, Tagesansicht, Diashow und Vollbild.",
+  "version": "2026.11.13.2",
+  "notes": "Fototagebuch: alle Bilder eines Jahres als Kollage (PNG) speichern, lückenlos oder als Kalender. Fototagebücher erscheinen nicht mehr in „Heute“.",
   "files": [
     "app.py",
     "static/index.html",
@@ -9,7 +9,7 @@
   ],
   "sha256": {
     "app.py": "3d95589de99c3a8e455673ae96f1aa271352df1ed4e82a09af6eeb116f63d004",
-    "static/index.html": "f801bf6978f1535eb89719b10919456ee435ee697dbf5f8094705bcd0a250756",
-    "README.md": "a0e4a03c83e0fabb61c80d80eb37ec284d97322ec470388a9f3b321e3abf4701"
+    "static/index.html": "5a6df79b9ad507a7c0e3aed5a431f83123dc88235419ee08d6e9714036b73148",
+    "README.md": "305846c7376bc33090c905c2972ddc1f9c335be53836a32ba004be0967e35de0"
   }
 }

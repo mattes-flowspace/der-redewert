@@ -138,6 +138,12 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
 - **Diashow:** „▶ Diashow“ zeigt alle Bilder des Jahres nacheinander, alle 4 Sekunden das nächste. Leertaste hält an und startet wieder.
 - **Vollbild:** „⛶ Vollbild“ (in der Tagesansicht auch Taste F) zeigt das Fotojahr bildschirmfüllend, Esc beendet es.
 - **Kachelgröße:** S, M oder L.
+- **Kollage als PNG:** „⤓ PNG“ speichert alle Bilder des gewählten Jahres als ein Bild, ohne Datum und Text. Jedes Foto wird mittig quadratisch zugeschnitten. Wählbar sind:
+  - **Anordnung:** „lückenlos“ (nur Tage mit Bild, als fast quadratisches Raster) oder „Kalender“ (12 Zeilen für die Monate, 31 Spalten für die Tage, leere Tage bleiben frei).
+  - **Kachelgröße:** 120, 240 oder 400 Pixel. 400 Pixel nimmt die großen Originale und eignet sich für den Druck.
+  - **Abstand und Hintergrund:** ohne, schmal oder breit; Weiß, Papier oder Schwarz.
+  Die Größe des fertigen Bildes steht im Dialog. Ein volles Jahr mit 240 Pixeln ergibt etwa 4.600 × 4.600 Pixel.
+- Fototagebücher erscheinen nicht in „Heute“. Wer das möchte, schaltet es dort unter „Welche Datenbanken erscheinen hier?“ ein.
 - Das Fotojahr ist eine normale Ansicht: Über „+“ neben den Reitern kannst du es jeder Datenbank mit Datumsspalte hinzufügen. Unter „Ansicht“ wählst du Datums- und Textspalte.
 - iPhone-Fotos im HEIC-Format kann der Browser unter Windows nicht lesen. Exportiere sie vorher als JPG.
 
