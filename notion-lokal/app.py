@@ -25,6 +25,7 @@ import mimetypes
 import os
 import platform
 import signal
+import socket
 import subprocess
 import urllib.request
 import time
@@ -1071,19 +1072,26 @@ def backup():
     return target
 
 
-def auto_backup(keep=14, min_age_hours=20):
-    """Legt höchstens einmal täglich eine Kopie der Datenbank in daten/sicherungen ab."""
+BACKUP_DIR = os.path.join(DATA_DIR, "sicherungen")
+BACKUP_RE = re.compile(r"^notion_[0-9A-Za-z_-]+\.sqlite3$")
+
+
+def auto_backup(keep=14, min_age_hours=20, force=False, tag=""):
+    """Legt höchstens einmal täglich eine Kopie der Datenbank in daten/sicherungen ab.
+    force: sofort sichern (Knopf „Jetzt sichern“, vor einer Wiederherstellung)."""
     try:
         if not os.path.exists(DB_PATH):
             return None
-        bdir = os.path.join(DATA_DIR, "sicherungen")
+        bdir = BACKUP_DIR
         os.makedirs(bdir, exist_ok=True)
-        files = sorted(f for f in os.listdir(bdir) if f.endswith(".sqlite3"))
-        if files:
+        files = sorted((f for f in os.listdir(bdir) if BACKUP_RE.match(f)),
+                       key=lambda f: os.path.getmtime(os.path.join(bdir, f)))
+        if files and not force:
             newest = os.path.getmtime(os.path.join(bdir, files[-1]))
             if (dt.datetime.now().timestamp() - newest) < min_age_hours * 3600:
                 return None
-        target = os.path.join(bdir, "notion_" + dt.datetime.now().strftime("%Y-%m-%d_%H%M") + ".sqlite3")
+        stamp = dt.datetime.now().strftime("%Y-%m-%d_%H%M%S" if force else "%Y-%m-%d_%H%M")
+        target = os.path.join(bdir, "notion_" + stamp + (("_" + tag) if tag else "") + ".sqlite3")
         src = connect()
         dst = sqlite3.connect(target)
         src.backup(dst)
@@ -1095,7 +1103,47 @@ def auto_backup(keep=14, min_age_hours=20):
         return target
     except Exception as e:  # noqa: BLE001
         print("Automatische Sicherung fehlgeschlagen:", e)
+        if force:
+            raise
         return None
+
+
+def list_backups():
+    if not os.path.isdir(BACKUP_DIR):
+        return []
+    out = []
+    for f in os.listdir(BACKUP_DIR):
+        full = os.path.join(BACKUP_DIR, f)
+        if BACKUP_RE.match(f) and os.path.isfile(full):
+            out.append({"name": f, "size": os.path.getsize(full),
+                        "ts": dt.datetime.fromtimestamp(os.path.getmtime(full)).isoformat(timespec="seconds"),
+                        "before_restore": "vor-wiederherstellung" in f})
+    return sorted(out, key=lambda b: b["ts"], reverse=True)
+
+
+def restore_backup(name):
+    """Eine Sicherung zurückspielen. Der aktuelle Stand wird vorher selbst gesichert."""
+    if not BACKUP_RE.match(name or ""):
+        raise ValueError("Unbekannte Sicherung")
+    path = os.path.join(BACKUP_DIR, name)
+    if not os.path.isfile(path):
+        raise ValueError("Diese Sicherung gibt es nicht mehr")
+    src = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+    try:
+        n = src.execute("SELECT count(*) FROM pages").fetchone()[0]
+        mem = sqlite3.connect(":memory:")
+        src.backup(mem)                 # erst in den Speicher: die Datei könnte gleich aufgeräumt werden
+    except sqlite3.DatabaseError as e:
+        raise ValueError(f"Die Sicherung ist beschädigt: {e}")
+    finally:
+        src.close()
+    with _write_lock:
+        auto_backup(force=True, tag="vor-wiederherstellung", keep=20)
+        live = connect()
+        mem.backup(live)
+        live.close()
+    mem.close()
+    return n
 
 
 def _backup_loop():
@@ -1475,6 +1523,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_trash()
             if path == "/api/agenda":
                 return self.api_agenda()
+            if path == "/api/backups":
+                return self._json({"backups": list_backups(), "dir": BACKUP_DIR})
+            if path == "/api/handy":
+                return self._json(phone_status())
             if path == "/api/lock":
                 return self._json(lock_status())
             if path == "/api/update":
@@ -1536,6 +1588,18 @@ class Handler(BaseHTTPRequestHandler):
                 return self.api_batch(self._jbody())
             if url.path == "/api/recur/run":
                 return self._json({"made": run_recurring()})
+            if url.path == "/api/backups":
+                path = auto_backup(force=True)
+                return self._json({"ok": True, "name": os.path.basename(path or "")})
+            if url.path == "/api/backups/restore":
+                try:
+                    n = restore_backup(self._jbody().get("name"))
+                except ValueError as e:
+                    return self._err(400, str(e))
+                return self._json({"ok": True, "pages": n})
+            if url.path == "/api/handy":
+                b = self._jbody()
+                return self._json(phone_set(b.get("on"), bool(b.get("renew"))))
             if url.path.startswith("/api/from-template/"):
                 return self.api_from_template(url.path.split("/")[3], self._jbody())
             if url.path.startswith("/api/duplicate/"):
@@ -1986,6 +2050,387 @@ class Handler(BaseHTTPRequestHandler):
                 os.remove(tmp)
 
 
+# ---------------------------------------------------------------------------
+# Handy-Zugang: ein zweiter, kleiner Server im WLAN, der nur eines kann:
+# ein Foto (und einen Satz) in einen Lebensfluss legen. Geschützt durch einen
+# geheimen Link; alle anderen Daten bleiben unerreichbar.
+# ---------------------------------------------------------------------------
+
+PHONE_PORT = int(os.environ.get("NOTION_LOKAL_HANDY_PORT", str(PORT + 1)))
+PHONE_KEY = "_handy"
+PHONE_HTTPD = None
+PHONE_ERR = ""
+PHONE_MAX = 40 * 1024 * 1024
+_phone_fails = []
+MONTHS_DE = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober",
+             "November", "Dezember"]
+
+
+def phone_cfg(con=None):
+    return meta_get(con or connect(), PHONE_KEY, {}) or {}
+
+
+def phone_token():
+    alpha = "abcdefghijkmnpqrstuvwxyz23456789"     # ohne 0/o, 1/l: leichter abzutippen
+    return "".join(alpha[b % len(alpha)] for b in os.urandom(10))
+
+
+def local_ips():
+    ips = []
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("10.255.255.255", 1))       # sendet nichts, wählt nur die Netzwerkkarte
+        ips.append(s.getsockname()[0])
+        s.close()
+    except OSError:
+        pass
+    try:
+        for ip in socket.gethostbyname_ex(socket.gethostname())[2]:
+            if ip not in ips:
+                ips.append(ip)
+    except OSError:
+        pass
+    priv = re.compile(r"^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)")
+    return [ip for ip in ips if priv.match(ip)] or [ip for ip in ips if not ip.startswith("127.")]
+
+
+def phone_status():
+    cfg = phone_cfg()
+    on = bool(cfg.get("on") and cfg.get("token"))
+    urls = [f"http://{ip}:{PHONE_PORT}/h/{cfg['token']}" for ip in local_ips()] if on else []
+    return {"on": on, "running": PHONE_HTTPD is not None, "port": PHONE_PORT, "urls": urls, "error": PHONE_ERR}
+
+
+def phone_start():
+    global PHONE_HTTPD, PHONE_ERR
+    if PHONE_HTTPD is not None:
+        return
+    try:
+        PHONE_HTTPD = ThreadingHTTPServer(("0.0.0.0", PHONE_PORT), PhoneHandler)
+        PHONE_ERR = ""
+    except OSError as e:
+        PHONE_ERR = f"Port {PHONE_PORT} ist belegt ({e.strerror or e})"
+        return
+    threading.Thread(target=PHONE_HTTPD.serve_forever, daemon=True).start()
+    print(f"Handy-Zugang aktiv auf Port {PHONE_PORT}")
+
+
+def phone_stop():
+    global PHONE_HTTPD
+    h, PHONE_HTTPD = PHONE_HTTPD, None
+    if h is not None:
+        threading.Thread(target=lambda: (h.shutdown(), h.server_close()), daemon=True).start()
+
+
+def phone_set(on=None, renew=False):
+    with _write_lock:
+        con = connect()
+        cfg = phone_cfg(con)
+        if renew or not cfg.get("token"):
+            cfg["token"] = phone_token()
+        if on is not None:
+            cfg["on"] = bool(on)
+        meta_set(con, PHONE_KEY, cfg)
+        con.commit()
+    if cfg.get("on"):
+        phone_start()
+    else:
+        phone_stop()
+    return phone_status()
+
+
+def photo_diaries(con):
+    views = meta_get(con, "dbviews", {}) or {}
+    out = []
+    for r in con.execute("SELECT id,title,icon,schema FROM pages WHERE kind='database' AND deleted=0 ORDER BY sort"):
+        yv = next((v for v in (views.get(r["id"]) or []) if isinstance(v, dict) and v.get("view") == "year"), None)
+        if yv is None:
+            continue
+        schema = json.loads(r["schema"] or "[]")
+        dates = [c for c in schema if c.get("type") == "date"]
+        if not dates:
+            continue
+        dcol = next((c for c in dates if c["name"] == yv.get("dateCol")), None) \
+            or next((c for c in dates if re.match(r"^(date|datum|fällig|due)", c["name"], re.I)), None) or dates[0]
+        texts = [c for c in schema if c.get("type") == "text"]
+        tcol = next((c for c in schema if c["name"] == yv.get("textCol") and c.get("type") in ("text", "title")), None) \
+            or next((c for c in texts if re.search(r"satz|notiz|text|tagebuch|eintrag|note|caption", c["name"], re.I)), None) \
+            or (texts[0] if texts else None)
+        out.append({"id": r["id"], "title": r["title"] or "Ohne Titel", "icon": r["icon"] or "",
+                    "dateCol": dcol["name"], "textCol": tcol["name"] if tcol else None,
+                    "textType": tcol["type"] if tcol else None,
+                    "titleCol": next((c["name"] for c in schema if c.get("type") == "title"), None)})
+    return out
+
+
+def _unique_file(folder, name):
+    os.makedirs(folder, exist_ok=True)
+    base, ext = os.path.splitext(name)
+    dest, n = os.path.join(folder, name), 2
+    while os.path.exists(dest):
+        dest = os.path.join(folder, f"{base}-{n}{ext}")
+        n += 1
+    return dest
+
+
+def phone_save(db_id, iso, big=b"", small=b"", color="", sentence=None):
+    """Foto und/oder Satz für einen Tag in einem Lebensfluss ablegen (wie in der Oberfläche)."""
+    day = dt.date.fromisoformat(iso)
+    with _write_lock:
+        con = connect()
+        d = next((x for x in photo_diaries(con) if x["id"] == db_id), None)
+        if not d:
+            raise ValueError("Diesen Lebensfluss gibt es nicht mehr")
+        rows = con.execute("SELECT id,cover,props FROM pages WHERE parent_id=? AND kind='row' AND deleted=0",
+                           (db_id,)).fetchall()
+        hit = None
+        for r in rows:
+            props = json.loads(r["props"] or "{}")
+            if str(props.get(d["dateCol"], "")).split("→")[0].strip()[:10] != iso:
+                continue
+            has_img = bool(r["cover"]) and not str(r["cover"]).startswith("gradient:")
+            if hit is None or (has_img and not hit[1]):
+                hit = (r["id"], has_img, props)
+        if hit is None:
+            title = f"{WEEKDAYS_DE[day.weekday()]}., {day.day}. {MONTHS_DE[day.month - 1]} {day.year}"
+            rid, ts = new_id(), now()
+            props = {d["dateCol"]: iso}
+            if d["titleCol"]:
+                props[d["titleCol"]] = title
+            mx = con.execute("SELECT COALESCE(MAX(sort),0)+1 FROM pages WHERE parent_id IS ?", (db_id,)).fetchone()[0]
+            con.execute("INSERT INTO pages (id,parent_id,kind,title,icon,content,props,schema,sort,created,updated) "
+                        "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                        (rid, db_id, "row", title, "", "", json.dumps(props, ensure_ascii=False), "[]", mx, ts, ts))
+        else:
+            rid, _, props = hit
+        upd = {}
+        if big:
+            folder = os.path.join(FILES_DIR, rid)
+            bpath = _unique_file(folder, f"foto-{iso}.jpg")
+            with open(bpath, "wb") as fh:
+                fh.write(big)
+            upd["cover"] = f"/dateien/{rid}/{urllib.parse.quote(os.path.basename(bpath))}"
+            if small:
+                spath = _unique_file(folder, f"foto-{iso}-klein.jpg")
+                with open(spath, "wb") as fh:
+                    fh.write(small)
+                props["_vorschau"] = f"/dateien/{rid}/{urllib.parse.quote(os.path.basename(spath))}"
+            else:
+                props.pop("_vorschau", None)
+            if re.match(r"^#[0-9a-fA-F]{6}$", color or ""):
+                props["_farbe"] = color.lower()
+            else:
+                props.pop("_farbe", None)
+        if sentence is not None and d["textCol"]:
+            if d["textType"] == "title":
+                upd["title"] = sentence
+            else:
+                props[d["textCol"]] = sentence
+        upd["props"] = props
+        Handler._apply_update(None, con, rid, upd)
+        con.commit()
+    return {"ok": True, "id": rid}
+
+
+class PhoneHandler(BaseHTTPRequestHandler):
+    server_version = "Flowtiz-Handy/1.0"
+
+    def log_message(self, fmt, *args):
+        pass
+
+    def _json(self, obj, status=200):
+        body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def _route(self):
+        """(Unterpfad, Query) bei gültigem Link, sonst None (und schon geantwortet)."""
+        url = urllib.parse.urlparse(self.path)
+        parts = url.path.strip("/").split("/")
+        cfg = phone_cfg()
+        tok = cfg.get("token") or ""
+        ok = cfg.get("on") and len(parts) >= 2 and parts[0] == "h" and tok and hmac.compare_digest(parts[1], tok)
+        if not ok:
+            now_ts = time.time()
+            _phone_fails[:] = [t for t in _phone_fails if now_ts - t < 300]
+            _phone_fails.append(now_ts)
+            time.sleep(min(3, 0.3 * len(_phone_fails)))
+            self.send_error(404)
+            return None
+        return "/".join(parts[2:]), urllib.parse.parse_qs(url.query)
+
+    def do_GET(self):
+        r = self._route()
+        if r is None:
+            return
+        sub, _q = r
+        try:
+            if sub == "":
+                body = PHONE_HTML.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "no-store")
+                self.send_header("Referrer-Policy", "no-referrer")
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            if sub == "info":
+                con = connect()
+                return self._json({"diaries": [{"id": d["id"], "title": d["title"], "icon": d["icon"],
+                                                "sentence": bool(d["textCol"])} for d in photo_diaries(con)],
+                                   "today": dt.date.today().isoformat()})
+            self.send_error(404)
+        except Exception as e:  # noqa: BLE001
+            self._json({"error": str(e)}, 500)
+
+    def do_POST(self):
+        r = self._route()
+        if r is None:
+            return
+        sub, q = r
+        if sub != "foto":
+            return self.send_error(404)
+        try:
+            if not OWNS_LOCK or foreign_lock() is not None:
+                return self._json({"error": "Flowtiz ist gerade auf einem anderen Rechner geöffnet."}, 423)
+            n = int(self.headers.get("Content-Length") or 0)
+            if n > PHONE_MAX:
+                return self._json({"error": "Das Foto ist zu groß."}, 413)
+            data = self.rfile.read(n) if n else b""
+            k = int((q.get("klein") or ["0"])[0] or 0)
+            if k < 0 or k > len(data):
+                return self._json({"error": "Unvollständige Übertragung"}, 400)
+            big, small = data[:len(data) - k], data[len(data) - k:]
+            for blob in (big, small):
+                if blob and not blob.startswith(b"\xff\xd8"):
+                    return self._json({"error": "Bitte ein Foto (JPG) senden."}, 400)
+            iso = (q.get("datum") or [""])[0]
+            if not re.match(r"^\d{4}-\d{2}-\d{2}$", iso):
+                return self._json({"error": "Ungültiges Datum"}, 400)
+            satz = q.get("satz")
+            res = phone_save((q.get("db") or [""])[0], iso, big, small, (q.get("farbe") or [""])[0],
+                             satz[0].strip() if satz else None)
+            self._json(res)
+        except ValueError as e:
+            self._json({"error": str(e)}, 400)
+        except Exception as e:  # noqa: BLE001
+            self._json({"error": str(e)}, 500)
+
+
+PHONE_HTML = r"""<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f2ed"><meta name="referrer" content="no-referrer">
+<title>Lebensfluss</title>
+<style>
+:root{--bg:#f4f2ed;--card:#fff;--text:#161615;--muted:#7a7873;--line:#dcd9d2;--accent:#e4570f}
+@media (prefers-color-scheme:dark){:root{--bg:#161615;--card:#1f1f1d;--text:#efede8;--muted:#8d8a84;--line:#34332f}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;padding:20px 16px 40px}
+h1{font-size:20px;margin:4px 0 2px;display:flex;align-items:center;gap:9px}
+h1::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.sub{color:var(--muted);font-size:13px;margin:0 0 18px}
+label{display:block;font-size:12px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 6px}
+select,input[type=date],textarea{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--text)}
+textarea{min-height:76px;resize:vertical}
+.pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;background:var(--card);color:var(--muted);overflow:hidden;position:relative}
+.pick b{font-size:42px;font-weight:300;color:var(--text);line-height:1}
+.pick img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pick input{position:absolute;inset:0;opacity:0}
+button.go{margin-top:20px;width:100%;padding:14px;font:inherit;font-weight:600;border:0;border-radius:4px;background:var(--text);color:var(--bg)}
+button.go:disabled{opacity:.45}
+#msg{margin-top:14px;min-height:22px;font-size:14px;text-align:center}
+#msg.ok{color:#2e7d32}#msg.err{color:#c62828}
+.hide{display:none}
+</style></head><body>
+<h1>Lebensfluss</h1>
+<p class="sub">Ein Foto und ein Satz für einen Tag.</p>
+<div id="wrap">
+  <div id="dwrap"><label for="db">Tagebuch</label><select id="db"></select></div>
+  <label for="day">Tag</label><input type="date" id="day">
+  <label>Foto</label>
+  <div class="pick" id="pick"><b>+</b><span>Foto aufnehmen oder auswählen</span><input type="file" id="file" accept="image/*"></div>
+  <div id="swrap"><label for="satz">Satz (freiwillig)</label><textarea id="satz" placeholder="Was war heute?"></textarea></div>
+  <button class="go" id="go" disabled>Speichern</button>
+  <div id="msg"></div>
+</div>
+<script>
+const $ = s => document.querySelector(s), base = location.pathname.replace(/\/$/, "");
+let diaries = [], file = null;
+const msg = (t, cls="") => { $("#msg").textContent = t; $("#msg").className = cls; };
+const ready = () => { $("#go").disabled = !(diaries.length && (file || $("#satz").value.trim())); };
+async function load(){
+  try {
+    const r = await (await fetch(base + "/info", {cache:"no-store"})).json();
+    diaries = r.diaries || [];
+    if (!diaries.length){ $("#wrap").innerHTML = "<p class='sub'>Es gibt noch keinen Lebensfluss. Lege am Rechner einen an.</p>"; return; }
+    $("#db").innerHTML = ""; for (const d of diaries){ const o = document.createElement("option"); o.value = d.id; o.textContent = (d.icon ? d.icon + " " : "") + d.title; $("#db").append(o); }
+    try { const last = localStorage.getItem("lf_db"); if (diaries.some(d=>d.id===last)) $("#db").value = last; } catch {}
+    $("#dwrap").classList.toggle("hide", diaries.length < 2);
+    $("#day").value = r.today; $("#day").max = r.today;
+    sync(); ready();
+  } catch(e){ msg("Keine Verbindung zum Rechner. Läuft Flowtiz und ist das Handy im selben WLAN?", "err"); }
+}
+const sync = () => { const d = diaries.find(x=>x.id===$("#db").value); $("#swrap").classList.toggle("hide", !d?.sentence); };
+$("#db").onchange = () => { sync(); try { localStorage.setItem("lf_db", $("#db").value); } catch {} };
+$("#satz").oninput = ready;
+$("#file").onchange = () => {
+  file = $("#file").files[0] || null;
+  const old = $("#pick img"); if (old){ URL.revokeObjectURL(old.src); old.remove(); }
+  if (file){ const im = new Image(); im.src = URL.createObjectURL(file); $("#pick").prepend(im); }
+  msg(""); ready();
+};
+async function bitmap(f){
+  try { return await createImageBitmap(f, {imageOrientation:"from-image"}); }
+  catch { const im = new Image(); im.src = URL.createObjectURL(f); await im.decode(); return im; }
+}
+function shrink(bmp, max){
+  const w = bmp.width, h = bmp.height, k = Math.min(1, max / Math.max(w, h));
+  const cv = document.createElement("canvas"); cv.width = Math.round(w*k); cv.height = Math.round(h*k);
+  cv.getContext("2d").drawImage(bmp, 0, 0, cv.width, cv.height);
+  return new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error("Bild konnte nicht verkleinert werden")), "image/jpeg", 0.86));
+}
+function avg(bmp){
+  const cv = document.createElement("canvas"); cv.width = cv.height = 8;
+  const cx = cv.getContext("2d"); cx.drawImage(bmp, 0, 0, 8, 8);
+  const d = cx.getImageData(0, 0, 8, 8).data; let r = 0, g = 0, b = 0;
+  for (let i=0; i<d.length; i+=4){ r += d[i]; g += d[i+1]; b += d[i+2]; }
+  const hx = v => Math.round(v/64).toString(16).padStart(2,"0");
+  return "#" + hx(r) + hx(g) + hx(b);
+}
+$("#go").onclick = async () => {
+  $("#go").disabled = true; msg("Wird gespeichert …");
+  try {
+    const db = $("#db").value, day = $("#day").value, d = diaries.find(x=>x.id===db);
+    const params = new URLSearchParams({db, datum: day});
+    let body = new Blob([]);
+    if (file){
+      const bmp = await bitmap(file);
+      const big = await shrink(bmp, 2000), small = await shrink(bmp, 480);
+      params.set("klein", String(small.size)); params.set("farbe", avg(bmp));
+      body = new Blob([big, small], {type:"application/octet-stream"});
+    }
+    const satz = $("#satz").value.trim();
+    if (d?.sentence && satz) params.set("satz", satz);
+    const res = await fetch(base + "/foto?" + params, {method:"POST", body});
+    const j = await res.json().catch(()=>({}));
+    if (!res.ok) throw new Error(j.error || "Fehler " + res.status);
+    msg("Gespeichert ✓", "ok");
+    file = null; $("#file").value = ""; $("#satz").value = "";
+    const im = $("#pick img"); if (im){ URL.revokeObjectURL(im.src); im.remove(); }
+  } catch(e){ msg(e.message || "Das hat nicht geklappt.", "err"); }
+  ready();
+};
+load();
+</script></body></html>
+"""
+
+
 def serve(open_browser=True):
     url = f"http://{'127.0.0.1' if HOST == '0.0.0.0' else HOST}:{PORT}/"
     global HTTPD
@@ -2001,6 +2446,8 @@ def serve(open_browser=True):
     _heartbeat_loop()
     if other is None:
         _backup_loop()
+        if phone_cfg().get("on"):
+            phone_start()
     _recur_loop()
     print(f"Flowtiz {local_version()} läuft auf {url}")
     print(f"Daten liegen in: {DATA_DIR}")
@@ -2027,6 +2474,7 @@ def serve(open_browser=True):
         print("\nBeendet.")
     finally:
         release_lock()
+        phone_stop()
         httpd.server_close()
     if RESTART:
         print("Update eingespielt – starte neu …")

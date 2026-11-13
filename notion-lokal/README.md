@@ -54,6 +54,8 @@ Alles liegt im Ordner **`daten/`**:
 
 Die App legt außerdem **automatisch einmal täglich** eine Kopie der Datenbank in `daten/sicherungen/` ab und behält die letzten 14.
 
+**„Sicherungen“** unten in der Seitenleiste zeigt diese Kopien mit Datum und Größe. „Jetzt sichern“ legt sofort eine an. „Wiederherstellen“ (zweimal klicken) spielt eine Sicherung zurück. Der aktuelle Stand wird vorher selbst noch einmal gesichert, du kannst also jederzeit wieder zurück. Fotos und Dateien in `daten/dateien/` werden nicht doppelt kopiert. Sie bleiben beim Zurückspielen unverändert.
+
 Zum Sichern kopierst du einfach den Ordner `daten/`, z. B. auf eine externe Platte oder in einen Backup-Ordner. Alternativ:
 
 ```bash
@@ -115,6 +117,14 @@ Seiten können Datenbanken **einbetten**. Damit funktioniert ein Dashboard wie d
 
 Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben der Board-Spalten** nicht. Bring sie über „⋯“ einmal in die gewünschte Reihenfolge, danach bleibt sie erhalten, auch bei einem erneuten Import. Spalten-Layouts (nebeneinander) exportiert Notion ebenfalls nicht, die Inhalte stehen dann untereinander.
 
+## Schnellnotiz
+
+**Strg + Alt + N** (oder „✎ Schnellnotiz“ in der Seitenleiste) öffnet von überall ein kleines Notizfeld. Die erste Zeile wird der Titel, der Rest landet im Text. **Strg + Enter** speichert die Notiz in der Datenbank **„Eingang“**, die beim ersten Mal von selbst entsteht. Dort sortierst du später in Ruhe weiter. Ein angefangener Text bleibt erhalten, falls du das Feld schließt. Das Tastenkürzel wirkt, solange das Flowtiz-Fenster aktiv ist.
+
+## Fokusmodus
+
+**„◎ Fokus“** oben rechts (oder **Strg + Alt + F**) blendet Seitenleiste und Menüs aus, nur dein Text bleibt. Fährst du mit der Maus nach oben, erscheinen die Knöpfe wieder. Esc beendet den Fokusmodus. Der Knopf **„25:00“** startet einen 25-Minuten-Timer. Die Restzeit steht auch im Fenstertitel, am Ende ertönt ein leiser Gong. Ein zweiter Klick hält den Timer an.
+
 ## Heute
 
 **„☀️ Heute“** oben in der Seitenleiste sammelt aus allen Datenbanken, was ansteht:
@@ -144,6 +154,7 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
   - **Abstand und Hintergrund:** ohne, schmal oder breit; Weiß, Papier oder Schwarz.
   Die Größe des fertigen Bildes steht im Dialog. Ein volles Jahr mit 240 Pixeln ergibt etwa 4.600 × 4.600 Pixel.
 - **Zoom auf dein ganzes Leben:** „Leben“ links in der Leiste (oder Strg + Mausrad nach unten, oder Taste −) zoomt aus dem Jahr heraus. Dann siehst du jedes Jahr deines Lebens als kleine Kachel, zehn Jahre pro Zeile, standardmäßig bis zum Alter von 100. Jede Kachel ist ein winziger Kalender: 12 Zeilen für die Monate, 31 Punkte für die Tage. Ein Tag mit Foto erscheint in der mittleren Farbe dieses Fotos, vergangene Tage ohne Foto grau, kommende Tage blass, heute in Orange. Ein Klick auf eine Kachel (oder Strg + Mausrad nach oben, oder Taste +) zoomt in dieses Jahr hinein. Beim ersten Mal fragt die Ansicht nach deinem Geburtsjahr. Geburtsjahr und Lebensjahre änderst du unter „Ansicht“.
+- **Fotos vom Handy:** „📱 Handy“ in der Leiste schaltet den Handy-Zugang ein. Du bekommst eine geheime Adresse (z. B. `http://192.168.1.20:8766/h/…`), die du auf dem Handy öffnest und am besten auf den Home-Bildschirm legst. Dort nimmst du ein Foto auf oder wählst eines aus, schreibst einen Satz dazu und speicherst. Das Foto wird schon auf dem Handy verkleinert, iPhone-Fotos wandelt Safari dabei selbst in JPG um. Voraussetzungen: Handy und Rechner sind im selben WLAN, und Flowtiz läuft. Beim ersten Einschalten fragt die Windows-Firewall, ob Python im Netzwerk erreichbar sein darf. Wähle „Zulassen“ für private Netzwerke. Über diese Adresse erreicht man nur die Foto-Seite, nicht deine anderen Einträge. „Neue Adresse erzeugen“ macht die alte ungültig. Der Zugang nutzt den Port nach dem der App (standardmäßig 8766, änderbar mit der Umgebungsvariable `NOTION_LOKAL_HANDY_PORT`).
 - Lebensfluss-Tagebücher erscheinen nicht in „Heute“. Wer das möchte, schaltet es dort unter „Welche Datenbanken erscheinen hier?“ ein.
 - Das Fotojahr ist eine normale Ansicht: Über „+“ neben den Reitern kannst du es jeder Datenbank mit Datumsspalte hinzufügen. Unter „Ansicht“ wählst du Datums- und Textspalte.
 - iPhone-Fotos im HEIC-Format kann der Browser unter Windows nicht lesen. Exportiere sie vorher als JPG.

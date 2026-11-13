@@ -779,6 +779,33 @@ button.subtg:hover{background:var(--hover)}
 .pyx select{font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--text)}
 .pyx-act{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:16px}
 .pyx-act .hint{margin:0 auto 0 0}
+/* Schnellnotiz */
+.qn textarea{width:100%;min-height:150px;border:0;outline:0;resize:vertical;font:inherit;font-size:15.5px;line-height:1.55;background:transparent;color:var(--text);padding:0}
+.qn-act{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+.qn-act .hint{margin:0 auto 0 0}
+/* Sicherungen */
+.bk-list{display:flex;flex-direction:column;margin:12px 0 4px;max-height:44vh;overflow:auto;border-top:1px solid var(--line)}
+.bk-row{display:flex;align-items:center;gap:12px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:14px}
+.bk-row .d{font-family:var(--mono);font-size:13px}
+.bk-row .m{color:var(--muted);font-size:12.5px}
+.bk-row .sp{flex:1}
+.bk-row .btn.warn{border-color:var(--danger);color:var(--danger)}
+/* Handy-Zugang */
+.hy-url{font-family:var(--mono);font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg);word-break:break-all;user-select:all;margin:6px 0}
+.hy-row{display:flex;align-items:center;gap:10px;margin:14px 0 6px}
+.hy-steps{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:13.5px;line-height:1.6}
+/* Fokusmodus */
+#btnFocus.on{color:var(--text)}
+#ftimer{display:none;font-family:var(--mono);font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:3px;color:var(--muted)}
+#ftimer.run{color:var(--text);border-color:var(--text)}
+#ftimer.done{color:var(--accent);border-color:var(--accent)}
+body.focus #ftimer,#ftimer.run,#ftimer.done{display:inline-block}
+body.focus #side{display:none}
+body.focus #topbar > :not(#btnFocus):not(#ftimer):not(.sp){opacity:0;transition:opacity .25s}
+body.focus #topbar:hover > *{opacity:1}
+body.focus .page{max-width:700px}
+body.focus .dbbar, body.focus .props, body.focus .page-actions{opacity:.35;transition:opacity .25s}
+body.focus .dbbar:hover, body.focus .props:hover, body.focus .page-actions:hover{opacity:1}
 /* Fotojahr: Leben (alle Jahre als Kacheln) */
 .pl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px;margin:4px 0 14px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
 .pl-head b{color:var(--text);font-weight:600}
@@ -830,6 +857,7 @@ button.subtg:hover{background:var(--hover)}
   <header><span class="home" id="homeBtn" title="Startseite">Flowtiz</span></header>
   <button class="side-btn" id="btnSearch">Suchen <kbd>Strg K</kbd></button>
   <button class="side-btn" id="btnToday">☀️ Heute</button>
+  <button class="side-btn" id="btnQuick" title="Schnellnotiz – landet in „Eingang“">✎ Schnellnotiz <kbd>Strg Alt N</kbd></button>
   <div id="tree"></div>
   <footer>
     <button class="side-btn" id="btnNewPage">Neue Seite</button>
@@ -837,6 +865,7 @@ button.subtg:hover{background:var(--hover)}
     <button class="side-btn" id="btnNewPhoto">Neuer Lebensfluss</button>
     <button class="side-btn" id="btnImport">Notion importieren</button>
     <button class="side-btn" id="btnExport">Export</button>
+    <button class="side-btn" id="btnBackups">Sicherungen</button>
     <button class="side-btn" id="btnTrash">Papierkorb</button>
     <button class="side-btn" id="btnUpdate">Nach Updates suchen</button>
     <button class="side-btn" id="btnPass">Passwort</button>
@@ -846,7 +875,7 @@ button.subtg:hover{background:var(--hover)}
 <main id="main">
   <div id="offline">⚠️ Keine Verbindung zu Flowtiz. Läuft das Programm noch? Änderungen werden gerade nicht gespeichert.</div>
   <div id="lockbar"></div>
-  <div id="topbar"><button id="menuBtn" title="Seitenleiste ein-/ausblenden">☰</button><span id="crumbs"></span><span class="sp"></span><span id="status"></span><button id="btnFav" title="Favorit">☆</button><button id="btnMore" title="Mehr">•••</button></div>
+  <div id="topbar"><button id="menuBtn" title="Seitenleiste ein-/ausblenden">☰</button><span id="crumbs"></span><span class="sp"></span><span id="status"></span><button id="ftimer" title="25-Minuten-Fokus starten oder anhalten">25:00</button><button id="btnFocus" title="Fokusmodus (Strg+Alt+F)">◎ Fokus</button><button id="btnFav" title="Favorit">☆</button><button id="btnMore" title="Mehr">•••</button></div>
   <div id="view"></div>
 </main>
 <aside id="peek"></aside>
@@ -3198,6 +3227,14 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     else if ((e.key==="+" || e.key==="=") && st.zoom==="life"){ e.preventDefault(); zoomTo("year", st.year || new Date().getFullYear()); }
   };
   document.addEventListener("keydown", zoomKeys);
+  // Fotos, die inzwischen vom Handy kamen: beim Zurückkehren ins Fenster nachladen
+  let lastFocusLoad = 0;
+  const onWinFocus = () => {
+    if (!host.isConnected){ window.removeEventListener("focus", onWinFocus); return; }
+    if (st.view!=="year" || dayBox || Date.now() - lastFocusLoad < 8000) return;
+    lastFocusLoad = Date.now(); inst.reload();
+  };
+  window.addEventListener("focus", onWinFocus);
 
   // Farbwerte für Fotos nachtragen, die vor dieser Funktion hochgeladen wurden
   const colorFail = new Set(); let coloring = false;
@@ -3302,6 +3339,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       h("button",{class:(st.tsize||"m")===k ? "on" : "", onclick:()=>{ st.tsize = k; persist(); draw(); }}, l)));
     const bar = h("div",{class:"py-bar"}, zoomSeg(), years, h("span",{class:"sp"}),
       h("span",{class:"py-stat", title:"Tage mit Bild"}, h("b",{}, String(filled)), ` / ${ylen}`), sw, size,
+      h("button",{class:"btn", title:"Fotos direkt vom Handy hochladen", onclick:()=>openPhone(()=>inst.reload())},"📱 Handy"),
       h("button",{class:"btn", title:"Alle Bilder dieses Jahres als Kollage (PNG) speichern", onclick:()=>exportCollage(y)},"⤓ PNG"),
       h("button",{class:"btn", title:"Diashow der Bilder dieses Jahres", onclick:()=>{ const ds = photoDays(y); if (!ds.length) return toast("In "+y+" gibt es noch keine Bilder."); openDay(ds[0], true); }},"▶ Diashow"),
       h("button",{class:"btn", title:"Vollbild", onclick:toggleFs},"⛶ Vollbild"));
@@ -4043,6 +4081,163 @@ async function newPhotoDiary(){
 }
 
 // ===========================================================================
+// Schnellnotiz: Strg+Alt+N, landet in der Datenbank „Eingang“
+// ===========================================================================
+async function inboxId(){
+  if (META.inbox){
+    try { const p = await api("GET","/api/page/"+META.inbox); if (p && !p.deleted && p.kind==="database") return {id:META.inbox, schema:p.schema}; } catch {}
+  }
+  // „Erstellt“ zählt in „Heute“ nicht als Fälligkeit, Notizen tauchen dort also nicht als überfällig auf
+  const schema = [{name:"Name", type:"title"}, {name:"Erstellt", type:"date"}, {name:"Erledigt", type:"checkbox"}];
+  const r = await api("POST","/api/page",{kind:"database", parent_id:null, title:"Eingang", icon:"📥", schema});
+  META.inbox = r.id; saveMeta("inbox"); metaSavers.inbox?.flush?.();
+  await loadTree();
+  return {id:r.id, schema};
+}
+let QUICK = null;
+function quickNote(){
+  if (QUICK?.isConnected){ QUICK.querySelector("textarea")?.focus(); return; }
+  const ta = h("textarea",{placeholder:"Was geht dir durch den Kopf? Die erste Zeile wird der Titel."});
+  let draft = ""; try { draft = localStorage.getItem("fl_quick") || ""; } catch {}
+  ta.value = draft;
+  ta.oninput = () => { try { localStorage.setItem("fl_quick", ta.value); } catch {} };
+  const btnSave = h("button",{class:"btn primary"},"Speichern");
+  const body = h("div",{class:"body qn"}, ta,
+    h("div",{class:"qn-act"}, h("span",{class:"hint"},"Strg+Enter speichert · landet in „Eingang“"),
+      h("button",{class:"btn", onclick:()=>ov.close()},"Schließen"), btnSave));
+  const ov = dialog(body); QUICK = ov;
+  ov.onclose = () => { QUICK = null; };
+  const save = async () => {
+    const text = ta.value.replace(/\s+$/,"");
+    if (!text.trim()){ ov.close(); return; }
+    btnSave.disabled = true;
+    try {
+      const lines = text.split("\n"), first = lines[0].trim() || "Notiz";
+      const title = first.length > 90 ? first.slice(0, 88).trim() + " …" : first;
+      const rest = (first.length > 90 ? text : lines.slice(1).join("\n")).trim();
+      const {id:db, schema} = await inboxId();
+      const n = new Date(), stamp = isoOf(n) + " " + String(n.getHours()).padStart(2,"0") + ":" + String(n.getMinutes()).padStart(2,"0");
+      const tcol = schema.find(c=>c.type==="title"), dcol = schema.find(c=>c.type==="date" && DATE_SKIP_RE.test(c.name)) || schema.find(c=>c.type==="date");
+      const props = {}; if (tcol) props[tcol.name] = title; if (dcol) props[dcol.name] = stamp;
+      const r = await api("POST","/api/page",{kind:"row", parent_id:db, title, props, content:rest});
+      try { localStorage.removeItem("fl_quick"); } catch {}
+      ov.close(); notifyDb(db);
+      toast("In „Eingang“ gespeichert", "Öffnen", ()=>go(r.id));
+    } catch(e){ btnSave.disabled = false; toast(e.message); }
+  };
+  btnSave.onclick = save;
+  ta.onkeydown = e => { if (e.key==="Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); save(); } };
+  setTimeout(()=>{ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 30);
+}
+
+// ===========================================================================
+// Fokusmodus: Seitenleiste und Menüs weg, optional 25-Minuten-Timer
+// ===========================================================================
+const FT = {left:25*60, run:null, end:0};
+function setFocus(on){
+  document.body.classList.toggle("focus", on);
+  $("#btnFocus").classList.toggle("on", on);
+  $("#btnFocus").textContent = on ? "◎ Fokus beenden" : "◎ Fokus";
+  try { localStorage.setItem("fl_focus", on ? "1" : "0"); } catch {}
+}
+const fmtT = s => String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0");
+function gong(){
+  try {
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    for (const [f, t] of [[660,0],[880,0.18]]){
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, ac.currentTime+t); g.gain.exponentialRampToValueAtTime(0.18, ac.currentTime+t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime+t+1.4);
+      o.connect(g).connect(ac.destination); o.start(ac.currentTime+t); o.stop(ac.currentTime+t+1.5);
+    }
+    setTimeout(()=>ac.close(), 2000);
+  } catch {}
+}
+function tickTimer(){
+  const el = $("#ftimer");
+  const left = Math.max(0, Math.round((FT.end - Date.now())/1000));
+  el.textContent = fmtT(left);
+  if (left <= 0){
+    clearInterval(FT.run); FT.run = null; el.className = "done"; el.textContent = "Pause ✓";
+    document.title = "✓ " + document.title.replace(/^(\d\d:\d\d · |✓ )/, "");
+    gong(); toast("25 Minuten geschafft. Zeit für eine kurze Pause.");
+  } else document.title = fmtT(left) + " · " + document.title.replace(/^(\d\d:\d\d · |✓ )/, "");
+}
+function toggleTimer(){
+  const el = $("#ftimer");
+  if (FT.run){ clearInterval(FT.run); FT.run = null; el.className = ""; el.textContent = "25:00";
+    document.title = document.title.replace(/^(\d\d:\d\d · |✓ )/, ""); return; }
+  FT.end = Date.now() + 25*60*1000; el.className = "run";
+  FT.run = setInterval(tickTimer, 1000); tickTimer();
+}
+
+// ===========================================================================
+// Sicherungen: tägliche Kopie der Datenbank, ansehen und zurückspielen
+// ===========================================================================
+async function openBackups(){
+  const list = h("div",{class:"bk-list"}), info = h("p",{class:"hint", style:"margin:0"});
+  const fill = async () => {
+    list.innerHTML = "";
+    let r; try { r = await api("GET","/api/backups"); } catch(e){ list.append(h("p",{class:"hint"}, e.message)); return; }
+    if (!r.backups.length) list.append(h("p",{class:"hint", style:"padding:10px 2px"},"Noch keine Sicherung vorhanden."));
+    for (const b of r.backups){
+      const d = new Date(b.ts);
+      const when = d.toLocaleDateString("de-DE",{weekday:"short", day:"2-digit", month:"2-digit", year:"numeric"}) + "  " + d.toLocaleTimeString("de-DE",{hour:"2-digit", minute:"2-digit"});
+      const btn = h("button",{class:"btn"},"Wiederherstellen");
+      let armed = false;
+      btn.onclick = async () => {
+        if (!armed){ armed = true; btn.classList.add("warn"); btn.textContent = "Wirklich zurückspielen?"; setTimeout(()=>{ armed = false; btn.classList.remove("warn"); btn.textContent = "Wiederherstellen"; }, 5000); return; }
+        btn.disabled = true; btn.textContent = "Wird zurückgespielt …";
+        try { await api("POST","/api/backups/restore",{name:b.name}); toast("Sicherung zurückgespielt. Die App lädt neu …"); setTimeout(()=>location.reload(), 900); }
+        catch(e){ btn.disabled = false; btn.textContent = "Wiederherstellen"; toast(e.message); }
+      };
+      list.append(h("div",{class:"bk-row"}, h("span",{class:"d"}, when),
+        h("span",{class:"m"}, (b.size/1024 < 1024 ? Math.max(1, Math.round(b.size/1024)) + " KB" : (b.size/1048576).toFixed(1).replace(".",",") + " MB") + (b.before_restore ? " · Stand vor einer Wiederherstellung" : "")),
+        h("span",{class:"sp"}), btn));
+    }
+    info.textContent = "Ordner: " + r.dir;
+  };
+  const now = h("button",{class:"btn", onclick:async()=>{ now.disabled = true; try { await api("POST","/api/backups"); toast("Sicherung erstellt"); await fill(); } catch(e){ toast(e.message); } now.disabled = false; }},"Jetzt sichern");
+  const body = h("div",{class:"body"},
+    h("h2",{},"Sicherungen"),
+    h("p",{class:"hint", style:"margin:0"},"Flowtiz sichert alle Einträge automatisch einmal am Tag, solange die App läuft. Die letzten 14 Sicherungen bleiben erhalten. Beim Zurückspielen wird der aktuelle Stand vorher noch einmal gesichert, du kannst also nichts verlieren. Fotos und Dateien liegen unverändert im Ordner „dateien“ und werden nicht doppelt kopiert."),
+    list, info,
+    h("div",{class:"pyx-act"}, h("span",{class:"hint"}), now, h("button",{class:"btn", onclick:()=>ov.close()},"Schließen")));
+  const ov = dialog(body);
+  fill();
+}
+
+// ===========================================================================
+// Handy-Zugang: Fotos für den Lebensfluss direkt vom Handy (im selben WLAN)
+// ===========================================================================
+async function openPhone(onClose){
+  const box = h("div");
+  const draw = st => {
+    box.innerHTML = "";
+    const sw = h("input",{type:"checkbox", checked:st.on});
+    sw.onchange = async () => { sw.disabled = true; try { draw(await api("POST","/api/handy",{on:sw.checked})); } catch(e){ toast(e.message); sw.disabled = false; } };
+    box.append(h("label",{class:"hy-row"}, sw, h("b",{}, st.on ? "Handy-Zugang ist an" : "Handy-Zugang ist aus")));
+    if (st.error) box.append(h("p",{class:"hint", style:"color:var(--danger);margin:0"}, st.error));
+    if (st.on && st.urls.length){
+      box.append(h("p",{class:"hint", style:"margin:8px 0 0"},"Öffne diese Adresse auf dem Handy und lege sie als Lesezeichen oder auf den Home-Bildschirm:"));
+      for (const u of st.urls) box.append(h("div",{class:"hy-url"}, u));
+      box.append(h("ol",{class:"hy-steps"},
+        h("li",{},"Handy und Rechner müssen im selben WLAN sein, und Flowtiz muss auf dem Rechner laufen."),
+        h("li",{},"Fragt Windows beim ersten Mal nach der Firewall: „Zulassen“ für private Netzwerke wählen."),
+        h("li",{},"Die Adresse ist dein Schlüssel. Über sie kommt man nur an diese Foto-Seite, nicht an deine anderen Einträge. Teile sie trotzdem nicht.")),
+        h("div",{class:"hy-row"}, h("button",{class:"btn", onclick:async()=>{ try { draw(await api("POST","/api/handy",{renew:true})); toast("Neue Adresse erzeugt. Die alte funktioniert nicht mehr."); } catch(e){ toast(e.message); } }},"Neue Adresse erzeugen")));
+    } else if (!st.on){
+      box.append(h("p",{class:"hint", style:"margin:6px 0 0"},"Wenn du den Zugang einschaltest, bekommst du eine geheime Adresse für dein Handy. Dort kannst du ein Foto aufnehmen oder auswählen, einen Satz dazuschreiben und beides in deinen Lebensfluss legen. Das Foto wird schon auf dem Handy verkleinert."));
+    }
+  };
+  const body = h("div",{class:"body"}, h("h2",{},"Fotos vom Handy"), box,
+    h("div",{class:"pyx-act"}, h("span",{class:"hint"}), h("button",{class:"btn", onclick:()=>ov.close()},"Fertig")));
+  const ov = dialog(body);
+  ov.onclose = () => onClose?.();
+  try { draw(await api("GET","/api/handy")); } catch(e){ box.append(h("p",{class:"hint"}, e.message)); }
+}
+
+// ===========================================================================
 // Wiederkehrende Einträge (Einstellung an der Vorlage, angelegt vom Server)
 // ===========================================================================
 const WD = ["Mo","Di","Mi","Do","Fr","Sa","So"];
@@ -4350,7 +4545,7 @@ function closePop(){ if (POP){ POP.remove(); POP=null; document.removeEventListe
 function dialog(content){
   const ov = h("div",{class:"overlay", onmousedown:e=>{ if(e.target===ov) close(); }}, h("div",{class:"dialog"}, content));
   const onKey = e => { if (e.key==="Escape"){ e.stopPropagation(); close(); } };
-  const close = () => { ov.remove(); document.removeEventListener("keydown", onKey, true); };
+  const close = () => { if (!ov.isConnected) return; ov.remove(); document.removeEventListener("keydown", onKey, true); ov.onclose?.(); };
   document.addEventListener("keydown", onKey, true);
   document.body.append(ov); ov.close = close;
   return ov;
@@ -4472,6 +4667,10 @@ $("#btnMore").onclick = moreMenu;
 $("#homeBtn").onclick = () => { closePeek(); if (META.home==="heute") openToday(); else if (META.home && NODE[META.home]) go(META.home); else location.hash = "#/alle"; };
 $("#btnToday").onclick = openToday;
 $("#btnNewPhoto").onclick = newPhotoDiary;
+$("#btnQuick").onclick = quickNote;
+$("#btnBackups").onclick = openBackups;
+$("#btnFocus").onclick = () => setFocus(!document.body.classList.contains("focus"));
+$("#ftimer").onclick = toggleTimer;
 // ---- Updates ----------------------------------------------------------------
 async function checkUpdate(manual){
   const btn = $("#btnUpdate");
@@ -4556,16 +4755,20 @@ $("#main").addEventListener("click", () => document.body.classList.remove("side-
 $("#lightbox").onclick = () => { $("#lightbox").style.display = "none"; };
 document.addEventListener("keydown", e => {
   if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openSearch(); return; }
+  if (e.ctrlKey && e.altKey && !e.shiftKey && e.code==="KeyN"){ e.preventDefault(); quickNote(); return; }
+  if (e.ctrlKey && e.altKey && !e.shiftKey && e.code==="KeyF"){ e.preventDefault(); setFocus(!document.body.classList.contains("focus")); return; }
   if (e.key==="Escape"){
     if ($("#lightbox").style.display==="flex"){ $("#lightbox").style.display="none"; return; }
     if (POP){ closePop(); return; }
     if (e.target.matches?.("textarea, input, [contenteditable]")) return;
-    if (PEEK && !$(".overlay")) closePeek();
+    if (PEEK && !$(".overlay")) { closePeek(); return; }
+    if (document.body.classList.contains("focus") && !$(".overlay") && !document.fullscreenElement) setFocus(false);
   }
 });
 window.addEventListener("beforeunload", flushAll);
 document.addEventListener("visibilitychange", () => { if (document.hidden) flushAll(); });
 try { if (localStorage.getItem("nl_side")==="0") document.body.classList.add("side-collapsed"); } catch {}
+try { if (localStorage.getItem("fl_focus")==="1") setFocus(true); } catch {}
 
 (async () => {
   try { Object.assign(META, await api("GET","/api/meta")); } catch(e){}

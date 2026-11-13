@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.13.5",
-  "notes": "Fehlerkorrekturen: wiederkehrende Einträge laufen weiter, auch wenn eine Vorlage fehlerhaft eingestellt ist; Lebensfluss-Zoom reagiert nur noch in der sichtbaren Ansicht.",
+  "version": "2026.11.13.6",
+  "notes": "Neu: Schnellnotiz (Strg+Alt+N) in den „Eingang“, Fokusmodus mit 25-Minuten-Timer (Strg+Alt+F), Sicherungen ansehen und zurückspielen, Fotos für den Lebensfluss direkt vom Handy im WLAN.",
   "files": [
     "app.py",
     "static/index.html",
@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "c98f3c8f8867fbc6c94115bb6e3256e373f958e9a779c08e5a3d3645d6fc03fa",
-    "static/index.html": "5aed52097bb87ffc2e56353e6b05cda1471699054afea3217ebd139efb680fc1",
-    "README.md": "d6bffe1228f1d4d98bb6f576c5848a655607d6790e61ec8a4dbfc95e77aa9bfe"
+    "app.py": "7dd951462fb906dc5fd7348139f42cb6afb244239a9ce49a1f77c575d7d5e204",
+    "static/index.html": "619e0acb7f61bc618f3b7a78467b045575f8791b704b51a8c4db0fdd349bb849",
+    "README.md": "ac74dd6fefc4f2093351479b43175352bd8932a32a1a399e424c6ddd57b915cd"
   }
 }
