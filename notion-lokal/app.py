@@ -1527,6 +1527,13 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"backups": list_backups(), "dir": BACKUP_DIR})
             if path == "/api/handy":
                 return self._json(phone_status())
+            if path == "/api/ordner":
+                return self._json(folder_status())
+            if path == "/api/ordner/datei":
+                try:
+                    return self._file(folder_file((q.get("name") or [""])[0]))
+                except ValueError as e:
+                    return self._err(404, str(e))
             if path == "/api/lock":
                 return self._json(lock_status())
             if path == "/api/update":
@@ -1600,6 +1607,20 @@ class Handler(BaseHTTPRequestHandler):
             if url.path == "/api/handy":
                 b = self._jbody()
                 return self._json(phone_set(b.get("on"), bool(b.get("renew"))))
+            if url.path == "/api/ordner":
+                b = self._jbody()
+                return self._json(folder_set(b.get("on"), b.get("db")))
+            if url.path == "/api/ordner/oeffnen":
+                os.makedirs(FOLDER_DIR, exist_ok=True)
+                if hasattr(os, "startfile"):
+                    os.startfile(FOLDER_DIR)  # noqa: S606
+                elif sys.platform == "darwin":
+                    subprocess.Popen(["open", FOLDER_DIR])
+                else:
+                    subprocess.Popen(["xdg-open", FOLDER_DIR])
+                return self._json({"ok": True})
+            if url.path == "/api/ordner/einlesen":
+                return self.api_folder_import(q)
             if url.path.startswith("/api/from-template/"):
                 return self.api_from_template(url.path.split("/")[3], self._jbody())
             if url.path.startswith("/api/duplicate/"):
@@ -2008,6 +2029,36 @@ class Handler(BaseHTTPRequestHandler):
                         "snippet": snippet})
         self._json(out)
 
+    def api_folder_import(self, q):
+        """Ein Foto aus dem Eingangsordner übernehmen. Body: großes JPG + kleines JPG (Länge in „klein“),
+        oder leer mit fehler=1, wenn der Browser die Datei nicht lesen konnte."""
+        name = (q.get("name") or [""])[0]
+        try:
+            folder_file(name)
+        except ValueError as e:
+            return self._err(404, str(e))
+        if (q.get("fehler") or [""])[0]:
+            self._body()
+            folder_move(name, FOLDER_BAD)
+            return self._json({"ok": False, "bad": True})
+        cfg = folder_cfg()
+        data = self._body()
+        k = int((q.get("klein") or ["0"])[0] or 0)
+        if not data or k <= 0 or k >= len(data):
+            return self._err(400, "Unvollständige Übertragung")
+        big, small = data[:len(data) - k], data[len(data) - k:]
+        if not (big.startswith(b"\xff\xd8") and small.startswith(b"\xff\xd8")):
+            return self._err(400, "Bitte JPG senden")
+        iso = (q.get("datum") or [""])[0]
+        if not re.match(r"^\d{4}-\d{2}-\d{2}$", iso):
+            return self._err(400, "Ungültiges Datum")
+        try:
+            res = phone_save(cfg.get("db") or "", iso, big, small, (q.get("farbe") or [""])[0], keep_existing=True)
+        except ValueError as e:
+            return self._err(400, str(e))
+        folder_move(name, FOLDER_TAKEN if res.get("taken") else FOLDER_DONE)
+        return self._json(res)
+
     def api_upload(self, page, name):
         page = re.sub(r"[^0-9a-zA-Z_-]", "", page) or "allgemein"
         name = safe_name(os.path.basename(name))
@@ -2173,7 +2224,7 @@ def _unique_file(folder, name):
     return dest
 
 
-def phone_save(db_id, iso, big=b"", small=b"", color="", sentence=None):
+def phone_save(db_id, iso, big=b"", small=b"", color="", sentence=None, keep_existing=False):
     """Foto und/oder Satz für einen Tag in einem Lebensfluss ablegen (wie in der Oberfläche)."""
     day = dt.date.fromisoformat(iso)
     with _write_lock:
@@ -2191,6 +2242,8 @@ def phone_save(db_id, iso, big=b"", small=b"", color="", sentence=None):
             has_img = bool(r["cover"]) and not str(r["cover"]).startswith("gradient:")
             if hit is None or (has_img and not hit[1]):
                 hit = (r["id"], has_img, props)
+        if keep_existing and hit is not None and hit[1]:
+            return {"ok": False, "taken": True, "id": hit[0]}
         if hit is None:
             title = f"{WEEKDAYS_DE[day.weekday()]}., {day.day}. {MONTHS_DE[day.month - 1]} {day.year}"
             rid, ts = new_id(), now()
@@ -2230,6 +2283,151 @@ def phone_save(db_id, iso, big=b"", small=b"", color="", sentence=None):
         Handler._apply_update(None, con, rid, upd)
         con.commit()
     return {"ok": True, "id": rid}
+
+
+# ---------------------------------------------------------------------------
+# Lebensfluss-Eingang: Fotos, die in einen Ordner (z. B. per Dropbox) gelegt
+# werden, kommen von selbst in einen Lebensfluss. Der Server findet die Dateien
+# und das Aufnahmedatum; verkleinert werden sie im Browser (wie beim Hochladen).
+# ---------------------------------------------------------------------------
+
+FOLDER_KEY = "_ordner"
+FOLDER_DIR = os.environ.get("NOTION_LOKAL_EINGANG") or os.path.join(DATA_DIR, "Lebensfluss-Eingang")
+FOLDER_DONE = "Eingelesen"
+FOLDER_TAKEN = "Tag schon belegt"
+FOLDER_BAD = "Nicht lesbar"
+IMG_EXT = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif")
+NAME_DATE_RE = re.compile(r"(?<!\d)(19\d{2}|20\d{2})[-_.]?(0[1-9]|1[0-2])[-_.]?(0[1-9]|[12]\d|3[01])(?!\d)")
+
+
+def folder_cfg(con=None):
+    return meta_get(con or connect(), FOLDER_KEY, {}) or {}
+
+
+def exif_date(path):
+    """Aufnahmedatum aus den EXIF-Daten eines JPG (DateTimeOriginal), sonst None."""
+    import struct
+    try:
+        with open(path, "rb") as fh:
+            data = fh.read(256 * 1024)
+    except OSError:
+        return None
+    if not data.startswith(b"\xff\xd8"):
+        return None
+    i = 2
+    while i + 4 <= len(data) and data[i] == 0xFF:
+        marker = data[i + 1]
+        size = struct.unpack(">H", data[i + 2:i + 4])[0]
+        seg = data[i + 4:i + 2 + size]
+        if marker == 0xE1 and seg.startswith(b"Exif\x00\x00"):
+            t = seg[6:]
+            if len(t) < 8:
+                return None
+            e = "<" if t[:2] == b"II" else ">"
+
+            def ifd(off):
+                out = {}
+                if off + 2 > len(t):
+                    return out
+                n = struct.unpack(e + "H", t[off:off + 2])[0]
+                for k in range(n):
+                    p = off + 2 + 12 * k
+                    if p + 12 > len(t):
+                        break
+                    tag, typ, cnt = struct.unpack(e + "HHI", t[p:p + 8])
+                    val = t[p + 8:p + 12]
+                    if typ == 2:                        # Text
+                        o = struct.unpack(e + "I", val)[0] if cnt > 4 else None
+                        raw = t[o:o + cnt] if o is not None else val[:cnt]
+                        out[tag] = raw.split(b"\x00")[0].decode("ascii", "ignore")
+                    elif typ == 4:
+                        out[tag] = struct.unpack(e + "I", val)[0]
+                return out
+            ifd0 = ifd(struct.unpack(e + "I", t[4:8])[0])
+            exif = ifd(ifd0[0x8769]) if isinstance(ifd0.get(0x8769), int) else {}
+            for v in (exif.get(0x9003), exif.get(0x9004), ifd0.get(0x0132)):
+                m = re.match(r"^(\d{4}):(\d{2}):(\d{2})", v or "")
+                if m and m.group(1) != "0000":
+                    try:
+                        return dt.date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                    except ValueError:
+                        pass
+            return None
+        if marker == 0xDA:                              # Bilddaten beginnen: keine EXIF
+            return None
+        i += 2 + size
+    return None
+
+
+def photo_date(path):
+    """(Datum, Quelle): EXIF, sonst Datum im Dateinamen, sonst Änderungsdatum der Datei."""
+    d = exif_date(path)
+    if d:
+        return d, "Aufnahme"
+    m = NAME_DATE_RE.search(os.path.basename(path))
+    if m:
+        try:
+            return dt.date(int(m.group(1)), int(m.group(2)), int(m.group(3))), "Dateiname"
+        except ValueError:
+            pass
+    return dt.date.fromtimestamp(os.path.getmtime(path)), "Dateidatum"
+
+
+def folder_pending():
+    if not os.path.isdir(FOLDER_DIR):
+        return []
+    out, now_ts = [], time.time()
+    for f in sorted(os.listdir(FOLDER_DIR)):
+        full = os.path.join(FOLDER_DIR, f)
+        if f.startswith((".", "~")) or not f.lower().endswith(IMG_EXT) or not os.path.isfile(full):
+            continue
+        if now_ts - os.path.getmtime(full) < 5:          # wird vielleicht gerade noch geschrieben
+            continue
+        d, src = photo_date(full)
+        out.append({"name": f, "date": d.isoformat(), "source": src, "size": os.path.getsize(full),
+                    "heic": f.lower().endswith((".heic", ".heif"))})
+    return out
+
+
+def folder_file(name):
+    name = os.path.basename(name or "")
+    full = os.path.join(FOLDER_DIR, name)
+    if not name or not os.path.isfile(full):
+        raise ValueError("Datei nicht gefunden")
+    return full
+
+
+def folder_move(name, sub):
+    full = folder_file(name)
+    dest = _unique_file(os.path.join(FOLDER_DIR, sub), os.path.basename(full))
+    shutil.move(full, dest)
+    return dest
+
+
+def folder_status():
+    cfg = folder_cfg()
+    con = connect()
+    diaries = photo_diaries(con)
+    target = next((d for d in diaries if d["id"] == cfg.get("db")), None)
+    on = bool(cfg.get("on") and target)
+    return {"on": on, "dir": FOLDER_DIR, "db": target["id"] if target else None,
+            "dbTitle": target["title"] if target else None,
+            "pending": folder_pending() if on else [], "exists": os.path.isdir(FOLDER_DIR)}
+
+
+def folder_set(on=None, db=None):
+    with _write_lock:
+        con = connect()
+        cfg = folder_cfg(con)
+        if on is not None:
+            cfg["on"] = bool(on)
+        if db:
+            cfg["db"] = db
+        meta_set(con, FOLDER_KEY, cfg)
+        con.commit()
+    if cfg.get("on"):
+        os.makedirs(FOLDER_DIR, exist_ok=True)
+    return folder_status()
 
 
 class PhoneHandler(BaseHTTPRequestHandler):

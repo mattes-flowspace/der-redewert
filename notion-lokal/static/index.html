@@ -794,6 +794,9 @@ button.subtg:hover{background:var(--hover)}
 .hy-url{font-family:var(--mono);font-size:15px;padding:10px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg);word-break:break-all;user-select:all;margin:6px 0}
 .hy-row{display:flex;align-items:center;gap:10px;margin:14px 0 6px}
 .hy-steps{margin:8px 0 0;padding-left:20px;color:var(--muted);font-size:13.5px;line-height:1.6}
+.od-list{margin:8px 0 0;padding:0;list-style:none;max-height:22vh;overflow:auto;font-size:13px}
+.od-list li{display:flex;gap:10px;padding:4px 0;border-bottom:1px solid var(--line)}
+.od-list .m{color:var(--muted);font-family:var(--mono);font-size:12px;margin-left:auto;white-space:nowrap}
 /* Fokusmodus */
 #btnFocus.on{color:var(--text)}
 #ftimer{display:none;font-family:var(--mono);font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:3px;color:var(--muted)}
@@ -3340,6 +3343,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     const bar = h("div",{class:"py-bar"}, zoomSeg(), years, h("span",{class:"sp"}),
       h("span",{class:"py-stat", title:"Tage mit Bild"}, h("b",{}, String(filled)), ` / ${ylen}`), sw, size,
       h("button",{class:"btn", title:"Fotos direkt vom Handy hochladen", onclick:()=>openPhone(()=>inst.reload())},"📱 Handy"),
+      h("button",{class:"btn", title:"Fotos aus einem Ordner (z. B. Dropbox) übernehmen", onclick:()=>openFolder(p.id)},"📁 Ordner"),
       h("button",{class:"btn", title:"Alle Bilder dieses Jahres als Kollage (PNG) speichern", onclick:()=>exportCollage(y)},"⤓ PNG"),
       h("button",{class:"btn", title:"Diashow der Bilder dieses Jahres", onclick:()=>{ const ds = photoDays(y); if (!ds.length) return toast("In "+y+" gibt es noch keine Bilder."); openDay(ds[0], true); }},"▶ Diashow"),
       h("button",{class:"btn", title:"Vollbild", onclick:toggleFs},"⛶ Vollbild"));
@@ -4238,6 +4242,71 @@ async function openPhone(onClose){
 }
 
 // ===========================================================================
+// Lebensfluss-Eingang: Fotos aus einem Ordner (z. B. Dropbox) übernehmen
+// ===========================================================================
+let FOLDER_BUSY = false, FOLDER_LAST = 0;
+async function folderSync(force=false){
+  if (FOLDER_BUSY || (!force && Date.now() - FOLDER_LAST < 20000)) return null;
+  FOLDER_BUSY = true; FOLDER_LAST = Date.now();
+  const res = {done:0, taken:0, bad:0};
+  try {
+    const st = await api("GET","/api/ordner");
+    if (!st.on || !st.pending.length) return res;
+    for (const f of st.pending){
+      const q = "name=" + encodeURIComponent(f.name);
+      try {
+        const r = await fetch("/api/ordner/datei?" + q);
+        if (!r.ok) continue;
+        const blob = await r.blob();
+        let big, small, color;
+        try { big = await shrinkImage(blob, 2000); small = await shrinkImage(blob, 480); color = await avgColor(small); }
+        catch { await api("POST","/api/ordner/einlesen?" + q + "&fehler=1", new Blob([]), true); res.bad++; continue; }
+        const out = await api("POST", "/api/ordner/einlesen?" + q + "&datum=" + f.date + "&klein=" + small.size + "&farbe=" + encodeURIComponent(color),
+          new Blob([big, small]), true);
+        out.taken ? res.taken++ : res.done++;
+      } catch(e){ if (/geöffnet|anmelden/i.test(e.message)) break; }
+    }
+    if (res.done || res.taken) notifyDb(st.db);
+    const parts = [];
+    if (res.done) parts.push(res.done === 1 ? "1 Foto aus dem Ordner übernommen" : `${res.done} Fotos aus dem Ordner übernommen`);
+    if (res.taken) parts.push(res.taken === 1 ? "1 Tag war schon belegt" : `${res.taken} Tage waren schon belegt`);
+    if (res.bad) parts.push(res.bad === 1 ? "1 Datei nicht lesbar" : `${res.bad} Dateien nicht lesbar`);
+    if (parts.length) toast(parts.join(" · "));
+    return res;
+  } catch { return res; }
+  finally { FOLDER_BUSY = false; }
+}
+async function openFolder(dbId){
+  const box = h("div");
+  const draw = st => {
+    box.innerHTML = "";
+    const here = st.db === dbId;
+    const sw = h("input",{type:"checkbox", checked:st.on && here});
+    sw.onchange = async () => { sw.disabled = true; try { draw(await api("POST","/api/ordner",{on:sw.checked, db:dbId})); if (sw.checked) folderSync(true).then(()=>refresh()); } catch(e){ toast(e.message); sw.disabled = false; } };
+    box.append(h("label",{class:"hy-row"}, sw, h("b",{}, st.on && here ? "Fotos aus dem Ordner kommen in diesen Lebensfluss" : "Fotos aus einem Ordner übernehmen")));
+    if (st.on && !here) box.append(h("p",{class:"hint", style:"margin:0"}, `Der Ordner ist gerade mit „${st.dbTitle}“ verbunden. Einschalten verbindet ihn stattdessen mit diesem Lebensfluss.`));
+    box.append(h("div",{class:"hy-url"}, st.dir));
+    box.append(h("div",{class:"hy-row"},
+      h("button",{class:"btn", onclick:async()=>{ try { await api("POST","/api/ordner/oeffnen"); } catch(e){ toast(e.message); } }},"Ordner öffnen"),
+      st.on && here ? h("button",{class:"btn", onclick:async e=>{ e.target.disabled = true; const r = await folderSync(true); if (r && !(r.done||r.taken||r.bad)) toast("Keine neuen Fotos im Ordner"); refresh(); }},"Jetzt einlesen") : null));
+    if (st.on && here && st.pending.length){
+      box.append(h("p",{class:"hint", style:"margin:10px 0 0"}, `${st.pending.length} Foto${st.pending.length===1?"":"s"} warten:`),
+        h("ul",{class:"od-list"}, st.pending.slice(0,50).map(f=>h("li",{}, h("span",{}, f.name),
+          h("span",{class:"m"}, parseISO(f.date).d.toLocaleDateString("de-DE") + " · " + f.source)))));
+    }
+    box.append(h("ul",{class:"hy-steps"},
+      h("li",{},"Lege Fotos in diesen Ordner, zum Beispiel mit der Dropbox-App vom Handy. Solange Flowtiz offen ist, schaut es jede Minute nach und übernimmt neue Fotos."),
+      h("li",{},"Der Tag kommt aus dem Aufnahmedatum im Foto, sonst aus einem Datum im Dateinamen (z. B. IMG_20261113…), sonst aus dem Dateidatum."),
+      h("li",{},"Übernommene Originale landen im Unterordner „Eingelesen“, dort kannst du sie löschen. Hat ein Tag schon ein Bild, wird es nicht ersetzt: das neue Foto kommt nach „Tag schon belegt“."),
+      h("li",{},"iPhone-Fotos im HEIC-Format kann der Browser unter Windows nicht lesen, sie landen in „Nicht lesbar“. Stelle in den iPhone-Einstellungen unter Kamera › Formate „Maximale Kompatibilität“ ein, oder lade sie über die Dropbox-App als JPG hoch.")));
+  };
+  const refresh = async () => { try { draw(await api("GET","/api/ordner")); } catch(e){ box.textContent = e.message; } };
+  dialog(h("div",{class:"body"}, h("h2",{},"Fotos aus einem Ordner"), box,
+    h("div",{class:"pyx-act"}, h("span",{class:"hint"}), h("button",{class:"btn", onclick:e=>e.target.closest(".overlay").close()},"Fertig"))));
+  refresh();
+}
+
+// ===========================================================================
 // Wiederkehrende Einträge (Einstellung an der Vorlage, angelegt vom Server)
 // ===========================================================================
 const WD = ["Mo","Di","Mi","Do","Fr","Sa","So"];
@@ -4769,6 +4838,9 @@ window.addEventListener("beforeunload", flushAll);
 document.addEventListener("visibilitychange", () => { if (document.hidden) flushAll(); });
 try { if (localStorage.getItem("nl_side")==="0") document.body.classList.add("side-collapsed"); } catch {}
 try { if (localStorage.getItem("fl_focus")==="1") setFocus(true); } catch {}
+setInterval(()=>{ if (!document.hidden) folderSync(); }, 60000);
+window.addEventListener("focus", ()=>folderSync());
+setTimeout(()=>folderSync(true), 2500);
 
 (async () => {
   try { Object.assign(META, await api("GET","/api/meta")); } catch(e){}
