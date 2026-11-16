@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.16.4",
-  "notes": "Flowtiz am Handy öffnen: im WLAN mit allen Seiten und Bearbeiten, als App auf dem Home-Bildschirm. Außerdem: Seitenleiste am Handy ging sofort wieder zu (behoben).",
+  "version": "2026.11.16.5",
+  "notes": "Läuft Flowtiz auf zwei Rechnern über Dropbox, startet es nach einem Update jetzt auch auf dem anderen Rechner von selbst neu. Vorher fehlten dort neue Funktionen („Unbekannter Pfad“).",
   "files": [
     "app.py",
     "static/index.html",
