@@ -89,7 +89,7 @@ Die App prüft beim Öffnen, ob im GitHub-Repository eine neuere Version liegt. 
 
 Liegt der Ordner `notion-lokal` in der Dropbox, kannst du an mehreren Rechnern mit denselben Daten arbeiten, aber immer nur **abwechselnd**:
 
-1. App am ersten Rechner beenden (Terminalfenster schließen).
+1. App am ersten Rechner beenden: in der Seitenleiste unten „⏻ Flowtiz beenden“ (zweimal klicken), oder im schwarzen Fenster Strg+C. Dabei wird die Sperre freigegeben.
 2. Warten, bis Dropbox an beiden Rechnern „Aktuell“ zeigt.
 3. App am zweiten Rechner starten.
 

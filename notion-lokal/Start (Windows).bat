@@ -8,4 +8,5 @@ if %errorlevel%==0 (
 ) else (
   python app.py
 )
-pause
+rem Fenster nur bei einem Fehler offen lassen, damit man die Meldung lesen kann
+if errorlevel 1 pause

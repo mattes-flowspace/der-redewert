@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.14.1",
-  "notes": "Lebensfluss: Fotos aus einem Ordner (z. B. per Dropbox vom Handy) werden automatisch am richtigen Tag eingefügt.",
+  "version": "2026.11.16.1",
+  "notes": "Neuer Knopf „Flowtiz beenden“ in der Seitenleiste: beendet das Programm sauber und gibt die Sperre für den anderen Rechner frei.",
   "files": [
     "app.py",
     "static/index.html",
@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "f4d2209f7530da92817c577f93b28f462f308069e304c7101256b803ffac574e",
-    "static/index.html": "45615e0ef4b6349338d2d31bebbef8f789d6f70dc179a8d1078b1b2e325e9a08",
-    "README.md": "e6ac061a6551857f50ae3ec10d00f5839c4c77cc6493f4194c47b1d3349a7b2a"
+    "app.py": "ac259f822d736520d3e9a8e11a7bea74bf9d61ccc01b46bc405c15f8827e7fb5",
+    "static/index.html": "befe47cc2da5240f93f7a2f2a8dff8be62f029ea5639581ab33eef26a08a4fc2",
+    "README.md": "55e97ac3583a071c60caaa6f781db8499c840e81fa3c68c4c0d85c50af137ac8"
   }
 }

@@ -543,6 +543,9 @@ textarea.editor{font:13.5px/1.7 var(--mono);padding:18px}
 #toast button{color:var(--accent)}
 .hint{font-size:12px}
 #lockbar,#offline{font-size:13px}
+#quitscreen{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
+#quitscreen .big{font-size:44px;margin-bottom:8px}
+#quitscreen p{color:var(--muted);max-width:440px;margin:8px auto;line-height:1.5}
 .children{border-top:1px solid var(--line);margin-top:48px}
 .children a{padding:6px 0;border-bottom:1px solid var(--line);border-radius:0}
 .children a:hover{background:none;color:var(--accent)}
@@ -873,6 +876,7 @@ body.focus .dbbar:hover, body.focus .props:hover, body.focus .page-actions:hover
     <button class="side-btn" id="btnUpdate">Nach Updates suchen</button>
     <button class="side-btn" id="btnPass">Passwort</button>
     <button class="side-btn" id="btnTheme">Darstellung: Automatisch</button>
+    <button class="side-btn" id="btnQuit" title="Flowtiz an diesem Rechner beenden und die Sperre für andere Rechner freigeben">⏻ Flowtiz beenden</button>
   </footer>
 </nav>
 <main id="main">
@@ -4738,6 +4742,24 @@ $("#btnToday").onclick = openToday;
 $("#btnNewPhoto").onclick = newPhotoDiary;
 $("#btnQuick").onclick = quickNote;
 $("#btnBackups").onclick = openBackups;
+let QUIT_ARM = 0;
+$("#btnQuit").onclick = async () => {
+  const btn = $("#btnQuit");
+  if (Date.now() - QUIT_ARM > 4000){
+    QUIT_ARM = Date.now(); btn.textContent = "Wirklich beenden? Nochmal klicken";
+    setTimeout(()=>{ if (Date.now() - QUIT_ARM >= 4000) btn.textContent = "⏻ Flowtiz beenden"; }, 4100);
+    return;
+  }
+  btn.disabled = true; btn.textContent = "Wird beendet …";
+  try { flushAll(); } catch {}
+  await new Promise(r=>setTimeout(r, 700));        // offene Speichervorgänge abwarten
+  try { await api("POST","/api/beenden"); }
+  catch(e){ btn.disabled = false; btn.textContent = "⏻ Flowtiz beenden"; toast(e.message); return; }
+  document.body.append(h("div",{id:"quitscreen"}, h("div",{},
+    h("div",{class:"big"},"👋"), h("h2",{},"Flowtiz ist beendet"),
+    h("p",{},"Alles ist gespeichert und die Sperre ist freigegeben. Du kannst dieses Browserfenster und das schwarze Programmfenster schließen."),
+    h("p",{},"Warte, bis Dropbox „Aktuell“ zeigt, bevor du Flowtiz am anderen Rechner startest."))));
+};
 $("#btnFocus").onclick = () => setFocus(!document.body.classList.contains("focus"));
 $("#ftimer").onclick = toggleTimer;
 // ---- Updates ----------------------------------------------------------------

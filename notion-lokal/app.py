@@ -1289,6 +1289,12 @@ def apply_update(force=False):
             "backup": os.path.relpath(old_dir, BASE_DIR), "overwritten": changed}
 
 
+def _quit_soon():
+    """Server sauber anhalten (gibt danach die Sperre frei), ohne Neustart."""
+    if HTTPD:
+        threading.Thread(target=lambda: (time.sleep(0.3), HTTPD.shutdown()), daemon=True).start()
+
+
 def _restart_soon():
     global RESTART
     RESTART = True
@@ -1587,6 +1593,10 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(res)
                 if res.get("restart"):
                     _restart_soon()
+                return
+            if url.path == "/api/beenden":
+                self._json({"ok": True})
+                _quit_soon()
                 return
             if url.path == "/api/lock/takeover":
                 take_lock()
@@ -2669,11 +2679,13 @@ def serve(open_browser=True):
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\nBeendet.")
+        pass
     finally:
         release_lock()
         phone_stop()
         httpd.server_close()
+    if not RESTART:
+        print("\nBeendet. Die Sperre ist freigegeben, du kannst Flowtiz jetzt an einem anderen Rechner starten.")
     if RESTART:
         print("Update eingespielt – starte neu …")
         env = dict(os.environ, NOTION_LOKAL_NO_BROWSER="1")
