@@ -1640,7 +1640,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"ok": True, "pages": n})
             if url.path == "/api/handy":
                 b = self._jbody()
-                return self._json(phone_set(b.get("on"), bool(b.get("renew"))))
+                return self._json(phone_set(b.get("on"), bool(b.get("renew")), b.get("app"), bool(b.get("renewApp"))))
             if url.path == "/api/ordner":
                 b = self._jbody()
                 return self._json(folder_set(b.get("on"), b.get("db")))
@@ -2184,8 +2184,17 @@ def local_ips():
 def phone_status():
     cfg = phone_cfg()
     on = bool(cfg.get("on") and cfg.get("token"))
-    urls = [f"http://{ip}:{PHONE_PORT}/h/{cfg['token']}" for ip in local_ips()] if on else []
-    return {"on": on, "running": PHONE_HTTPD is not None, "port": PHONE_PORT, "urls": urls, "error": PHONE_ERR}
+    app = bool(cfg.get("app") and cfg.get("apptoken"))
+    ips = local_ips() if (on or app) else []
+    urls = [f"http://{ip}:{PHONE_PORT}/h/{cfg['token']}" for ip in ips] if on else []
+    app_urls = [f"http://{ip}:{PHONE_PORT}/a/{cfg['apptoken']}" for ip in ips] if app else []
+    return {"on": on, "app": app, "running": PHONE_HTTPD is not None, "port": PHONE_PORT, "urls": urls,
+            "appUrls": app_urls, "password": auth_load() is not None, "error": PHONE_ERR}
+
+
+def phone_server_wanted(cfg=None):
+    cfg = cfg if cfg is not None else phone_cfg()
+    return bool(cfg.get("on") or cfg.get("app"))
 
 
 def phone_start():
@@ -2209,17 +2218,21 @@ def phone_stop():
         threading.Thread(target=lambda: (h.shutdown(), h.server_close()), daemon=True).start()
 
 
-def phone_set(on=None, renew=False):
+def phone_set(on=None, renew=False, app=None, renew_app=False):
     with _write_lock:
         con = connect()
         cfg = phone_cfg(con)
         if renew or not cfg.get("token"):
             cfg["token"] = phone_token()
+        if renew_app or not cfg.get("apptoken"):
+            cfg["apptoken"] = phone_token() + phone_token()    # länger: öffnet alle Einträge
         if on is not None:
             cfg["on"] = bool(on)
+        if app is not None:
+            cfg["app"] = bool(app)
         meta_set(con, PHONE_KEY, cfg)
         con.commit()
-    if cfg.get("on"):
+    if phone_server_wanted(cfg):
         phone_start()
     else:
         phone_stop()
@@ -2485,20 +2498,85 @@ def folder_set(on=None, db=None):
     return folder_status()
 
 
-class PhoneHandler(BaseHTTPRequestHandler):
+APP_COOKIE = "fl_handy"
+# Vom Handy aus nicht erlaubt: Rechner steuern oder den Zugang selbst verändern
+REMOTE_BLOCKED = ("/api/beenden", "/api/ordner/oeffnen", "/api/handy", "/api/update", "/api/ordner/einlesen")
+
+
+class PhoneHandler(Handler):
+    """Zweiter Server im WLAN. /h/<schlüssel>: nur die Foto-Seite.
+    /a/<app-schlüssel>: setzt ein Cookie und öffnet danach die ganze Oberfläche (wie am Rechner)."""
     server_version = "Flowtiz-Handy/1.0"
 
     def log_message(self, fmt, *args):
         pass
 
-    def _json(self, obj, status=200):
-        body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
-        self.send_response(status)
-        self.send_header("Content-Type", "application/json; charset=utf-8")
-        self.send_header("Content-Length", str(len(body)))
+    def _check_host(self):
+        return True             # erreichbar über die WLAN-Adresse; geschützt durch den geheimen Schlüssel
+
+    def _deny(self):
+        now_ts = time.time()
+        _phone_fails[:] = [t for t in _phone_fails if now_ts - t < 300]
+        _phone_fails.append(now_ts)
+        time.sleep(min(3, 0.3 * len(_phone_fails)))
+        self.send_error(404)
+
+    def _app_ok(self):
+        cfg = phone_cfg()
+        tok = cfg.get("apptoken") or ""
+        if not (cfg.get("app") and tok):
+            return False
+        for part in (self.headers.get("Cookie") or "").split(";"):
+            k, _, v = part.strip().partition("=")
+            if k == APP_COOKIE and hmac.compare_digest(v, tok):
+                return True
+        return False
+
+    def _kind(self):
+        first = urllib.parse.urlparse(self.path).path.strip("/").split("/")[0]
+        return first if first in ("h", "a") else ""
+
+    def _app_enter(self):
+        parts = urllib.parse.urlparse(self.path).path.strip("/").split("/")
+        cfg = phone_cfg()
+        tok = cfg.get("apptoken") or ""
+        if not (cfg.get("app") and tok and len(parts) == 2 and hmac.compare_digest(parts[1], tok)):
+            return self._deny()
+        self.send_response(302)
+        self.send_header("Set-Cookie", f"{APP_COOKIE}={tok}; Path=/; Max-Age={400 * 86400}; HttpOnly; SameSite=Lax")
+        self.send_header("Location", "/")
         self.send_header("Cache-Control", "no-store")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Content-Length", "0")
         self.end_headers()
-        self.wfile.write(body)
+
+    def _app_write(self, method):
+        if not self._app_ok():
+            return self._deny()
+        if urllib.parse.urlparse(self.path).path.startswith(REMOTE_BLOCKED):
+            return self._err(403, "Das geht nur am Rechner")
+        return method(self)
+
+    def do_GET(self):
+        kind = self._kind()
+        if kind == "h":
+            return self._photo_get()
+        if kind == "a":
+            return self._app_enter()
+        if not self._app_ok():
+            return self._deny()
+        return Handler.do_GET(self)
+
+    def do_POST(self):
+        if self._kind() == "h":
+            return self._photo_post()
+        return self._app_write(Handler.do_POST)
+
+    def do_PUT(self):
+        return self._app_write(Handler.do_PUT)
+
+    def do_DELETE(self):
+        return self._app_write(Handler.do_DELETE)
 
     def _route(self):
         """(Unterpfad, Query) bei gültigem Link, sonst None (und schon geantwortet)."""
@@ -2516,7 +2594,7 @@ class PhoneHandler(BaseHTTPRequestHandler):
             return None
         return "/".join(parts[2:]), urllib.parse.parse_qs(url.query)
 
-    def do_GET(self):
+    def _photo_get(self):
         r = self._route()
         if r is None:
             return
@@ -2541,7 +2619,7 @@ class PhoneHandler(BaseHTTPRequestHandler):
         except Exception as e:  # noqa: BLE001
             self._json({"error": str(e)}, 500)
 
-    def do_POST(self):
+    def _photo_post(self):
         r = self._route()
         if r is None:
             return
@@ -2699,7 +2777,7 @@ def serve(open_browser=True):
     _heartbeat_loop()
     if other is None:
         _backup_loop()
-        if phone_cfg().get("on"):
+        if phone_server_wanted():
             phone_start()
         folder_ensure()          # Eingangsordner immer anlegen, damit er in der Dropbox-App zu finden ist
     _recur_loop()

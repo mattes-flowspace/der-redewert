@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Flowtiz</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flowtiz">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
 :root{
   --bg:#ffffff; --side:#f7f7f5; --text:#37352f; --muted:#787774; --line:#e9e9e7;
@@ -543,6 +547,10 @@ textarea.editor{font:13.5px/1.7 var(--mono);padding:18px}
 #toast button{color:var(--accent)}
 .hint{font-size:12px}
 #lockbar,#offline{font-size:13px}
+body.remote .pc-only{display:none!important}
+body.remote #side kbd{display:none}
+.hy-sec{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.hy-sec h3{margin:0 0 6px;font-size:15px}
 #quitscreen{position:fixed;inset:0;z-index:99999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px;text-align:center}
 #quitscreen .big{font-size:44px;margin-bottom:8px}
 #quitscreen p{color:var(--muted);max-width:440px;margin:8px auto;line-height:1.5}
@@ -873,10 +881,11 @@ body.focus .dbbar:hover, body.focus .props:hover, body.focus .page-actions:hover
     <button class="side-btn" id="btnExport">Export</button>
     <button class="side-btn" id="btnBackups">Sicherungen</button>
     <button class="side-btn" id="btnTrash">Papierkorb</button>
-    <button class="side-btn" id="btnUpdate">Nach Updates suchen</button>
+    <button class="side-btn pc-only" id="btnUpdate">Nach Updates suchen</button>
     <button class="side-btn" id="btnPass">Passwort</button>
     <button class="side-btn" id="btnTheme">Darstellung: Automatisch</button>
-    <button class="side-btn" id="btnQuit" title="Flowtiz an diesem Rechner beenden und die Sperre für andere Rechner freigeben">⏻ Flowtiz beenden</button>
+    <button class="side-btn pc-only" id="btnPhone" title="Flowtiz auf dem Handy im WLAN öffnen">📱 Am Handy öffnen</button>
+    <button class="side-btn pc-only" id="btnQuit" title="Flowtiz an diesem Rechner beenden und die Sperre für andere Rechner freigeben">⏻ Flowtiz beenden</button>
   </footer>
 </nav>
 <main id="main">
@@ -922,6 +931,9 @@ async function api(method, url, body, raw=false) {
   return j;
 }
 
+// Über das WLAN vom Handy geöffnet (nicht am Rechner selbst)?
+const REMOTE = !["localhost","127.0.0.1","[::1]","::1"].includes(location.hostname);
+if (REMOTE) document.body.classList.add("remote");
 // ---- Sperre zwischen mehreren Rechnern (Datenordner in Dropbox) -----------
 let LOCKED = false;
 function showLock(l){
@@ -3346,8 +3358,8 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
       h("button",{class:(st.tsize||"m")===k ? "on" : "", onclick:()=>{ st.tsize = k; persist(); draw(); }}, l)));
     const bar = h("div",{class:"py-bar"}, zoomSeg(), years, h("span",{class:"sp"}),
       h("span",{class:"py-stat", title:"Tage mit Bild"}, h("b",{}, String(filled)), ` / ${ylen}`), sw, size,
-      h("button",{class:"btn", title:"Fotos direkt vom Handy hochladen", onclick:()=>openPhone(()=>inst.reload())},"📱 Handy"),
-      h("button",{class:"btn", title:"Fotos aus einem Ordner (z. B. Dropbox) übernehmen", onclick:()=>openFolder(p.id)},"📁 Ordner"),
+      h("button",{class:"btn pc-only", title:"Fotos direkt vom Handy hochladen", onclick:()=>openPhone(()=>inst.reload())},"📱 Handy"),
+      h("button",{class:"btn pc-only", title:"Fotos aus einem Ordner (z. B. Dropbox) übernehmen", onclick:()=>openFolder(p.id)},"📁 Ordner"),
       h("button",{class:"btn", title:"Alle Bilder dieses Jahres als Kollage (PNG) speichern", onclick:()=>exportCollage(y)},"⤓ PNG"),
       h("button",{class:"btn", title:"Diashow der Bilder dieses Jahres", onclick:()=>{ const ds = photoDays(y); if (!ds.length) return toast("In "+y+" gibt es noch keine Bilder."); openDay(ds[0], true); }},"▶ Diashow"),
       h("button",{class:"btn", title:"Vollbild", onclick:toggleFs},"⛶ Vollbild"));
@@ -4220,25 +4232,46 @@ async function openBackups(){
 // ===========================================================================
 async function openPhone(onClose){
   const box = h("div");
+  const post = async (b, msg) => { try { draw(await api("POST","/api/handy", b)); if (msg) toast(msg); } catch(e){ toast(e.message); } };
+  const urls = list => list.map(u => h("div",{class:"hy-url"}, u));
   const draw = st => {
     box.innerHTML = "";
-    const sw = h("input",{type:"checkbox", checked:st.on});
-    sw.onchange = async () => { sw.disabled = true; try { draw(await api("POST","/api/handy",{on:sw.checked})); } catch(e){ toast(e.message); sw.disabled = false; } };
-    box.append(h("label",{class:"hy-row"}, sw, h("b",{}, st.on ? "Handy-Zugang ist an" : "Handy-Zugang ist aus")));
-    if (st.error) box.append(h("p",{class:"hint", style:"color:var(--danger);margin:0"}, st.error));
-    if (st.on && st.urls.length){
-      box.append(h("p",{class:"hint", style:"margin:8px 0 0"},"Öffne diese Adresse auf dem Handy und lege sie als Lesezeichen oder auf den Home-Bildschirm:"));
-      for (const u of st.urls) box.append(h("div",{class:"hy-url"}, u));
-      box.append(h("ol",{class:"hy-steps"},
-        h("li",{},"Handy und Rechner müssen im selben WLAN sein, und Flowtiz muss auf dem Rechner laufen."),
-        h("li",{},"Fragt Windows beim ersten Mal nach der Firewall: „Zulassen“ für private Netzwerke wählen."),
-        h("li",{},"Die Adresse ist dein Schlüssel. Über sie kommt man nur an diese Foto-Seite, nicht an deine anderen Einträge. Teile sie trotzdem nicht.")),
-        h("div",{class:"hy-row"}, h("button",{class:"btn", onclick:async()=>{ try { draw(await api("POST","/api/handy",{renew:true})); toast("Neue Adresse erzeugt. Die alte funktioniert nicht mehr."); } catch(e){ toast(e.message); } }},"Neue Adresse erzeugen")));
-    } else if (!st.on){
-      box.append(h("p",{class:"hint", style:"margin:6px 0 0"},"Wenn du den Zugang einschaltest, bekommst du eine geheime Adresse für dein Handy. Dort kannst du ein Foto aufnehmen oder auswählen, einen Satz dazuschreiben und beides in deinen Lebensfluss legen. Das Foto wird schon auf dem Handy verkleinert."));
+    if (st.error) box.append(h("p",{class:"hint", style:"color:var(--danger);margin:0 0 8px"}, st.error));
+    // --- ganze App ---
+    const swA = h("input",{type:"checkbox", checked:st.app});
+    swA.onchange = () => { swA.disabled = true; post({app:swA.checked}); };
+    const secA = h("div",{},
+      h("h3",{},"Flowtiz am Handy öffnen"),
+      h("label",{class:"hy-row"}, swA, h("b",{}, st.app ? "Zugriff auf alles ist an" : "Zugriff auf alles ist aus")));
+    if (st.app){
+      if (!st.password) secA.append(h("p",{class:"hint", style:"color:var(--danger);margin:6px 0"},
+        "Tipp: Lege in der Seitenleiste unter „Passwort“ ein Passwort fest. Dann fragt Flowtiz auch am Handy danach, falls jemand die Adresse kennt."));
+      secA.append(h("p",{class:"hint", style:"margin:8px 0 0"},"Öffne diese Adresse einmal im Browser deines Handys:"), ...urls(st.appUrls),
+        h("ol",{class:"hy-steps"},
+          h("li",{},"Danach merkt sich das Handy den Zugang. Lege die Seite auf den Home-Bildschirm (iPhone: Teilen › Zum Home-Bildschirm, Android: ⋮ › Zum Startbildschirm), dann startet Flowtiz wie eine App."),
+          h("li",{},"Funktioniert, solange Flowtiz auf diesem Rechner läuft und das Handy im selben WLAN ist. Alles, was du am Handy änderst, landet direkt hier."),
+          h("li",{},"Diese Adresse öffnet alle deine Einträge. Teile sie nicht. Mit „Neue Adresse“ sperrst du alle Handys aus, die die alte benutzt haben.")),
+        h("div",{class:"hy-row"}, h("button",{class:"btn", onclick:()=>post({renewApp:true}, "Neue Adresse erzeugt. Die alte funktioniert nicht mehr.")},"Neue Adresse")));
+    } else {
+      secA.append(h("p",{class:"hint", style:"margin:6px 0 0"},"Öffne Flowtiz mit allen Seiten, Datenbanken und dem Lebensfluss im Browser deines Handys, solange es auf diesem Rechner läuft und ihr im selben WLAN seid."));
     }
+    // --- nur Fotos ---
+    const sw = h("input",{type:"checkbox", checked:st.on});
+    sw.onchange = () => { sw.disabled = true; post({on:sw.checked}); };
+    const secF = h("div",{class:"hy-sec"},
+      h("h3",{},"Nur Fotos hochladen"),
+      h("label",{class:"hy-row"}, sw, h("b",{}, st.on ? "Foto-Seite ist an" : "Foto-Seite ist aus")));
+    if (st.on && st.urls.length){
+      secF.append(h("p",{class:"hint", style:"margin:8px 0 0"},"Eine schlanke Seite nur zum Fotografieren für den Lebensfluss:"), ...urls(st.urls),
+        h("p",{class:"hint", style:"margin:6px 0"},"Über diese Adresse kommt man nur an die Foto-Seite, nicht an deine anderen Einträge."),
+        h("div",{class:"hy-row"}, h("button",{class:"btn", onclick:()=>post({renew:true}, "Neue Adresse erzeugt. Die alte funktioniert nicht mehr.")},"Neue Adresse")));
+    } else if (!st.on){
+      secF.append(h("p",{class:"hint", style:"margin:6px 0 0"},"Eine eigene Adresse, unter der du nur ein Foto aufnehmen, einen Satz dazuschreiben und beides in deinen Lebensfluss legen kannst."));
+    }
+    box.append(secA, secF);
+    if (st.app || st.on) box.append(h("p",{class:"hint", style:"margin:12px 0 0"},"Fragt Windows beim ersten Mal nach der Firewall: „Zulassen“ für private Netzwerke wählen."));
   };
-  const body = h("div",{class:"body"}, h("h2",{},"Fotos vom Handy"), box,
+  const body = h("div",{class:"body"}, h("h2",{},"📱 Handy"), box,
     h("div",{class:"pyx-act"}, h("span",{class:"hint"}), h("button",{class:"btn", onclick:()=>ov.close()},"Fertig")));
   const ov = dialog(body);
   ov.onclose = () => onClose?.();
@@ -4250,6 +4283,7 @@ async function openPhone(onClose){
 // ===========================================================================
 let FOLDER_BUSY = false, FOLDER_LAST = 0;
 async function folderSync(force=false){
+  if (REMOTE) return null;
   if (FOLDER_BUSY || (!force && Date.now() - FOLDER_LAST < 20000)) return null;
   FOLDER_BUSY = true; FOLDER_LAST = Date.now();
   const res = {done:0, taken:0, bad:0};
@@ -4757,6 +4791,7 @@ $("#btnToday").onclick = openToday;
 $("#btnNewPhoto").onclick = newPhotoDiary;
 $("#btnQuick").onclick = quickNote;
 $("#btnBackups").onclick = openBackups;
+$("#btnPhone").onclick = () => openPhone();
 let QUIT_ARM = 0;
 $("#btnQuit").onclick = async () => {
   const btn = $("#btnQuit");
@@ -4857,7 +4892,7 @@ $("#btnTheme").onclick = () => { META.theme = ({auto:"light", light:"dark", dark
 $("#btnFav").onclick = () => { if (!CURRENT) return; const id = CURRENT.id; const on = META.favorites.includes(id);
   META.favorites = on ? META.favorites.filter(x=>x!==id) : [...META.favorites, id]; saveMeta("favorites"); $("#btnFav").textContent = on ? "☆" : "★"; renderTree(); };
 $("#menuBtn").onclick = () => { if (innerWidth <= 760) document.body.classList.toggle("side-open"); else { document.body.classList.toggle("side-collapsed"); try{ localStorage.setItem("nl_side", document.body.classList.contains("side-collapsed")?"0":"1"); }catch{} } };
-$("#main").addEventListener("click", () => document.body.classList.remove("side-open"));
+$("#main").addEventListener("click", e => { if (!e.target.closest("#menuBtn")) document.body.classList.remove("side-open"); });
 $("#lightbox").onclick = () => { $("#lightbox").style.display = "none"; };
 document.addEventListener("keydown", e => {
   if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="k"){ e.preventDefault(); openSearch(); return; }
@@ -4887,7 +4922,7 @@ setTimeout(()=>folderSync(true), 2500);
   try { await loadTree(); } catch(e){ return; }   // z. B. nicht angemeldet: Anmeldebildschirm steht schon
   route();
   checkLock();
-  checkUpdate(false);
+  if (!REMOTE) checkUpdate(false);
 })();
 </script>
 </body>

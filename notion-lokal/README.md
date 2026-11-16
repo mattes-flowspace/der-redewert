@@ -166,6 +166,16 @@ Nach dem Import einmalig prüfen: Notion exportiert die **Reihenfolge und Farben
 - Das Fotojahr ist eine normale Ansicht: Über „+“ neben den Reitern kannst du es jeder Datenbank mit Datumsspalte hinzufügen. Unter „Ansicht“ wählst du Datums- und Textspalte.
 - iPhone-Fotos im HEIC-Format kann der Browser unter Windows nicht lesen. Exportiere sie vorher als JPG.
 
+## Am Handy öffnen
+
+In der Seitenleiste unten **„📱 Am Handy öffnen“** und dann „Flowtiz am Handy öffnen“ einschalten. Du bekommst eine geheime Adresse (z. B. `http://192.168.1.20:8766/a/…`). Öffne sie einmal im Browser deines Handys, danach merkt sich das Handy den Zugang. Am besten legst du sie auf den Home-Bildschirm (iPhone: Teilen › Zum Home-Bildschirm), dann startet Flowtiz wie eine App.
+
+- Du siehst und bearbeitest alles wie am Rechner: Seiten, Datenbanken, Heute, Lebensfluss. Änderungen landen direkt auf dem Rechner.
+- Das geht, solange Flowtiz auf dem Rechner läuft und das Handy im selben WLAN ist.
+- Die Adresse öffnet alle Einträge: nicht teilen. „Neue Adresse“ sperrt alle Handys aus, die die alte benutzt haben. Lege zusätzlich ein Passwort fest (siehe „Passwortschutz“), dann fragt Flowtiz auch am Handy danach. Die Verbindung im WLAN ist nicht verschlüsselt, also nur im eigenen Heimnetz nutzen.
+- Vom Handy aus nicht möglich: Flowtiz beenden, Updates einspielen, den Handy-Zugang ändern, Ordner am Rechner öffnen.
+- Die schlanke Foto-Seite für den Lebensfluss gibt es weiter als eigene Adresse („Nur Fotos hochladen“); sie öffnet nur die Foto-Seite.
+
 ## Ansichten einer Datenbank
 
 Jede Datenbank hat **gespeicherte Ansichten**, die als Reiter über ihr stehen. Jede Ansicht merkt sich Layout, Filter, Sortierung und Anzeige. Welche Ansicht gerade offen ist, wird pro Stelle gespeichert, an der die Datenbank eingebettet ist.
@@ -282,4 +292,4 @@ Diese Einschränkungen kommen vom Notion-Export selbst:
 - `app.py`: Python-Server (nur Standardbibliothek), SQLite-Datenbank, Import und Export
 - `static/index.html`: komplette Oberfläche ohne externe Bibliotheken, funktioniert offline
 - Einstellbar per Umgebungsvariablen: `NOTION_LOKAL_PORT`, `NOTION_LOKAL_DATEN` (anderer Datenordner)
-- Zugriff vom Handy im eigenen WLAN: mit `NOTION_LOKAL_HOST=0.0.0.0` starten und am Handy `http://<IP-des-Rechners>:8765` öffnen. Richte dafür vorher den Passwortschutz ein (siehe oben) und nutze das nur im eigenen Heimnetz: Die Verbindung ist nicht verschlüsselt.
+- Zugriff vom Handy: siehe „Am Handy öffnen“. Der Handy-Server läuft auf Port+1 (`NOTION_LOKAL_HANDY_PORT`).
