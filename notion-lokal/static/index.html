@@ -950,8 +950,10 @@ function showLock(l){
   bar.style.display = bar.childNodes.length ? "block" : "none";
   if (wasLocked && !LOCKED && TREE.length){ loadTree().then(route); }
 }
-async function checkLock(){ try { showLock(await api("GET","/api/lock")); } catch(e){} }
-setInterval(()=>{ if (!document.hidden) checkLock(); }, 60000);
+let BOOT_V = null;     // Server-Version beim Laden der Seite; ändert sie sich, Oberfläche neu laden
+async function checkLock(){ try { const l = await api("GET","/api/lock"); showLock(l);
+  if (l.version){ if (BOOT_V === null) BOOT_V = l.version; else if (l.version !== BOOT_V){ try { flushAll(); } catch {} setTimeout(()=>location.reload(), 600); } } } catch(e){} }
+setInterval(()=>{ if (!document.hidden) checkLock(); }, 30000);
 document.addEventListener("visibilitychange", () => { if (!document.hidden) checkLock(); });
 function toast(msg, action, fn){
   const t=$("#toast"); t.innerHTML=""; t.append(msg);

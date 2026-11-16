@@ -209,7 +209,27 @@ def conflict_files():
 def lock_status():
     other = foreign_lock()
     return {"owns": OWNS_LOCK and other is None, "host": INSTANCE["host"], "other": other,
-            "conflicts": conflict_files()}
+            "conflicts": conflict_files(), "version": RUN_VERSION}
+
+
+RUN_VERSION = None      # Version, mit der dieser Server gestartet wurde
+
+
+def _code_watch_loop():
+    """Die Programmdateien liegen oft in der Dropbox. Hat ein anderer Rechner ein Update eingespielt,
+    kommen hier nur die Dateien an, der laufende Server hat noch den alten Code. Dann neu starten,
+    sobald alle neuen Dateien vollständig da sind (Prüfsummen stimmen)."""
+    try:
+        cur = local_version()
+        if RUN_VERSION and cur != RUN_VERSION and not RESTART and not local_changes():
+            print(f"Neue Version {cur} im Programmordner gefunden – starte neu …")
+            _restart_soon()
+            return
+    except Exception:  # noqa: BLE001
+        pass
+    t = threading.Timer(60, _code_watch_loop)
+    t.daemon = True
+    t.start()
 
 
 def now():
@@ -2773,8 +2793,11 @@ def serve(open_browser=True):
             webbrowser.open(url)
         return
     connect().close()
+    global RUN_VERSION
+    RUN_VERSION = local_version()
     other = acquire_lock_on_start()
     _heartbeat_loop()
+    _code_watch_loop()
     if other is None:
         _backup_loop()
         if phone_server_wanted():

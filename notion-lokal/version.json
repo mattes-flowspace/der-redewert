@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "40097bbcd725dee7950d18b1ca4a9b797a90b10a244d6d5b026512ba56720e47",
-    "static/index.html": "8943df95e2b5114f0ffe32eda7f16d6b61cda7567149409d27bbdea1bc2c0ff8",
+    "app.py": "bd8ec2d0806157f42141cc80ee9155b507c2ab0226acbcca1cff23fcf85aa721",
+    "static/index.html": "e392791e7b46f9c49b6e31776fd2d2f82852626c1d5513e94431b31ceb1db990",
     "README.md": "d5568da62950dc04dffc5976faed6586fea2e1ab7eb7cea58abbb1ad911134d5"
   }
 }
