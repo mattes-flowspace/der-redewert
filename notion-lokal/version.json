@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.16.5",
-  "notes": "Läuft Flowtiz auf zwei Rechnern über Dropbox, startet es nach einem Update jetzt auch auf dem anderen Rechner von selbst neu. Vorher fehlten dort neue Funktionen („Unbekannter Pfad“).",
+  "version": "2026.11.16.6",
+  "notes": "Lebensfluss: Bilder bearbeiten („✎ Bearbeiten“ im geöffneten Tag) – drehen, spiegeln, zuschneiden, Helligkeit, Kontrast, Sättigung, Wärme. Das Original bleibt erhalten.",
   "files": [
     "app.py",
     "static/index.html",
@@ -9,7 +9,7 @@
   ],
   "sha256": {
     "app.py": "bd8ec2d0806157f42141cc80ee9155b507c2ab0226acbcca1cff23fcf85aa721",
-    "static/index.html": "e392791e7b46f9c49b6e31776fd2d2f82852626c1d5513e94431b31ceb1db990",
-    "README.md": "d5568da62950dc04dffc5976faed6586fea2e1ab7eb7cea58abbb1ad911134d5"
+    "static/index.html": "8f3b8683f0018cfc378942b1d9d0095ab9158c3875190c6af04af30a4604030e",
+    "README.md": "2563d92c6ae895adff2ebc323d31526204d24f95f41dd6509466a524da882d7d"
   }
 }

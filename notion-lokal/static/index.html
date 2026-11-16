@@ -808,6 +808,18 @@ button.subtg:hover{background:var(--hover)}
 .od-list{margin:8px 0 0;padding:0;list-style:none;max-height:22vh;overflow:auto;font-size:13px}
 .od-list li{display:flex;gap:10px;padding:4px 0;border-bottom:1px solid var(--line)}
 .od-list .m{color:var(--muted);font-family:var(--mono);font-size:12px;margin-left:auto;white-space:nowrap}
+/* Bildbearbeitung */
+.overlay .ie{width:min(980px,96vw)}
+.ie-wrap{position:relative;display:flex;justify-content:center;align-items:center;background:var(--side);border-radius:6px;min-height:200px;height:min(58vh,620px);touch-action:none;user-select:none}
+.ie-wrap canvas{max-width:100%;max-height:100%;display:block}
+.ie-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 4px}
+.ie-bar .sep{width:1px;height:22px;background:var(--line);margin:0 4px}
+.ie-bar .btn.on{background:var(--text);color:var(--bg)}
+.ie-sl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 22px;margin-top:8px}
+.ie-sl label{display:grid;grid-template-columns:90px 1fr 38px;align-items:center;gap:8px;font-size:13px}
+.ie-sl input{width:100%}
+.ie-sl span.v{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right}
+@media (max-width:700px){ .ie-sl{grid-template-columns:1fr} .ie-wrap{height:46vh} }
 /* Fokusmodus */
 #btnFocus.on{color:var(--text)}
 #ftimer{display:none;font-family:var(--mono);font-size:12px;padding:3px 9px;border:1px solid var(--line);border-radius:3px;color:var(--muted)}
@@ -3024,7 +3036,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
   };
   const removeDayImage = async iso => {
     const r = dayMap().get(iso); if (!r) return;
-    r.cover = ""; r.thumb = ""; delete r.props._vorschau; delete r.props._farbe;
+    r.cover = ""; r.thumb = ""; delete r.props._vorschau; delete r.props._farbe; delete r.props._original;
     await save(r.id, {cover:"", props:r.props});
   };
   const setDaySentence = async (iso, text) => {
@@ -3110,7 +3122,7 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     const r = dayMap().get(iso), img = imgOf(r);
     const y = d.getFullYear(), doy = diffDays(new Date(y,0,1), d)+1, ylen = diffDays(new Date(y,0,1), new Date(y+1,0,1));
     const fileInp = h("input",{type:"file", accept:"image/*", style:"display:none"});
-    const upload = async f => { if (!f) return; const r2 = await setDayImage(iso, f); if (r2 && dayBox && dayBox.dataset.iso===iso) renderDay(); };
+    const upload = async f => { if (!f) return; if (r?.props) delete r.props._original; const r2 = await setDayImage(iso, f); if (r2 && dayBox && dayBox.dataset.iso===iso) renderDay(); };
     fileInp.onchange = () => upload(fileInp.files[0]);
     const stage = h("div",{class:"pyd-stage"});
     if (img) stage.append(h("img",{src:img, alt:dayTitle(iso)}));
@@ -3134,6 +3146,12 @@ async function mountDatabase(host, dbId, viewKey, opt={}){
     put(top,
         h("div",{class:"pyd-date"}, h("b",{}, d.toLocaleDateString("de-DE",{weekday:"long", day:"numeric", month:"long", year:"numeric"})), h("span",{class:"pyd-n"}, `Tag ${doy} / ${ylen}`)),
         h("span",{class:"sp"}),
+        img ? h("button",{class:"btn", title:"Drehen, zuschneiden, Helligkeit und Farbe", onclick:async()=>{
+          const src = r.cover && !/^gradient:/.test(r.cover) ? r.cover : img;
+          const out = await editImage(src, r.props?._original);
+          if (!out) return;
+          if (!r.props._original) r.props._original = src;      // unbearbeitetes Foto bleibt erhalten
+          const r2 = await setDayImage(iso, out); if (r2 && dayBox && dayBox.dataset.iso===iso) renderDay(); }},"✎ Bearbeiten") : null,
         img ? h("button",{class:"btn", onclick:()=>fileInp.click()},"Bild ersetzen") : null,
         img ? h("button",{class:"btn", onclick:async()=>{ if (!confirm("Bild von diesem Tag entfernen? Der Satz bleibt erhalten.")) return; await removeDayImage(iso); renderDay(); }},"Entfernen") : null,
         h("button",{class:"btn"+(slide?" on":""), title:"Diashow der Bilder dieses Jahres (Leertaste)", onclick:()=>{ if (slide){ stopSlide(); renderDay(); } else startSlide(); }}, slide ? "❚❚ Pause" : "▶ Diashow"),
@@ -4074,6 +4092,182 @@ async function avgColor(src){
   for (let i=0; i<d.length; i+=4){ r += d[i]; g += d[i+1]; b += d[i+2]; }
   const hx = v => Math.round(v/64).toString(16).padStart(2,"0");
   return "#" + hx(r) + hx(g) + hx(b);
+}
+// ===========================================================================
+// Bildbearbeitung: drehen, spiegeln, zuschneiden, Helligkeit & Farbe
+// editImage(src, original?) -> Promise<Blob|null> (JPG in voller Größe)
+// ===========================================================================
+async function loadBitmap(src){
+  const r = await fetch(src, {cache:"no-store"}); if (!r.ok) throw new Error("Bild nicht gefunden");
+  return createImageBitmap(await r.blob());
+}
+function ieAdjust(data, a){
+  // a: {b, c, s, w} jeweils -100 … 100
+  const lut = new Uint8ClampedArray(256), bf = 1 + a.b/100*0.6, cf = 1 + a.c/100;
+  for (let i=0;i<256;i++) lut[i] = ((i*bf) - 128) * cf + 128;
+  const sf = 1 + a.s/100, wr = a.w*0.35, wb = -a.w*0.35, px = data.data;
+  const plain = !a.s && !a.w;
+  for (let i=0;i<px.length;i+=4){
+    let r = lut[px[i]], g = lut[px[i+1]], b = lut[px[i+2]];
+    if (!plain){
+      const l = 0.299*r + 0.587*g + 0.114*b;
+      r = l + (r-l)*sf + wr; g = l + (g-l)*sf; b = l + (b-l)*sf + wb;
+    }
+    px[i] = r; px[i+1] = g; px[i+2] = b;
+  }
+  return data;
+}
+function ieOriented(bmp, st, maxSide){
+  const sw = bmp.width, sh = bmp.height, side = st.rot % 180 !== 0;
+  const W0 = side ? sh : sw, H0 = side ? sw : sh;
+  const sc = Math.min(1, maxSide / Math.max(W0, H0));
+  const W = Math.max(1, Math.round(W0*sc)), H = Math.max(1, Math.round(H0*sc));
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const cx = cv.getContext("2d");
+  cx.fillStyle = "#fff"; cx.fillRect(0,0,W,H);
+  cx.translate(W/2, H/2); if (st.flip) cx.scale(-1, 1); cx.rotate(st.rot*Math.PI/180);
+  const dw = (side ? H : W), dh = (side ? W : H);
+  cx.drawImage(bmp, -dw/2, -dh/2, dw, dh);
+  return cv;
+}
+async function editImage(src, original){
+  let bmp;
+  try { bmp = await loadBitmap(src); } catch(e){ toast(e.message); return null; }
+  const st = {rot:0, flip:false, crop:null, ratio:null, adj:{b:0, c:0, s:0, w:0}};
+  const view = h("canvas",{}), wrap = h("div",{class:"ie-wrap"}, view);
+  let base = null, scaled = null;                  // gedrehte Vorschau / mit Farben
+  const rebuild = () => { base = ieOriented(bmp, st, 1100); recolor(); };
+  let raf = 0;
+  const recolor = () => { clearTimeout(raf); raf = setTimeout(() => {
+    const c = document.createElement("canvas"); c.width = base.width; c.height = base.height;
+    const cx = c.getContext("2d"); cx.drawImage(base, 0, 0);
+    if (st.adj.b || st.adj.c || st.adj.s || st.adj.w) cx.putImageData(ieAdjust(cx.getImageData(0,0,c.width,c.height), st.adj), 0, 0);
+    scaled = c; paint();
+  }, 16); };
+  const paint = () => {
+    if (!scaled) return;
+    view.width = scaled.width; view.height = scaled.height;
+    const cx = view.getContext("2d"); cx.drawImage(scaled, 0, 0);
+    if (st.crop){
+      const W = view.width, H = view.height, c = st.crop, x = c.x*W, y = c.y*H, w = c.w*W, hh = c.h*H;
+      cx.fillStyle = "rgba(0,0,0,.55)";
+      cx.fillRect(0,0,W,y); cx.fillRect(0,y+hh,W,H-y-hh); cx.fillRect(0,y,x,hh); cx.fillRect(x+w,y,W-x-w,hh);
+      cx.strokeStyle = "#fff"; cx.lineWidth = Math.max(1.5, W/500); cx.strokeRect(x, y, w, hh);
+      cx.globalAlpha = .45; cx.beginPath();
+      for (const f of [1/3, 2/3]){ cx.moveTo(x+w*f, y); cx.lineTo(x+w*f, y+hh); cx.moveTo(x, y+hh*f); cx.lineTo(x+w, y+hh*f); }
+      cx.stroke(); cx.globalAlpha = 1;
+      const k = Math.max(10, W/45); cx.fillStyle = "#fff";
+      for (const [px,py] of [[x,y],[x+w,y],[x,y+hh],[x+w,y+hh]]) cx.fillRect(px-k/2, py-k/2, k, k);
+    }
+  };
+  // Seitenverhältnis in Bildpunkten -> normierte Höhe/Breite
+  const fitCrop = ratio => {
+    if (!ratio) return {x:.05, y:.05, w:.9, h:.9};
+    const W = base.width, H = base.height; let w = W*.9, hh = w/ratio;
+    if (hh > H*.9){ hh = H*.9; w = hh*ratio; }
+    return {x:(W-w)/2/W, y:(H-hh)/2/H, w:w/W, h:hh/H};
+  };
+  // Zuschnitt mit Maus/Finger: in der Mitte verschieben, an den Ecken ziehen
+  let drag = null;
+  const pt = e => { const r = view.getBoundingClientRect(); return {x:(e.clientX-r.left)/r.width, y:(e.clientY-r.top)/r.height, r}; };
+  view.addEventListener("pointerdown", e => {
+    if (!st.crop) return;
+    const p = pt(e), c = st.crop, tolX = 22/p.r.width, tolY = 22/p.r.height;
+    const corners = {nw:[c.x,c.y], ne:[c.x+c.w,c.y], sw:[c.x,c.y+c.h], se:[c.x+c.w,c.y+c.h]};
+    let mode = Object.keys(corners).find(k => Math.abs(p.x-corners[k][0])<tolX && Math.abs(p.y-corners[k][1])<tolY);
+    if (!mode && p.x>c.x && p.x<c.x+c.w && p.y>c.y && p.y<c.y+c.h) mode = "move";
+    if (!mode) return;
+    drag = {mode, p, c:{...c}}; try { view.setPointerCapture(e.pointerId); } catch {} e.preventDefault();
+  });
+  view.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const p = pt(e), dx = p.x-drag.p.x, dy = p.y-drag.p.y, o = drag.c, min = .05;
+    let c = {...o};
+    if (drag.mode === "move"){
+      c.x = Math.min(1-o.w, Math.max(0, o.x+dx)); c.y = Math.min(1-o.h, Math.max(0, o.y+dy));
+    } else {
+      const left = drag.mode.includes("w"), topE = drag.mode.includes("n");
+      let x1 = o.x, y1 = o.y, x2 = o.x+o.w, y2 = o.y+o.h;
+      if (left) x1 = Math.min(x2-min, Math.max(0, x1+dx)); else x2 = Math.max(x1+min, Math.min(1, x2+dx));
+      if (topE) y1 = Math.min(y2-min, Math.max(0, y1+dy)); else y2 = Math.max(y1+min, Math.min(1, y2+dy));
+      if (st.ratio){
+        const R = st.ratio * base.height / base.width;          // Verhältnis in normierten Einheiten
+        let w = x2-x1, hh = w / R;
+        if (topE ? y2-hh < 0 : y1+hh > 1){ hh = topE ? y2 : 1-y1; w = hh*R; }
+        if (left) x1 = x2-w; else x2 = x1+w;
+        if (topE) y1 = y2-hh; else y2 = y1+hh;
+        if (x1 < 0 || x2 > 1) return;
+      }
+      c = {x:x1, y:y1, w:x2-x1, h:y2-y1};
+    }
+    st.crop = c; paint();
+  });
+  const endDrag = () => { drag = null; };
+  view.addEventListener("pointerup", endDrag); view.addEventListener("pointercancel", endDrag);
+
+  const bar = h("div",{class:"ie-bar"});
+  const ratioBtns = [];
+  const setRatio = (label, ratio) => {
+    if (label === "Aus"){ st.crop = null; st.ratio = null; }
+    else { st.ratio = ratio; st.crop = fitCrop(ratio); }
+    ratioBtns.forEach(b => b.classList.toggle("on", b.dataset.l === label && label !== "Aus"));
+    paint();
+  };
+  const turn = (f) => { f(); const had = !!st.crop; st.crop = null; rebuild(); if (had) setTimeout(()=>{ st.crop = fitCrop(st.ratio); paint(); }, 30); };
+  bar.append(
+    h("button",{class:"btn", title:"Nach links drehen", onclick:()=>turn(()=>{ st.rot = (st.rot+270)%360; })},"⟲ Links"),
+    h("button",{class:"btn", title:"Nach rechts drehen", onclick:()=>turn(()=>{ st.rot = (st.rot+90)%360; })},"⟳ Rechts"),
+    h("button",{class:"btn", title:"Spiegeln", onclick:()=>turn(()=>{ st.flip = !st.flip; })},"⇋ Spiegeln"),
+    h("span",{class:"sep"}), h("span",{class:"hint", style:"margin:0 4px 0 0"},"Zuschneiden:"));
+  for (const [label, ratio] of [["Frei", null], ["1:1", 1], ["4:3", 4/3], ["3:4", 3/4], ["16:9", 16/9], ["Aus", null]]){
+    const b = h("button",{class:"btn", onclick:()=>setRatio(label, ratio)}, label);
+    b.dataset.l = label; ratioBtns.push(b); bar.append(b);
+  }
+  const sliders = h("div",{class:"ie-sl"});
+  const inputs = {};
+  for (const [k, label] of [["b","Helligkeit"], ["c","Kontrast"], ["s","Sättigung"], ["w","Wärme"]]){
+    const v = h("span",{class:"v"},"0");
+    const inp = h("input",{type:"range", min:"-100", max:"100", value:"0", title:"Doppelklick: zurück auf 0"});
+    inp.oninput = () => { st.adj[k] = +inp.value; v.textContent = inp.value; recolor(); };
+    inp.ondblclick = () => { inp.value = "0"; inp.oninput(); };
+    inputs[k] = [inp, v];
+    sliders.append(h("label",{}, label, inp, v));
+  }
+  const resetAll = () => {
+    st.rot = 0; st.flip = false; st.crop = null; st.ratio = null;
+    for (const k in inputs){ inputs[k][0].value = "0"; inputs[k][1].textContent = "0"; st.adj[k] = 0; }
+    ratioBtns.forEach(b => b.classList.remove("on")); rebuild();
+  };
+  return new Promise(resolve => {
+    let done = false;
+    const finish = v => { if (done) return; done = true; bmp.close?.(); resolve(v); };
+    const saveBtn = h("button",{class:"btn primary"},"Speichern");
+    saveBtn.onclick = async () => {
+      saveBtn.disabled = true; saveBtn.textContent = "Speichert …";
+      try {
+        const full = ieOriented(bmp, st, 4000);
+        const c = st.crop || {x:0, y:0, w:1, h:1};
+        const sx = Math.round(c.x*full.width), sy = Math.round(c.y*full.height);
+        const sw = Math.max(1, Math.round(c.w*full.width)), sh = Math.max(1, Math.round(c.h*full.height));
+        const out = document.createElement("canvas"); out.width = sw; out.height = sh;
+        const ox = out.getContext("2d"); ox.drawImage(full, sx, sy, sw, sh, 0, 0, sw, sh);
+        if (st.adj.b || st.adj.c || st.adj.s || st.adj.w) ox.putImageData(ieAdjust(ox.getImageData(0,0,sw,sh), st.adj), 0, 0);
+        const blob = await new Promise(r => out.toBlob(r, "image/jpeg", 0.9));
+        if (!blob) throw new Error("Bild konnte nicht gespeichert werden");
+        finish(blob); ov.close();
+      } catch(e){ toast(e.message); saveBtn.disabled = false; saveBtn.textContent = "Speichern"; }
+    };
+    const origBtn = original && original !== src ? h("button",{class:"btn", title:"Mit dem unbearbeiteten Foto neu beginnen", onclick:async()=>{
+      try { const b2 = await loadBitmap(original); bmp.close?.(); bmp = b2; resetAll(); toast("Original geladen"); } catch(e){ toast(e.message); } }},"Original") : null;
+    const ov = dialog(h("div",{class:"body ie"},
+      h("h2",{},"Bild bearbeiten"), wrap, bar, sliders,
+      h("div",{class:"pyx-act"},
+        h("span",{class:"hint"},"Ecken des Rahmens ziehen, Mitte verschieben · Doppelklick auf einen Regler setzt ihn zurück"),
+        origBtn, h("button",{class:"btn", onclick:resetAll},"Zurücksetzen"),
+        h("button",{class:"btn", onclick:()=>ov.close()},"Abbrechen"), saveBtn)));
+    ov.onclose = () => finish(null);
+    rebuild();
+  });
 }
 async function shrinkImage(file, max){
   const bmp = await createImageBitmap(file);
