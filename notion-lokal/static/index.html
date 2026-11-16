@@ -4660,12 +4660,22 @@ function openImport(){
   const inp = h("input",{type:"file", accept:".zip", style:"display:none", multiple:true});
   const zone = h("div",{class:"drop-zone"},"Notion-Export (.zip) hierher ziehen oder klicken");
   const log = h("div",{class:"log", style:"display:none"});
+  let last = "Notion-Import", useGroup = true;
+  try { const g = JSON.parse(localStorage.getItem("fl_import_group") || "null"); if (g){ last = g.name || last; useGroup = g.on !== false; } } catch {}
+  const gOn = h("input",{type:"checkbox", checked:useGroup});
+  const gName = h("input",{type:"text", value:last, placeholder:"Name der Gruppe", style:"flex:1;min-width:0;font:inherit;font-size:14px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text)"});
+  gName.disabled = !useGroup;
+  gOn.onchange = () => { gName.disabled = !gOn.checked; };
+  const group = h("div",{class:"hy-row", style:"margin:10px 0"},
+    h("label",{style:"display:flex;gap:6px;align-items:center;white-space:nowrap"}, gOn, "In eine Gruppe importieren:"), gName);
   dialog(h("div",{class:"body"},
     h("h2",{},"📥 Notion importieren"),
     h("ol",{},
       h("li",{},"In Notion: ", h("b",{},"Einstellungen → Allgemein → Alle Inhalte des Arbeitsbereichs exportieren"), "."),
       h("li",{},"Format: ", h("b",{},"Markdown & CSV"), ", alles einschließen, ", h("b",{},"Ordner für Unterseiten erstellen"), " aktivieren."),
       h("li",{},"Die heruntergeladene ZIP-Datei hier ablegen (nicht entpacken).")),
+    group,
+    h("p",{class:"hint", style:"margin-top:0"},"Alles aus dem Export kommt dann unter eine Seite mit diesem Namen, statt einzeln in die Seitenleiste. Importierst du später erneut mit demselben Namen, wird dieselbe Gruppe aktualisiert."),
     zone, inp, log,
     h("p",{class:"hint"},"Sehr große Exporte (mehrere GB) lieber über das Terminal importieren: ", h("code",{},"python3 app.py import Export.zip"), ". Ein erneuter Import aktualisiert vorhandene Seiten; Board-Spalten, Farben und Ansichten bleiben erhalten.")));
   zone.onclick = () => inp.click();
@@ -4675,9 +4685,11 @@ function openImport(){
   inp.onchange = () => run([...inp.files]);
   async function run(files){
     log.style.display = "block";
+    const name = gOn.checked ? gName.value.trim() : "";
+    try { localStorage.setItem("fl_import_group", JSON.stringify({on:gOn.checked, name:gName.value.trim() || "Notion-Import"})); } catch {}
     for (const f of files){
       log.textContent += `Lade ${f.name} (${(f.size/1048576).toFixed(1)} MB) … bitte warten\n`;
-      try { const r = await api("POST","/api/import", f, true); log.textContent += r.log.join("\n") + "\n"; }
+      try { const r = await api("POST","/api/import" + (name ? "?gruppe=" + encodeURIComponent(name) : ""), f, true); log.textContent += r.log.join("\n") + "\n"; }
       catch(e){ log.textContent += "Fehler: " + e.message + "\n"; }
     }
     await loadTree(); route();

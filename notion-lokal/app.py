@@ -438,9 +438,12 @@ def norm_title(t):
 
 
 class NotionImporter:
-    def __init__(self, con, log=print):
+    GROUP_SOURCE = "notion-gruppe"
+
+    def __init__(self, con, log=print, group=None):
         self.con = con
         self.log = log
+        self.group = (group or "").strip()[:120] or None   # Titel einer Gruppenseite, in die alles kommt
         self.root = None
         self.path_ids = {}      # normalisierter Pfad (ohne Endung) -> id
         self.link_titles = {}   # Datenbank-ID -> Originaltitel aus dem Linktext
@@ -479,7 +482,7 @@ class NotionImporter:
             self.root = root
             with _write_lock:
                 self._index(root)
-                self._import_dir(root, None)
+                self._import_dir(root, self._group_id())
                 # Dateinamen verlieren Sonderzeichen ("To Do`s" -> "To Do s"); der Linktext kennt das Original
                 for pid, label in self.link_titles.items():
                     r = self.con.execute("SELECT title FROM pages WHERE id=? AND kind='database'", (pid,)).fetchone()
@@ -492,6 +495,27 @@ class NotionImporter:
         finally:
             if tmp:
                 shutil.rmtree(tmp, ignore_errors=True)
+
+    def _group_id(self):
+        """Gruppenseite oben in der Seitenleiste finden oder anlegen. Ein erneuter Import
+        mit demselben Namen landet in derselben Gruppe."""
+        if not self.group:
+            return None
+        r = self.con.execute(
+            "SELECT id FROM pages WHERE parent_id IS NULL AND kind='page' AND deleted=0 AND source=? AND title=?",
+            (self.GROUP_SOURCE, self.group)).fetchone()
+        if r:
+            self.log(f"Importiere in die Gruppe „{self.group}“")
+            return r["id"]
+        gid, ts = new_id(), now()
+        top = self.con.execute("SELECT COALESCE(MAX(sort),0) FROM pages WHERE parent_id IS NULL").fetchone()[0]
+        self.con.execute(
+            """INSERT INTO pages (id,parent_id,kind,title,icon,content,props,schema,sort,created,updated,deleted,source)
+               VALUES (?,NULL,'page',?,'📦',?,'{}','[]',?,?,?,0,?)""",
+            (gid, self.group, f"Aus Notion importiert am {dt.date.today().strftime('%d.%m.%Y')}.",
+             top + 1, ts, ts, self.GROUP_SOURCE))
+        self.log(f"Neue Gruppe „{self.group}“ angelegt")
+        return gid
 
     @staticmethod
     def _extract(zpath, dest):
@@ -2104,7 +2128,9 @@ class Handler(BaseHTTPRequestHandler):
                     remaining -= len(chunk)
             if not zipfile.is_zipfile(tmp):
                 return self._err(400, "Die Datei ist kein ZIP-Archiv")
-            stats = NotionImporter(connect(), log=logs.append).run(tmp)
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            group = (q.get("gruppe") or [""])[0]
+            stats = NotionImporter(connect(), log=logs.append, group=group).run(tmp)
             self._json({"ok": True, "stats": stats, "log": logs})
         finally:
             if os.path.exists(tmp):
@@ -2698,9 +2724,11 @@ def main(argv):
         serve()
     elif cmd == "import":
         if len(argv) < 3:
-            sys.exit("Aufruf: python3 app.py import <Notion-Export.zip oder Ordner> [...]")
+            sys.exit("Aufruf: python3 app.py import <Notion-Export.zip oder Ordner> [...] [--gruppe=Name]")
+        group = next((x.split("=", 1)[1] for x in argv[2:] if x.startswith("--gruppe=")), None)
         for src in argv[2:]:
-            NotionImporter(connect()).run(src)
+            if not src.startswith("--gruppe="):
+                NotionImporter(connect(), group=group).run(src)
     elif cmd == "export":
         dest = argv[2] if len(argv) > 2 else os.path.join(BASE_DIR, f"export_{dt.date.today()}")
         n = export_all(connect(), dest)

@@ -1,6 +1,6 @@
 {
-  "version": "2026.11.16.1",
-  "notes": "Neuer Knopf „Flowtiz beenden“ in der Seitenleiste: beendet das Programm sauber und gibt die Sperre für den anderen Rechner frei.",
+  "version": "2026.11.16.2",
+  "notes": "Notion-Import in eine Gruppe: alles aus dem Export landet unter einer Seite, damit die Seitenleiste übersichtlich bleibt. Neuer Knopf „Flowtiz beenden“ gibt die Sperre für den anderen Rechner frei.",
   "files": [
     "app.py",
     "static/index.html",
@@ -8,8 +8,8 @@
     "version.json"
   ],
   "sha256": {
-    "app.py": "ac259f822d736520d3e9a8e11a7bea74bf9d61ccc01b46bc405c15f8827e7fb5",
-    "static/index.html": "befe47cc2da5240f93f7a2f2a8dff8be62f029ea5639581ab33eef26a08a4fc2",
-    "README.md": "55e97ac3583a071c60caaa6f781db8499c840e81fa3c68c4c0d85c50af137ac8"
+    "app.py": "76b6b39cdc82ab14133a7c3a0753846074b1c6e25e00b679d337a1c0fcf7565b",
+    "static/index.html": "c76b4273882bc8cd75012e93c72bcf499f03f4b32bf963022cc51e98534a4bca",
+    "README.md": "ed49d3eb6af3c994090dd1456bd89a47111dacff96c2e3e9a0527ee02d5c1db5"
   }
 }

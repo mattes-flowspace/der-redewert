@@ -33,6 +33,8 @@ Danach öffnet sich der Browser mit **http://127.0.0.1:8765**. Die App ist nur a
 
 Klicke in der Seitenleiste auf **„Notion importieren“** und ziehe die ZIP-Datei hinein.
 
+**In eine Gruppe:** Im Import-Dialog ist „In eine Gruppe importieren“ vorausgewählt (Name z. B. „Notion-Import“). Dann kommt alles aus dem Export unter eine einzige Seite 📦 mit diesem Namen, statt einzeln in die Seitenleiste. Ein späterer Import mit demselben Namen aktualisiert dieselbe Gruppe, und schon früher importierte Seiten wandern dabei mit hinein. Im Terminal geht das mit `--gruppe="Notion-Import"`.
+
 Bei sehr großen Exporten (mehrere GB) geht es schneller über das Terminal:
 
 ```bash
