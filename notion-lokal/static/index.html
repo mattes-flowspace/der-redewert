@@ -4289,6 +4289,9 @@ async function openFolder(dbId){
     sw.onchange = async () => { sw.disabled = true; try { draw(await api("POST","/api/ordner",{on:sw.checked, db:dbId})); if (sw.checked) folderSync(true).then(()=>refresh()); } catch(e){ toast(e.message); sw.disabled = false; } };
     box.append(h("label",{class:"hy-row"}, sw, h("b",{}, st.on && here ? "Fotos aus dem Ordner kommen in diesen Lebensfluss" : "Fotos aus einem Ordner übernehmen")));
     if (st.on && !here) box.append(h("p",{class:"hint", style:"margin:0"}, `Der Ordner ist gerade mit „${st.dbTitle}“ verbunden. Einschalten verbindet ihn stattdessen mit diesem Lebensfluss.`));
+    if (st.dropbox) box.append(h("p",{class:"hint", style:"margin:8px 0 2px"},"In der Dropbox-App am Handy:"),
+      h("div",{class:"hy-url"}, ["Dropbox", ...st.dropbox].join(" › ")),
+      h("p",{class:"hint", style:"margin:8px 0 2px"},"Auf diesem Rechner:"));
     box.append(h("div",{class:"hy-url"}, st.dir));
     box.append(h("div",{class:"hy-row"},
       h("button",{class:"btn", onclick:async()=>{ try { await api("POST","/api/ordner/oeffnen"); } catch(e){ toast(e.message); } }},"Ordner öffnen"),

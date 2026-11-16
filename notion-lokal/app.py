@@ -2440,6 +2440,24 @@ def folder_move(name, sub):
     return dest
 
 
+def dropbox_path(path):
+    """Weg innerhalb der Dropbox (für die Handy-App), z. B. ["KI RND", …, "Lebensfluss-Eingang"], sonst None."""
+    parts = os.path.normpath(os.path.abspath(path)).replace("\\", "/").split("/")
+    for i in range(len(parts) - 1, -1, -1):
+        p = parts[i].lower()
+        if p == "dropbox" or p.startswith("dropbox (") or p.startswith("dropbox-"):
+            return parts[i + 1:]
+    return None
+
+
+def folder_ensure():
+    try:
+        os.makedirs(FOLDER_DIR, exist_ok=True)
+        return True
+    except OSError:
+        return False
+
+
 def folder_status():
     cfg = folder_cfg()
     con = connect()
@@ -2448,7 +2466,8 @@ def folder_status():
     on = bool(cfg.get("on") and target)
     return {"on": on, "dir": FOLDER_DIR, "db": target["id"] if target else None,
             "dbTitle": target["title"] if target else None,
-            "pending": folder_pending() if on else [], "exists": os.path.isdir(FOLDER_DIR)}
+            "pending": folder_pending() if on else [], "exists": folder_ensure(),
+            "dropbox": dropbox_path(FOLDER_DIR)}
 
 
 def folder_set(on=None, db=None):
@@ -2682,6 +2701,7 @@ def serve(open_browser=True):
         _backup_loop()
         if phone_cfg().get("on"):
             phone_start()
+        folder_ensure()          # Eingangsordner immer anlegen, damit er in der Dropbox-App zu finden ist
     _recur_loop()
     print(f"Flowtiz {local_version()} läuft auf {url}")
     print(f"Daten liegen in: {DATA_DIR}")
